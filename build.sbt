@@ -1,3 +1,5 @@
+import ScalaJSKeys._
+
 // Turn this project into a Scala.js project by importing these settings
 scalaJSSettings
 
@@ -15,3 +17,5 @@ scalacOptions ++= Seq(
     "-feature",
     "-encoding", "utf8"
 )
+
+sources in (Test, packageJS) += baseDirectory.value / "js" / "runtests.js"

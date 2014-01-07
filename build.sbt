@@ -1,23 +1,21 @@
 import ScalaJSKeys._
 
-// Turn this project into a Scala.js project by importing these settings
-scalaJSSettings
-
-organization := "org.scalajs"
-
-name := "Scala.js actors"
-
-normalizedName := "scalajs-actors"
-
-version := "0.1-SNAPSHOT"
-
-scalacOptions ++= Seq(
-    "-deprecation",
-    "-unchecked",
-    "-feature",
-    "-encoding", "utf8"
+val commonSettings = Seq(
+    organization := "org.scalajs",
+    version := "0.1-SNAPSHOT",
+    normalizedName ~= { _.replace("scala-js", "scalajs") },
+    scalacOptions ++= Seq(
+        "-deprecation",
+        "-unchecked",
+        "-feature",
+        "-encoding", "utf8"
+    )
 )
 
-scalaJSTestFramework in Test := "org.scalajs.actors.test.ActorsTestFramework"
+lazy val root = project.in(file(".")).settings(commonSettings: _*)
+  .aggregate(spickling, actors)
 
-scalaJSTestBridgeClass in Test := "org.scalajs.actors.test.ActorsTestBridge"
+lazy val spickling = project.settings(commonSettings: _*)
+
+lazy val actors = project.settings(commonSettings: _*)
+  .dependsOn(spickling)

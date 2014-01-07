@@ -1,4 +1,6 @@
-package ch.epfl.lamp.scalajs.actors
+package org.scalajs.actors
+
+import scala.scalajs.js
 
 private[actors] class LocalActorRef(
     _system: ActorSystem,
@@ -11,7 +13,7 @@ private[actors] class LocalActorRef(
     sendMessage(Envelope(msg, sender, _system))
 
   protected def sendMessage(msg: Envelope): Unit = {
-    scala.js.Dynamic.global.setTimeout({ () =>
+    js.Dynamic.global.setTimeout({ () =>
       dispatchNow(msg)
     }, 0)
   }

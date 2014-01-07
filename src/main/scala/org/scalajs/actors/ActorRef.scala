@@ -1,4 +1,4 @@
-package ch.epfl.lamp.scalajs.actors
+package org.scalajs.actors
 
 abstract class ActorRef {
 

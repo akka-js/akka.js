@@ -3,11 +3,11 @@ import ScalaJSKeys._
 // Turn this project into a Scala.js project by importing these settings
 scalaJSSettings
 
-organization := "ch.epfl.lamp"
-
-version := "0.1-SNAPSHOT"
+organization := "org.scalajs"
 
 name := "Scala.js actors"
+
+normalizedName := "scalajs-actors"
 
 version := "0.1-SNAPSHOT"
 
@@ -18,4 +18,6 @@ scalacOptions ++= Seq(
     "-encoding", "utf8"
 )
 
-sources in (Test, packageJS) += baseDirectory.value / "js" / "runtests.js"
+scalaJSTestFramework in Test := "org.scalajs.actors.test.ActorsTestFramework"
+
+scalaJSTestBridgeClass in Test := "org.scalajs.actors.test.ActorsTestBridge"

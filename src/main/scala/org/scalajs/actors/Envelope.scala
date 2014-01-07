@@ -1,4 +1,4 @@
-package ch.epfl.lamp.scalajs.actors
+package org.scalajs.actors
 
 final case class Envelope private (val message: Any, val sender: ActorRef)
 

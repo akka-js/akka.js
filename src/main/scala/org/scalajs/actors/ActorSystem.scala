@@ -1,4 +1,4 @@
-package ch.epfl.lamp.scalajs.actors
+package org.scalajs.actors
 
 abstract class ActorSystem(val name: String) {
   def actorOf(props: Props): ActorRef = actorOf(props, "")

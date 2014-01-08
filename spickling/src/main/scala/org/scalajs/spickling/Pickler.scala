@@ -8,7 +8,7 @@ trait Pickler[A] {
   def pickle(obj: Picklee)(implicit registry: PicklerRegistry): js.Any
 }
 
-object Pickler {
+object Pickler extends PicklerMaterializers {
   implicit object BooleanPickler extends Pickler[Boolean] {
     def pickle(x: Boolean)(implicit registry: PicklerRegistry): js.Any = x
   }

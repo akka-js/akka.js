@@ -8,12 +8,6 @@ case class Person(name: String, age: Int)
 
 object CaseClassPicklersTest extends PicklersTest {
 
-  implicit object TempPseudoPersonUnpickler extends Unpickler[Person] {
-    def unpickle(pickle: js.Any)(implicit registry: PicklerRegistry): Person = {
-      Person("???", 0)
-    }
-  }
-
   PicklerRegistry.register[Person]
 
   describe("Case class picklers") {
@@ -24,6 +18,14 @@ object CaseClassPicklersTest extends PicklersTest {
           lit(t = "org.scalajs.spickling.test.Person", v = lit(
               name = lit(t = "java.lang.String", v = "Jack"),
               age = lit(t = "java.lang.Integer", v = 24))))
+    }
+
+    it("should be able to unpickle a Person") {
+      expectUnpickleEqual(
+          lit(t = "org.scalajs.spickling.test.Person", v = lit(
+              name = lit(t = "java.lang.String", v = "Jack"),
+              age = lit(t = "java.lang.Integer", v = 24))),
+          Person("Jack", 24))
     }
   }
 }

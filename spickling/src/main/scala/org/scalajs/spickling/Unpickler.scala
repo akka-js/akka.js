@@ -8,7 +8,7 @@ trait Unpickler[A] {
   def unpickle(json: js.Any)(implicit registry: PicklerRegistry): A
 }
 
-object Unpickler {
+object Unpickler extends PicklerMaterializers {
   implicit object BooleanUnpickler extends Unpickler[Boolean] {
     def unpickle(json: js.Any)(implicit registry: PicklerRegistry): Boolean =
       json.asInstanceOf[js.Boolean]

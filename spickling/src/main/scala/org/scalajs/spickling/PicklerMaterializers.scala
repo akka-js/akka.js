@@ -45,9 +45,51 @@ trait PicklerMaterializersImpl extends BlackboxMacro {
       GenPickler
     """
   }
+
+  def materializeUnpickler[T: c.WeakTypeTag]: c.Tree = {
+    val tpe = weakTypeOf[T]
+    val sym = tpe.typeSymbol.asClass
+
+    if (!sym.isCaseClass) {
+      c.error(c.enclosingPosition,
+          "Cannot materialize pickler for non-case class")
+      return q"null"
+    }
+
+    val accessors = (tpe.declarations collect {
+      case acc: MethodSymbol if acc.isCaseAccessor => acc
+    }).toList
+
+    val unpickledFields = for {
+      accessor <- accessors
+    } yield {
+      val fieldName = accessor.name
+      val fieldTpe = accessor.returnType
+      q"""
+        registry.unpickle(pickle.$fieldName).asInstanceOf[$fieldTpe]
+      """
+    }
+
+    val unpickleLogic = q"""
+      val pickle = json.asInstanceOf[scala.scalajs.js.Dynamic]
+      new $tpe(..$unpickledFields)
+    """
+
+    q"""
+      implicit object GenUnpickler extends org.scalajs.spickling.Unpickler[$tpe] {
+        import org.scalajs.spickling._
+        override def unpickle(json: scala.scalajs.js.Any)(
+            implicit registry: PicklerRegistry): $tpe = $unpickleLogic
+      }
+      GenUnpickler
+    """
+  }
 }
 
 trait PicklerMaterializers {
   implicit def materializePickler[T]: Pickler[T] =
     macro PicklerMaterializersImpl.materializePickler[T]
+
+  implicit def materializeUnpickler[T]: Unpickler[T] =
+    macro PicklerMaterializersImpl.materializeUnpickler[T]
 }

@@ -19,3 +19,10 @@ lazy val spickling = project.settings(commonSettings: _*)
 
 lazy val actors = project.settings(commonSettings: _*)
   .dependsOn(spickling)
+
+lazy val examples = project.settings(commonSettings: _*)
+  .aggregate(webworkersExample)
+
+lazy val webworkersExample = project.in(file("examples/webworkers"))
+  .settings(commonSettings: _*)
+  .dependsOn(actors)

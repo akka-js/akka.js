@@ -4,9 +4,11 @@ import scala.scalajs.js
 
 private[actors] class LocalActorRef(
     _system: ActorSystem,
+    val path: ActorPath,
+    _parent: ActorRef,
     _props: Props) extends ActorRef {
 
-  val actorCell: ActorCell = new ActorCell(_system, _props, this, null)
+  val actorCell: ActorCell = new ActorCell(_system, _props, this, _parent)
   actorCell.create()
 
   def !(msg: Any)(implicit sender: ActorRef): Unit =

@@ -2,6 +2,8 @@ package org.scalajs.actors
 
 abstract class ActorRef {
 
+  def path: ActorPath
+
   /**
    * Sends a one-way asynchronous message. E.g. fire-and-forget semantics.
    * <p/>

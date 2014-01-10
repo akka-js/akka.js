@@ -36,7 +36,9 @@ private[actors] class ActorCell(
     val props: Props,
     val self: ActorRef,
     val parent: ActorRef
-) extends ActorContext {
+) extends ActorContext
+     with Children {
+
   import Actor._
   import ActorCell._
 

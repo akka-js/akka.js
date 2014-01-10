@@ -14,3 +14,9 @@ object ActorInitializationException {
   def apply(actor: ActorRef, msg: String): ActorInitializationException =
     new ActorInitializationException(actor, msg, null)
 }
+
+/**
+ * An InvalidActorNameException is thrown when you try to convert something,
+ * usually a String, to an Actor name which doesn't validate.
+ */
+case class InvalidActorNameException(message: String) extends Exception(message)

@@ -55,5 +55,13 @@ object PrimitivePicklersTest extends PicklersTest {
           lit(t = "java.lang.String", v = "hello"),
           "hello")
     }
+
+    it("should be able to pickle null") {
+      expectPickleEqual(null, null)
+    }
+
+    it("should be able to unpickle null") {
+      expectUnpickleEqual(null, null)
+    }
   }
 }

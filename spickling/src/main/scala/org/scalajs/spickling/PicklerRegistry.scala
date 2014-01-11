@@ -6,11 +6,18 @@ import scala.collection.mutable
 import scala.scalajs.js
 
 object PicklerRegistry extends PicklerRegistry {
+  class SingletonFullName[A](val name: String)
+
+  object SingletonFullName extends PicklerMaterializers
 }
 
 class PicklerRegistry {
+  import PicklerRegistry._
+
   private val picklers = new mutable.HashMap[String, Pickler[_]]
   private val unpicklers = new mutable.HashMap[String, Unpickler[_]]
+  private val singletons = new mutable.HashMap[Any, String]
+  private val singletonsRev = new mutable.HashMap[String, Any]
 
   implicit private def self = this
 
@@ -32,20 +39,41 @@ class PicklerRegistry {
     register(pickler, unpickler)
   }
 
+  def register[A <: Singleton](obj: A)(implicit name: SingletonFullName[A]): Unit = {
+    singletons(obj) = name.name
+    singletonsRev(name.name) = obj
+  }
+
   def pickle(value: Any): js.Any = {
-    val className = value.getClass.getName
-    val pickler = picklers(className)
-    val pickledValue = pickler.pickle(value.asInstanceOf[pickler.Picklee])
-    js.Dynamic.literal(
-        t = className,
-        v = pickledValue)
+    if (value == null) {
+      null
+    } else {
+      singletons.get(value) match {
+        case Some(name) => js.Dynamic.literal(s = name)
+        case _ =>
+          val className = value.getClass.getName
+          val pickler = picklers(className)
+          val pickledValue = pickler.pickle(value.asInstanceOf[pickler.Picklee])
+          js.Dynamic.literal(
+              t = className,
+              v = pickledValue)
+          }
+    }
   }
 
   def unpickle(json: js.Any): Any = {
-    val dyn = json.asInstanceOf[js.Dynamic]
-    val className: String = dyn.t.asInstanceOf[js.String]
-    val unpickler = unpicklers(className)
-    unpickler.unpickle(dyn.v)
+    if (json eq null) {
+      null
+    } else {
+      val dyn = json.asInstanceOf[js.Dynamic]
+      if (!(!dyn.s)) {
+        singletonsRev(dyn.s.asInstanceOf[js.String])
+      } else {
+        val className: String = dyn.t.asInstanceOf[js.String]
+        val unpickler = unpicklers(className)
+        unpickler.unpickle(dyn.v)
+      }
+    }
   }
 
   private def registerBuiltinPicklers(): Unit = {

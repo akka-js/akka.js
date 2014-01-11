@@ -86,6 +86,22 @@ object PicklerMaterializersImpl {
       GenUnpickler
     """
   }
+
+  def materializeCaseObjectName[T: c.WeakTypeTag](c: BlackboxContext): c.Tree = {
+    import c.universe._
+
+    val tpe = weakTypeOf[T]
+    val sym = tpe.typeSymbol.asClass
+
+    if (!sym.isModuleClass || !sym.isCaseClass)
+      c.abort(c.enclosingPosition,
+          s"Cannot generate a case object name for non-case object $sym")
+
+    val name = sym.fullName+"$"
+    q"""
+      new org.scalajs.spickling.PicklerRegistry.SingletonFullName($name)
+    """
+  }
 }
 
 trait PicklerMaterializers {
@@ -94,4 +110,7 @@ trait PicklerMaterializers {
 
   implicit def materializeUnpickler[T]: Unpickler[T] =
     macro PicklerMaterializersImpl.materializeUnpickler[T]
+
+  implicit def materializeCaseObjectName[T]: PicklerRegistry.SingletonFullName[T] =
+    macro PicklerMaterializersImpl.materializeCaseObjectName[T]
 }

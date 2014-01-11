@@ -13,17 +13,15 @@ private[actors] class WorkerActorRef(
   def !(msg: Any)(implicit sender: ActorRef): Unit = {
     val messagePickle: js.Any = PicklerRegistry.pickle(msg)
     val senderID = sender match {
-      case Actor.noSender => ""
+      case Actor.noSender => null
       case _ => system.globalizePath(sender.path)
     }
     val senderIDPickle: js.Any = PicklerRegistry.pickle(senderID)
     val data = js.Dynamic.literal(
-        isActorSystemMessage = true,
         kind = "bang",
-        senderPath = senderIDPickle,
-        receiverPath = pickledPath,
+        sender = senderIDPickle,
+        receiver = pickledPath,
         message = messagePickle)
-    val nextHop = system.computeNextHop(path.address)
-    nextHop.get.postMessage(data)
+    WebWorkerRouter.postMessageTo(path.address, data)
   }
 }

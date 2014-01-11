@@ -101,7 +101,7 @@ final case class RootActorPath(address: Address, name: String = "/") extends Act
 
   override def elements: immutable.Iterable[String] = ActorPath.emptyActorPath
 
-  override val toString: String = address + name
+  //override val toString: String = address + name
 
   override val toSerializationFormat: String = toString
 
@@ -150,10 +150,10 @@ final case class ChildActorPath private[actors] (
     rec(this)
   }
 
-  override def toString: String = {
+  /*override def toString: String = {
     val length = toStringLength
     buildToString(new JStringBuilder(length), length, 0, _.toString).toString
-  }
+  }*/
 
   override def toSerializationFormat: String = {
     val length = toStringLength
@@ -164,8 +164,8 @@ final case class ChildActorPath private[actors] (
   private def toStringLength: Int = toStringOffset + name.length
 
   private val toStringOffset: Int = parent match {
-    case r: RootActorPath  ⇒ r.address.toString.length + r.name.length
-    case c: ChildActorPath ⇒ c.toStringLength + 1
+    case r: RootActorPath  => r.address.toString.length + r.name.length
+    case c: ChildActorPath => c.toStringLength + 1
   }
 
   override def toStringWithAddress(addr: Address): String = {

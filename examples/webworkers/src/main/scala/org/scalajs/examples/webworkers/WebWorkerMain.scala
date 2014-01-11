@@ -3,28 +3,31 @@ package org.scalajs.examples.webworkers
 import scala.scalajs.js
 import js.Dynamic.global
 
+import org.scalajs.spickling.PicklerRegistry
 import org.scalajs.actors._
+import webworkers.WebWorkerRouter
 
 class GreetingActor extends Actor {
   def receive = {
-    case Greeting(who) => global.console.log("Hello " + who)
+    case Greeting(who) =>
+      global.console.log("Hello " + who)
+      sender ! Greeting("returning " + who)
   }
 }
 
 object WebWorkerMain {
-  val system = ActorSystem("WebWorkerSystem")
+  println("Starting WebWorkerMain")
+  PicklerRegistry.register[Greeting]
 
-  ParentWebWorkerConnection.onmessage = { (event: MessageEvent) =>
-    val data = event.data
-    if (!(!data.isActorSystemMessage))
-      handleActorSystemMessage(data)
-  }
+  WebWorkerRouter.setupAsChild()
+
+  var system: ActorSystem = _
 
   def main(): Unit = {
-    val greeter = system.actorOf(Props(new GreetingActor), name = "greeter")
-  }
-
-  def handleActorSystemMessage(data: js.Dynamic): Unit = {
-
+    WebWorkerRouter.onInitialized {
+      global.console.log("Worker initialized with address "+WebWorkerRouter.address)
+      system = ActorSystem("WorkerSystem")
+      val greeter = system.actorOf(Props(new GreetingActor), name = "greeter")
+    }
   }
 }

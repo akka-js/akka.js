@@ -2,6 +2,7 @@ package org.scalajs.actors
 
 class Guardian extends Actor {
   def receive = {
-    case _ => ???
+    case msg =>
+      Console.err.println(s"guardian received message $msg")
   }
 }

@@ -1,11 +1,11 @@
 package org.scalajs.actors
 
-final case class Address private (
+final case class Address private[actors] (
     system: String, worker: Option[String]) {
 
   /**
    * Returns true if this Address is only defined locally. It is not safe to
-   * send locally scoped addresses to other works.
+   * send locally scoped addresses to other workers.
    * See also [[org.scalajs.actors.Address#hasGlobalScope]].
    */
   def hasLocalScope: Boolean = worker.isEmpty

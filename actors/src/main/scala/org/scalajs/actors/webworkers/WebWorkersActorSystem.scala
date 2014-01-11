@@ -1,14 +1,35 @@
 package org.scalajs.actors
 package webworkers
 
-private[actors] trait WebWorkersActorSystem { this: ActorSystemImpl =>
-  private var _workerPath: String = ""
+import scala.scalajs.js
+import org.scalajs.spickling.PicklerRegistry
 
-  private var childWorkers = JSMap.empty[WorkerConnection]
+private[actors] object WebWorkersActorSystem {
+  private var _registrationsDone = false
+
+  def registerPicklers(): Unit = {
+    if (_registrationsDone)
+      return
+    _registrationsDone = true
+
+    import PicklerRegistry.register
+
+    register[Some[Any]]
+    register(None)
+
+    register[RootActorPath]
+    register[ChildActorPath]
+    register[Address]
+  }
+}
+
+private[actors] trait WebWorkersActorSystem { this: ActorSystemImpl =>
+  WebWorkersActorSystem.registerPicklers()
+
+  WebWorkerRouter.registerSystem(name, this)
 
   private[webworkers] def workerAddress = {
-    assert(_workerPath != "")
-    Address(name, _workerPath)
+    Address(name, WebWorkerRouter.address)
   }
 
   private[webworkers] def globalizePath(path: ActorPath): ActorPath = {
@@ -16,24 +37,33 @@ private[actors] trait WebWorkersActorSystem { this: ActorSystemImpl =>
     else RootActorPath(workerAddress) / path.elements
   }
 
-  private[webworkers] def computeNextHop(
-      address: Address): Option[WorkerConnection] = {
-    if (address.hasLocalScope) None
-    else {
-      assert(_workerPath != "")
-      val destWorkerPath = address.worker.get
-      if (destWorkerPath == _workerPath) {
-        None
-      } else if (destWorkerPath.startsWith(_workerPath)) {
-        // next hop is one of my children
-        val childName =
-          destWorkerPath.substring(_workerPath.length).split("/")(0)
-        Some(childWorkers.getOrElse(childName,
-            throw new Exception(s"Cannot locate worker $destWorkerPath")))
-      } else {
-        // next hop is my parent
-        Some(ParentWorkerConnection)
-      }
+  // Handling messages arriving to my webworker
+
+  private[webworkers] def deliverMessageFromRouter(message: js.Dynamic): Unit = {
+    message.kind.toString match {
+      case "bang" =>
+        val senderPathPickle = message.sender
+        val receiverPathPickle = message.receiver
+        val messagePickle = message.message
+
+        val senderPath =
+          PicklerRegistry.unpickle(senderPathPickle).asInstanceOf[ActorPath]
+        println(s"senderPath = $senderPath")
+        val sender =
+          if (senderPath eq null) null
+          else new WorkerActorRef(this, senderPath)
+
+        val receiverPath =
+          PicklerRegistry.unpickle(receiverPathPickle).asInstanceOf[ActorPath]
+        println(s"receiverPath = $receiverPath")
+        val receiver = resolveLocalActorPath(receiverPath)
+        println(s"receiver = $receiver")
+
+        receiver foreach { ref =>
+          val msg = PicklerRegistry.unpickle(messagePickle)
+          println(s"msg = $msg")
+          ref.!(msg)(sender)
+        }
     }
   }
 }

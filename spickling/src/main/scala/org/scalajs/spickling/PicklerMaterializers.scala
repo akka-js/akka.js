@@ -2,12 +2,12 @@ package org.scalajs.spickling
 
 import scala.language.experimental.macros
 
-import scala.reflect.macros.BlackboxMacro
+import scala.reflect.macros.BlackboxContext
 
-trait PicklerMaterializersImpl extends BlackboxMacro {
-  import c.universe._
+object PicklerMaterializersImpl {
+  def materializePickler[T: c.WeakTypeTag](c: BlackboxContext): c.Tree = {
+    import c.universe._
 
-  def materializePickler[T: c.WeakTypeTag]: c.Tree = {
     val tpe = weakTypeOf[T]
     val sym = tpe.typeSymbol.asClass
 
@@ -46,7 +46,9 @@ trait PicklerMaterializersImpl extends BlackboxMacro {
     """
   }
 
-  def materializeUnpickler[T: c.WeakTypeTag]: c.Tree = {
+  def materializeUnpickler[T: c.WeakTypeTag](c: BlackboxContext): c.Tree = {
+    import c.universe._
+
     val tpe = weakTypeOf[T]
     val sym = tpe.typeSymbol.asClass
 

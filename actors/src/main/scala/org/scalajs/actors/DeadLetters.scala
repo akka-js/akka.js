@@ -1,9 +1,9 @@
 package org.scalajs.actors
 
-class DeadLettersActorRef(system: ActorSystem) extends ActorRef {
+class DeadLettersActorRef(system: ActorSystem) extends MinimalActorRef {
   def path: ActorPath = ???
 
-  def !(msg: Any)(implicit sender: ActorRef): Unit = {
+  override def !(msg: Any)(implicit sender: ActorRef): Unit = {
     // TODO, ignore for now
   }
 }

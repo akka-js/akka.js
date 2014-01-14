@@ -2,6 +2,9 @@ package org.scalajs.actors
 
 import scala.util.control.NonFatal
 
+import dispatch.MessageDispatcher
+import sysmsg._
+
 trait ActorContext {
   /**
    * Reference to this actor.
@@ -34,10 +37,12 @@ private[actors] object ActorCell {
 private[actors] class ActorCell(
     val system: ActorSystem,
     val props: Props,
+    val dispatcher: MessageDispatcher,
     val self: ActorRef,
     val parent: ActorRef
 ) extends ActorContext
-     with Children {
+     with Children
+     with Dispatch {
 
   import Actor._
   import ActorCell._
@@ -104,6 +109,11 @@ private[actors] class ActorCell(
   /*
    * MESSAGE HANDLING
    */
+
+  final def systemInvoke(message: SystemMessage): Unit = {
+    //???
+    println(message)
+  }
 
   final def invoke(messageHandle: Envelope): Unit = try {
     currentMessage = messageHandle

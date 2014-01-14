@@ -2,25 +2,37 @@ package org.scalajs.actors
 
 import scala.scalajs.js
 
+import dispatch._
+import sysmsg.SystemMessage
+
 private[actors] class LocalActorRef(
-    _system: ActorSystem,
+    system: ActorSystem,
     val path: ActorPath,
     _parent: ActorRef,
-    _props: Props) extends ActorRef {
+    _props: Props,
+    _dispatcher: MessageDispatcher) extends InternalActorRef {
 
-  val actorCell: ActorCell = new ActorCell(_system, _props, this, _parent)
+  val actorCell: ActorCell =
+    new ActorCell(system, _props, _dispatcher, this, _parent)
+  actorCell.init(sendSupervise = _parent ne null)
   actorCell.create()
 
   def !(msg: Any)(implicit sender: ActorRef): Unit =
-    sendMessage(Envelope(msg, sender, _system))
+    actorCell.sendMessage(Envelope(msg, sender, system))
 
-  protected def sendMessage(msg: Envelope): Unit = {
-    js.Dynamic.global.setTimeout({ () =>
-      dispatchNow(msg)
-    }, 0)
-  }
+  // InternalActorRef API
 
-  protected def dispatchNow(msg: Envelope): Unit = {
-    actorCell.invoke(msg)
-  }
+  def start(): Unit = actorCell.start()
+  def resume(causedByFailure: Throwable): Unit = actorCell.resume(causedByFailure)
+  def suspend(): Unit = actorCell.suspend()
+  def restart(cause: Throwable): Unit = actorCell.restart(cause)
+  def stop(): Unit = actorCell.stop()
+  def sendSystemMessage(message: SystemMessage): Unit = actorCell.sendSystemMessage(message)
+
+  def getParent: InternalActorRef = _parent
+
+  def getChild(name: Iterator[String]): InternalActorRef =
+    Actor.noSender
+
+  def isLocal: Boolean = true
 }

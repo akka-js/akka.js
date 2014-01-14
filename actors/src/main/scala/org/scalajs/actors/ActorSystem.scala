@@ -1,6 +1,9 @@
 package org.scalajs.actors
 
+import dispatch._
+
 abstract class ActorSystem(val name: String) extends ActorRefFactory {
+  def guardian: ActorRef
   def deadLetters: ActorRef
 
   def sendToPath(path: ActorPath, message: Any)(
@@ -21,9 +24,13 @@ class ActorSystemImpl(nme: String) extends ActorSystem(nme)
 
   def stop(ref: ActorRef): Unit = ???
 
-  val guardian = new LocalActorRef(this, RootActorPath(Address(name)), null,
-      Props(new Guardian))
   val deadLetters: ActorRef = new DeadLettersActorRef(this)
+
+  val mailboxes: Mailboxes = new Mailboxes(deadLetters)
+  val dispatcher: MessageDispatcher = new MessageDispatcher(mailboxes)
+
+  val guardian = new LocalActorRef(this, RootActorPath(Address(name)), null,
+      Props(new Guardian), dispatcher)
 
   override def sendToPath(path: ActorPath, message: Any)(
       implicit sender: ActorRef): Unit = {

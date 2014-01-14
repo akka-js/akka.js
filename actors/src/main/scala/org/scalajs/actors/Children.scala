@@ -50,7 +50,7 @@ private[actors] trait Children { this: ActorCell =>
       async: Boolean, systemService: Boolean): ActorRef = {
 
     val childPath = new ChildActorPath(cell.self.path, name)
-    val child = new LocalActorRef(system, childPath, cell.self, props)
+    val child = new LocalActorRef(system, childPath, cell.self, props, dispatcher)
     childrenRefs(name) = child
     child
   }

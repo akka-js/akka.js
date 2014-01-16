@@ -15,7 +15,6 @@ private[actors] class LocalActorRef(
   val actorCell: ActorCell =
     new ActorCell(system, _props, _dispatcher, this, _parent)
   actorCell.init(sendSupervise = _parent ne null)
-  actorCell.create()
 
   def !(msg: Any)(implicit sender: ActorRef): Unit =
     actorCell.sendMessage(Envelope(msg, sender, system))

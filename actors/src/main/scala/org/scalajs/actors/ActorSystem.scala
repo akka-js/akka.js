@@ -1,10 +1,13 @@
 package org.scalajs.actors
 
 import dispatch._
+import event._
 
 abstract class ActorSystem(val name: String) extends ActorRefFactory {
   def guardian: ActorRef
   def deadLetters: ActorRef
+
+  def eventStream: EventStream
 
   def sendToPath(path: ActorPath, message: Any)(
       implicit sender: ActorRef = Actor.noSender): Unit
@@ -23,6 +26,8 @@ class ActorSystemImpl(nme: String) extends ActorSystem(nme)
     guardian.actorCell.actorOf(props, name)
 
   def stop(ref: ActorRef): Unit = ???
+
+  val eventStream: EventStream = new EventStream
 
   val deadLetters: ActorRef = new DeadLettersActorRef(this)
 

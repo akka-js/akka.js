@@ -1,11 +1,16 @@
 package org.scalajs.actors
 
+import scala.annotation.{tailrec, switch}
+
+import scala.collection.immutable
+import scala.concurrent.ExecutionContext
 import scala.util.control.NonFatal
 
 import dispatch.MessageDispatcher
+import event.Logging.LogEvent
 import sysmsg._
 
-trait ActorContext {
+trait ActorContext extends ActorRefFactory {
   /**
    * Reference to this actor.
    */
@@ -22,16 +27,86 @@ trait ActorContext {
   def sender: ActorRef
 
   /**
+   * Returns all supervised children; this method returns a view (i.e. a lazy
+   * collection) onto the internal collection of children. Targeted lookups
+   * should be using `child` instead for performance reasons:
+   *
+   * {{{
+   * val badLookup = context.children find (_.path.name == "kid")
+   * // should better be expressed as:
+   * val goodLookup = context.child("kid")
+   * }}}
+   */
+  def children: immutable.Iterable[ActorRef]
+
+  /**
+   * Get the child with the given name if it exists.
+   */
+  def child(name: String): Option[ActorRef]
+
+  /**
+   * Returns the dispatcher (MessageDispatcher) that is used for this Actor.
+   * Importing this member will place an implicit ExecutionContext in scope.
+   */
+  implicit def dispatcher: ExecutionContext
+
+  /**
    * The system that the actor belongs to.
-   * Importing this member will place a implicit ExecutionContext in scope.
+   * Importing this member will place an implicit ExecutionContext in scope.
    */
   implicit def system: ActorSystem
+
+  /**
+   * Returns the supervising parent ActorRef.
+   */
+  def parent: ActorRef
+
+  /**
+   * Registers this actor as a Monitor for the provided ActorRef.
+   * This actor will receive a Terminated(subject) message when watched
+   * actor is terminated.
+   * @return the provided ActorRef
+   */
+  def watch(subject: ActorRef): ActorRef
+
+  /**
+   * Unregisters this actor as Monitor for the provided ActorRef.
+   * @return the provided ActorRef
+   */
+  def unwatch(subject: ActorRef): ActorRef
 }
 
 private[actors] object ActorCell {
   var contextStack: List[ActorContext] = Nil
 
   final val emptyBehaviorStack: List[Actor.Receive] = Nil
+
+  final val emptyActorRefSet: Set[ActorRef] = immutable.Set.empty
+
+  final val undefinedUid = 0
+
+  @tailrec final def newUid(): Int = {
+    // Note that this uid is also used as hashCode in ActorRef, so be careful
+    // to not break hashing if you change the way uid is generated
+    val uid = scala.util.Random.nextInt()
+    if (uid == undefinedUid) newUid()
+    else uid
+  }
+
+  final def splitNameAndUid(name: String): (String, Int) = {
+    val i = name.indexOf('#')
+    if (i < 0) (name, undefinedUid)
+    else (name.substring(0, i), Integer.valueOf(name.substring(i + 1)))
+  }
+
+  final val emptyCancellable: Cancellable = new Cancellable {
+    def isCancelled: Boolean = false
+    def cancel(): Boolean = false
+  }
+
+  final val DefaultState = 0
+  final val SuspendedState = 1
+  final val SuspendedWaitForChildrenState = 2
 }
 
 private[actors] class ActorCell(
@@ -39,21 +114,38 @@ private[actors] class ActorCell(
     val props: Props,
     val dispatcher: MessageDispatcher,
     val self: ActorRef,
-    val parent: ActorRef
+    _parent: ActorRef
 ) extends ActorContext
      with Children
-     with Dispatch {
+     with Dispatch
+     with cell.ReceiveTimeout
+     with cell.DeathWatch
+     with cell.FaultHandling {
 
   import Actor._
   import ActorCell._
 
+  val parent: InternalActorRef = _parent
+
+  protected def uid: Int = self.path.uid
   private[this] var myActor: Actor = _
   def actor: Actor = myActor
   protected[this] def actor_=(v: Actor): Unit = myActor = v
 
   private[this] var behaviorStack: List[Receive] = emptyBehaviorStack
+  private[this] var sysmsgStashLatestFirst: List[SystemMessage] = Nil
 
-  private[this] var currentMessage: Envelope = null
+  protected[this] var currentMessage: Envelope = null
+
+  protected def stash(msg: SystemMessage): Unit = {
+    sysmsgStashLatestFirst ::= msg
+  }
+
+  private def unstashAllLatestFirst(): List[SystemMessage] = {
+    val unstashed = sysmsgStashLatestFirst
+    sysmsgStashLatestFirst = Nil
+    unstashed
+  }
 
   final def sender: ActorRef = currentMessage match {
     case null                      => system.deadLetters
@@ -75,12 +167,130 @@ private[actors] class ActorCell(
   }
 
   /*
-   * ACTOR INSTANCE HANDLING
+   * MESSAGE HANDLING
    */
 
-  def create(): Unit = {
-    actor = newActor()
+  final def systemInvoke(message: SystemMessage): Unit = {
+    /*
+     * When recreate/suspend/resume are received while restarting (i.e. between
+     * preRestart and postRestart, waiting for children to terminate), these
+     * must not be executed immediately, but instead queued and released after
+     * finishRecreate returns. This can only ever be triggered by
+     * ChildTerminated, and ChildTerminated is not one of the queued message
+     * types (hence the overwrite further down). Mailbox sets message.next=null
+     * before systemInvoke, so this will only be non-null during such a replay.
+     */
+
+    def calculateState: Int =
+      if (waitingForChildrenOrNull ne null) SuspendedWaitForChildrenState
+      else if (mailbox.isSuspended) SuspendedState
+      else DefaultState
+
+    @tailrec def sendAllToDeadLetters(messages: List[SystemMessage]): Unit =
+      if (messages.nonEmpty) {
+        val tail = messages.tail
+        val msg = messages.head
+        system.deadLetters ! msg
+        sendAllToDeadLetters(tail)
+      }
+
+    def shouldStash(m: SystemMessage, state: Int): Boolean =
+      (state: @switch) match {
+        case DefaultState                  ⇒ false
+        case SuspendedState                ⇒ m.isInstanceOf[StashWhenFailed]
+        case SuspendedWaitForChildrenState ⇒ m.isInstanceOf[StashWhenWaitingForChildren]
+      }
+
+    @tailrec
+    def invokeAll(messages: List[SystemMessage], currentState: Int): Unit = {
+      val rest = messages.tail
+      val message = messages.head
+      try {
+        message match {
+          case message: SystemMessage if shouldStash(message, currentState) => stash(message)
+          case f: Failed => handleFailure(f)
+          case DeathWatchNotification(a, ec, at) => watchedActorTerminated(a, ec, at)
+          case Create(failure) => create(failure)
+          case Watch(watchee, watcher) => addWatcher(watchee, watcher)
+          case Unwatch(watchee, watcher) => remWatcher(watchee, watcher)
+          case Recreate(cause) => faultRecreate(cause)
+          case Suspend() => faultSuspend()
+          case Resume(inRespToFailure) => faultResume(inRespToFailure)
+          case Terminate() => terminate()
+          case Supervise(child, async) => supervise(child, async)
+          case NoMessage => // only here to suppress warning
+        }
+      } catch handleNonFatalOrInterruptedException { e =>
+        handleInvokeFailure(Nil, e)
+      }
+      val newState = calculateState
+      // As each state accepts a strict subset of another state, it is enough
+      // to unstash if we "walk up" the state chain
+      val todo =
+        if (newState < currentState) unstashAllLatestFirst() reverse_::: rest
+        else rest
+
+      if (isTerminated) sendAllToDeadLetters(todo)
+      else if (todo.nonEmpty) invokeAll(todo, newState)
+    }
+
+    invokeAll(List(message), calculateState)
   }
+
+  final def invoke(messageHandle: Envelope): Unit = try {
+    currentMessage = messageHandle
+    messageHandle.message match {
+      case msg: AutoReceivedMessage => autoReceiveMessage(messageHandle)
+      case msg                      => receiveMessage(msg)
+    }
+    currentMessage = null // reset current message after successful invocation
+  } catch {
+    case e: Throwable =>
+      System.err.println("Error in invoke: " + e)
+      handleInvokeFailure(e)
+  }
+
+  def autoReceiveMessage(msg: Envelope): Unit = {
+    msg.message match {
+      case t: Terminated              => receivedTerminated(t)
+      //case AddressTerminated(address) => addressTerminated(address)
+      case Kill                       => throw new ActorKilledException("Kill")
+      case PoisonPill                 => (self: InternalActorRef).stop()
+      /*case SelectParent(m) =>
+        if (self == system.provider.rootGuardian) self.tell(m, msg.sender)
+        else parent.tell(m, msg.sender)
+      case s @ SelectChildName(name, m) =>
+        def selectChild(): Unit = {
+          getChildByName(name) match {
+            case Some(c: ChildRestartStats) => c.child.tell(m, msg.sender)
+            case _ ⇒
+              s.identifyRequest foreach { x => sender ! ActorIdentity(x.messageId, None) }
+          }
+        }
+        // need this special case because of extraNames handled by rootGuardian
+        if (self == system.provider.rootGuardian) {
+          self.asInstanceOf[LocalActorRef].getSingleChild(name) match {
+            case Nobody => selectChild()
+            case child  => child.tell(m, msg.sender)
+          }
+        } else
+          selectChild()
+      case SelectChildPattern(p, m) => for (c <- children if p.matcher(c.path.name).matches) c.tell(m, msg.sender)*/
+      case Identify(messageId)      => sender ! ActorIdentity(messageId, Some(self))
+    }
+  }
+
+  protected def receiveMessage(msg: Any): Unit = {
+    behaviorStack.head.applyOrElse(msg, actor.unhandled)
+  }
+
+  private def handleInvokeFailure(e: Throwable): Unit = {
+    ???
+  }
+
+  /*
+   * ACTOR INSTANCE HANDLING
+   */
 
   //This method is in charge of setting up the contextStack and create a new instance of the Actor
   protected def newActor(): Actor = {
@@ -90,7 +300,8 @@ private[actors] class ActorCell(
       val instance = props.newActor()
 
       if (instance eq null)
-        throw ActorInitializationException(self, "Actor instance passed to actorOf can't be 'null'")
+        throw ActorInitializationException(self,
+            "Actor instance passed to actorOf can't be 'null'")
 
       // If no becomes were issued, the actors behavior is its receive method
       behaviorStack =
@@ -106,33 +317,64 @@ private[actors] class ActorCell(
     }
   }
 
-  /*
-   * MESSAGE HANDLING
-   */
-
-  final def systemInvoke(message: SystemMessage): Unit = {
-    //???
-    println(message)
-  }
-
-  final def invoke(messageHandle: Envelope): Unit = try {
-    currentMessage = messageHandle
-    messageHandle.message match {
-      //case msg: AutoReceivedMessage => autoReceiveMessage(messageHandle)
-      case msg                      => receiveMessage(msg)
+  protected def create(failure: Option[ActorInitializationException]): Unit = {
+    def clearOutActorIfNonNull(): Unit = {
+      if (actor ne null) {
+        clearActorFields(actor)
+        actor = null // ensure that we know that we failed during creation
+      }
     }
-    currentMessage = null // reset current message after successful invocation
-  } catch {
-    case e: Throwable =>
-      System.err.println("Error in invoke: " + e)
-      handleInvokeFailure(e)
+
+    failure foreach { throw _ }
+
+    try {
+      val created = newActor()
+      actor = created
+      created.preStart()
+      checkReceiveTimeout()
+    } catch {
+      case NonFatal(e) =>
+        clearOutActorIfNonNull()
+        e match {
+          case i: InstantiationException => throw ActorInitializationException(self,
+            """exception during creation, this problem is likely to occur because the class of the Actor you tried to create is either,
+               a non-static inner class (in which case make it a static inner class or use Props(new ...) or Props( new UntypedActorFactory ... )
+               or is missing an appropriate, reachable no-args constructor.
+              """, i.getCause)
+          case x => throw ActorInitializationException(self, "exception during creation", x)
+        }
+    }
   }
 
-  private def receiveMessage(msg: Any): Unit = {
-    behaviorStack.head.applyOrElse(msg, actor.unhandled)
+  private def supervise(child: ActorRef, async: Boolean): Unit = {
+    if (!isTerminating) {
+      // TODO Supervise is the first thing we get from a new child, so store
+      // away the UID for later use in handleFailure()
+      if (!isChild(child)) {
+        // TODO publish to event stream
+        //publish(Error(self.path.toString, clazz(actor), "received Supervise from unregistered child " + child + ", this will not end well"))
+        Console.err.println(s"received Supervise from unregistered child $child, this will not end well")
+      }
+    }
   }
 
-  private def handleInvokeFailure(e: Throwable): Unit = {
-    ???
+  final protected def clearActorCellFields(cell: ActorCell): Unit = {
+    cell.unstashAllLatestFirst()
+    //if (!lookupAndSetField(cell.getClass, cell, "props", ActorCell.terminatedProps))
+    //  throw new IllegalArgumentException("ActorCell has no props field")
   }
+
+  final protected def clearActorFields(actorInstance: Actor): Unit = {
+    actorInstance.setActorFields(context = null, self = system.deadLetters)
+    currentMessage = null
+    behaviorStack = emptyBehaviorStack
+  }
+
+  // logging is not the main purpose, and if it fails there’s nothing we can do
+  protected final def publish(e: LogEvent): Unit =
+    try system.eventStream.publish(e)
+    catch { case NonFatal(_) => }
+
+  protected final def clazz(o: AnyRef): Class[_] =
+    if (o eq null) this.getClass else o.getClass
 }

@@ -13,6 +13,7 @@ private[actors] object WebWorkersActorSystem {
     _registrationsDone = true
 
     import PicklerRegistry.register
+    import DedicatedPicklers._
 
     register[Some[Any]]
     register(None)

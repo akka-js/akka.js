@@ -84,11 +84,24 @@ sealed trait ActorPath extends Comparable[ActorPath] {
   def toStringWithAddress(addr: Address): String
 
   def toSerializationFormatWithAddress(addr: Address): String
+
+  /**
+   * INTERNAL API
+   * Unique identifier of the actor. Used for distinguishing
+   * different incarnations of actors with same path (name elements).
+   */
+  private[actors] def uid: Int
+
+  /**
+   * INTERNAL API
+   * Creates a new ActorPath with same elements but with the specified `uid`.
+   */
+  private[actors] def withUid(uid: Int): ActorPath
 }
 
 /**
- * Root of the hierarchy of ActorPaths. There is exactly root per ActorSystem
- * and node (for remote-enabled or clustered systems).
+ * Root of the hierarchy of ActorPaths. There is exactly one root per
+ * ActorSystem and node (for remote-enabled or clustered systems).
  */
 final case class RootActorPath(address: Address, name: String = "/") extends ActorPath {
 
@@ -96,8 +109,10 @@ final case class RootActorPath(address: Address, name: String = "/") extends Act
 
   override def root: RootActorPath = this
 
-  override def /(child: String): ActorPath =
-    new ChildActorPath(this, child)
+  override def /(child: String): ActorPath = {
+    val (childName, uid) = ActorCell.splitNameAndUid(child)
+    new ChildActorPath(this, childName)(uid)
+  }
 
   override def elements: immutable.Iterable[String] = ActorPath.emptyActorPath
 
@@ -112,13 +127,27 @@ final case class RootActorPath(address: Address, name: String = "/") extends Act
   override def toSerializationFormatWithAddress(addr: Address): String = toStringWithAddress(addr)
 
   override def compareTo(other: ActorPath): Int = other match {
-    case r: RootActorPath  ⇒ toString compareTo r.toString // FIXME make this cheaper by comparing address and name in isolation
-    case c: ChildActorPath ⇒ 1
+    case r: RootActorPath  => toString compareTo r.toString // FIXME make this cheaper by comparing address and name in isolation
+    case c: ChildActorPath => 1
   }
+
+  /**
+   * INTERNAL API
+   */
+  override private[actors] def uid: Int = ActorCell.undefinedUid
+
+  /**
+   * INTERNAL API
+   */
+  override private[actors] def withUid(uid: Int): ActorPath =
+    if (uid == ActorCell.undefinedUid) this
+    else throw new IllegalStateException(
+        s"RootActorPath must have undefinedUid, [$uid != ${ActorCell.undefinedUid}")
 }
 
 final case class ChildActorPath private[actors] (
-    val parent: ActorPath, val name: String) extends ActorPath {
+    val parent: ActorPath, val name: String)(
+    override private[actors] val uid: Int) extends ActorPath {
 
   if (name.indexOf('/') != -1)
     throw new IllegalArgumentException(
@@ -129,8 +158,10 @@ final case class ChildActorPath private[actors] (
 
   override def address: Address = root.address
 
-  override def /(child: String): ActorPath =
-    new ChildActorPath(this, child)
+  override def /(child: String): ActorPath = {
+    val (childName, uid) = ActorCell.splitNameAndUid(child)
+    new ChildActorPath(this, childName)(uid)
+  }
 
   override def elements: immutable.Iterable[String] = {
     @tailrec
@@ -149,6 +180,10 @@ final case class ChildActorPath private[actors] (
     }
     rec(this)
   }
+
+  override private[actors] def withUid(uid: Int): ActorPath =
+    if (uid == this.uid) this
+    else new ChildActorPath(parent, name)(uid)
 
   /*override def toString: String = {
     val length = toStringLength

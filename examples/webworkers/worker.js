@@ -1,3 +1,7 @@
+var console = console || {
+  log: function() {},
+  error: function() {}
+};
 console.log("Worker loading ...")
 importScripts(
   "./target/scala-2.11.0-M7/scalajs-actors-example-webworkers-extdeps.js",

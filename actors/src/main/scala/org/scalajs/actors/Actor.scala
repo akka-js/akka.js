@@ -29,18 +29,7 @@ trait Actor {
   // to make type Receive known in subclasses without import
   type Receive = Actor.Receive
 
-  /**
-   * Stores the context for this actor, including self, and sender.
-   * It is implicit to support operations such as `forward`.
-   *
-   * WARNING: Only valid within the Actor itself, so do not close over it and
-   * publish it to other threads!
-   *
-   * [[akka.actor.ActorContext]] is the Scala API. `getContext` returns a
-   * [[akka.actor.UntypedActorContext]], which is the Java API of the actor
-   * context.
-   */
-  implicit val context: ActorContext = {
+  private[this] var _context: ActorContext = {
     val contextStack = ActorCell.contextStack
     if ((contextStack.isEmpty) || (contextStack.head eq null))
       throw ActorInitializationException(
@@ -51,6 +40,22 @@ trait Actor {
     c
   }
 
+  private[this] var _self: ActorRef = context.self
+
+  private[actors] final def setActorFields(context: ActorContext, self: ActorRef): Unit = {
+    this._context = context
+    this._self = self
+  }
+
+  /**
+   * Stores the context for this actor, including self, and sender.
+   * It is implicit to support operations such as `forward`.
+   *
+   * WARNING: Only valid within the Actor itself, so do not close over it and
+   * publish it to other threads!
+   */
+  implicit final def context: ActorContext = _context
+
   /**
    * The 'self' field holds the ActorRef for this actor.
    * <p/>
@@ -59,7 +64,7 @@ trait Actor {
    * self ! message
    * </pre>
    */
-  implicit final val self = context.self //MUST BE A VAL, TRUST ME
+  implicit final def self = _self
 
   /**
    * The reference sender Actor of the last received message.
@@ -78,6 +83,61 @@ trait Actor {
   def receive: Actor.Receive
 
   /**
+   * User overridable definition the strategy to use for supervising
+   * child actors.
+   */
+  def supervisorStrategy: SupervisorStrategy = SupervisorStrategy.defaultStrategy
+
+  // Life-cycle hooks
+
+  /**
+   * User overridable callback.
+   * <p/>
+   * Is called when an Actor is started.
+   * Actors are automatically started asynchronously when created.
+   * Empty default implementation.
+   */
+  def preStart(): Unit = ()
+
+  /**
+   * User overridable callback.
+   * <p/>
+   * Is called asynchronously after 'actor.stop()' is invoked.
+   * Empty default implementation.
+   */
+  def postStop(): Unit = ()
+
+  /**
+   * User overridable callback: '''By default it disposes of all children and
+   * then calls `postStop()`.'''
+   * @param reason the Throwable that caused the restart to happen
+   * @param message optionally the current message the actor processed when failing, if applicable
+   * <p/>
+   * Is called on a crashed Actor right BEFORE it is restarted to allow clean
+   * up of resources before Actor is terminated.
+   */
+  def preRestart(reason: Throwable, message: Option[Any]): Unit = {
+    context.children foreach { child =>
+      context.unwatch(child)
+      context.stop(child)
+    }
+    postStop()
+  }
+
+  /**
+   * User overridable callback: By default it calls `preStart()`.
+   * @param reason the Throwable that caused the restart to happen
+   * <p/>
+   * Is called right AFTER restart on the newly created Actor to allow
+   * reinitialization after an Actor crash.
+   */
+  def postRestart(reason: Throwable): Unit = {
+    preStart()
+  }
+
+  // Unhandled message
+
+  /**
    * User overridable callback.
    * <p/>
    * Is called when a message isn't handled by the current behavior of the actor
@@ -86,9 +146,12 @@ trait Actor {
    * to the actor's system's [[akka.event.EventStream]]
    */
   def unhandled(message: Any): Unit = {
-    /*message match {
+    message match {
       case Terminated(dead) => throw new DeathPactException(dead)
-      case _                => context.system.eventStream.publish(UnhandledMessage(message, sender, self))
-    }*/
+      case _                =>
+        // TODO publish to event stream
+        //context.system.eventStream.publish(UnhandledMessage(message, sender, self))
+        Console.err.println(s"Unhandled message: $message sent by $sender to $self")
+    }
   }
 }

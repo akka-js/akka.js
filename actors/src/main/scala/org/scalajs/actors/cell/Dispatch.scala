@@ -1,4 +1,5 @@
 package org.scalajs.actors
+package cell
 
 import scala.annotation.tailrec
 

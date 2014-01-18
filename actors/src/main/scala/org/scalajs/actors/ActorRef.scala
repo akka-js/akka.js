@@ -107,6 +107,11 @@ private[actors] abstract class InternalActorRef extends ActorRef {
   def sendSystemMessage(message: SystemMessage): Unit
 
   /**
+   * Get a reference to the actor ref provider which created this ref.
+   */
+  def provider: ActorRefProvider
+
+  /**
    * Obtain parent of this ref; used by getChild for ".." paths.
    */
   def getParent: InternalActorRef
@@ -164,4 +169,7 @@ private[actors] trait MinimalActorRef extends InternalActorRef {
 private[actors] case object Nobody extends MinimalActorRef {
   override val path: RootActorPath =
     RootActorPath(Address("actors", "all-systems"), "/Nobody")
+
+  override def provider =
+    throw new UnsupportedOperationException("Nobody does not provide")
 }

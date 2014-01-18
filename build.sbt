@@ -26,3 +26,7 @@ lazy val examples = project.settings(commonSettings: _*)
 lazy val webworkersExample = project.in(file("examples/webworkers"))
   .settings(commonSettings: _*)
   .dependsOn(actors)
+
+lazy val faultToleranceExample = project.in(file("examples/faulttolerance"))
+  .settings(commonSettings: _*)
+  .dependsOn(actors)

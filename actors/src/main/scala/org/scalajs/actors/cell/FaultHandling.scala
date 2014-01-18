@@ -131,7 +131,7 @@ private[actors] trait FaultHandling { this: ActorCell =>
     try resumeNonRecursive()
     finally clearFailed()
     try create(None)
-    catch handleNonFatalOrInterruptedException { e ⇒
+    catch handleNonFatalOrInterruptedException { e =>
       handleInvokeFailure(Nil, e)
     }
   }
@@ -223,7 +223,7 @@ private[actors] trait FaultHandling { this: ActorCell =>
       //if (system.settings.DebugLifecycle) publish(Debug(self.path.toString, clazz(freshActor), "restarted"))
 
       // only after parent is up and running again do restart the children which were not stopped
-      survivors foreach (child ⇒
+      survivors foreach (child =>
         try child.asInstanceOf[InternalActorRef].restart(cause)
         catch handleNonFatalOrInterruptedException { e =>
           publish(Error(e, self.path.toString, clazz(freshActor), "restarting " + child))

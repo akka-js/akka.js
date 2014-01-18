@@ -26,6 +26,11 @@ case object PoisonPill extends AutoReceivedMessage with PossiblyHarmful
 case object Kill extends AutoReceivedMessage with PossiblyHarmful
 
 /**
+ * Internal Akka use only, used in implementation of system.stop(child).
+ */
+private[actors] case class StopChild(child: ActorRef)
+
+/**
  * A message all Actors will understand, that when processed will reply with
  * [[org.scalajs.actors.ActorIdentity]] containing the `ActorRef`. The
  * `messageId` is returned in the `ActorIdentity` message as `correlationId`.
@@ -72,6 +77,28 @@ case object ReceiveTimeout extends PossiblyHarmful
  */
 final case class UnhandledMessage(message: Any, sender: ActorRef,
     recipient: ActorRef)
+
+/**
+ * Classes for passing status back to the sender.
+ * Used for internal ACKing protocol. But exposed as utility class for
+ * user-specific ACKing protocols as well.
+ */
+object Status {
+  sealed trait Status extends Serializable
+
+  /**
+   * This class/message type is preferably used to indicate success of some
+   * operation performed.
+   */
+  case class Success(status: AnyRef) extends Status
+
+  /**
+   * This class/message type is preferably used to indicate failure of some
+   * operation performed.
+   * As an example, it is used to signal failure with AskSupport is used (ask/?).
+   */
+  case class Failure(cause: Throwable) extends Status
+}
 
 /**
  * When a message is sent to an Actor that is terminated before receiving the

@@ -30,12 +30,6 @@ object Logging {
    */
   sealed trait LogEvent {
     /**
-     * The thread that created this log event
-     */
-    @transient
-    val thread: Thread = Thread.currentThread
-
-    /**
      * When this LogEvent was created according to System.currentTimeMillis
      */
     val timestamp: Long = System.currentTimeMillis

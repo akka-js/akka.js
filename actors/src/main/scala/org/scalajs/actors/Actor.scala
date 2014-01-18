@@ -1,5 +1,7 @@
 package org.scalajs.actors
 
+import scala.annotation.unchecked.uncheckedStable
+
 object Actor {
   /**
    * Type alias representing a Receive-expression for Akka Actors.
@@ -42,7 +44,8 @@ trait Actor {
 
   private[this] var _self: ActorRef = context.self
 
-  private[actors] final def setActorFields(context: ActorContext, self: ActorRef): Unit = {
+  private[actors] final def setActorFields(context: ActorContext,
+      self: ActorRef): Unit = {
     this._context = context
     this._self = self
   }
@@ -64,7 +67,7 @@ trait Actor {
    * self ! message
    * </pre>
    */
-  implicit final def self = _self
+  implicit final def self: ActorRef = _self
 
   /**
    * The reference sender Actor of the last received message.
@@ -149,9 +152,7 @@ trait Actor {
     message match {
       case Terminated(dead) => throw new DeathPactException(dead)
       case _                =>
-        // TODO publish to event stream
-        //context.system.eventStream.publish(UnhandledMessage(message, sender, self))
-        Console.err.println(s"Unhandled message: $message sent by $sender to $self")
+        context.system.eventStream.publish(UnhandledMessage(message, sender, self))
     }
   }
 }

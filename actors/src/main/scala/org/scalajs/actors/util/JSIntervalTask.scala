@@ -5,26 +5,25 @@ import scala.scalajs.js
 
 import scala.concurrent.duration.{Duration, FiniteDuration}
 
-class JSTimeoutTask(delay: FiniteDuration, task: => Any) extends Cancellable {
+class JSIntervalTask(interval: FiniteDuration, task: => Any) extends Cancellable {
   private[this] var underlying: js.Dynamic =
-    js.Dynamic.global.setTimeout({ () =>
-      underlying = null
+    js.Dynamic.global.setInterval({ () =>
       task
-    }, delay.toMillis)
+    }, interval.toMillis)
 
   def isCancelled: Boolean = underlying ne null
 
   def cancel(): Boolean = {
     if (isCancelled) false
     else {
-      js.Dynamic.global.clearTimeout(underlying)
+      js.Dynamic.global.clearInterval(underlying)
       underlying = null
       true
     }
   }
 }
 
-object JSTimeoutTask {
-  def apply(duration: FiniteDuration)(task: => Any): JSTimeoutTask =
-    new JSTimeoutTask(duration, task)
+object JSIntervalTask {
+  def apply(interval: FiniteDuration)(task: => Any): JSIntervalTask =
+    new JSIntervalTask(interval, task)
 }

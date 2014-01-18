@@ -1,0 +1,1 @@
+ScalaJS.modules.org_scalajs_examples_faulttolerance_FaultHandlingDocSample().main(null);

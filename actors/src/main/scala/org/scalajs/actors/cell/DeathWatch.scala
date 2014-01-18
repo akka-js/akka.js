@@ -10,14 +10,14 @@ import scala.util.control.NonFatal
 
 import event.Logging._
 
-private[actors] trait DeathWatch { this: ActorCell ⇒
+private[actors] trait DeathWatch { this: ActorCell =>
 
   private var watching: Set[ActorRef] = ActorCell.emptyActorRefSet
   private var watchedBy: Set[ActorRef] = ActorCell.emptyActorRefSet
   private var terminatedQueued: Set[ActorRef] = ActorCell.emptyActorRefSet
 
   override final def watch(subject: ActorRef): ActorRef = subject match {
-    case a: InternalActorRef ⇒
+    case a: InternalActorRef =>
       if (a != self && !watchingContains(a)) {
         maintainAddressTerminatedSubscription(a) {
           a.sendSystemMessage(Watch(a, self))
@@ -28,7 +28,7 @@ private[actors] trait DeathWatch { this: ActorCell ⇒
   }
 
   override final def unwatch(subject: ActorRef): ActorRef = subject match {
-    case a: InternalActorRef ⇒
+    case a: InternalActorRef =>
       if (a != self && watchingContains(a)) {
         a.sendSystemMessage(Unwatch(a, self))
         maintainAddressTerminatedSubscription(a) {
@@ -107,7 +107,8 @@ private[actors] trait DeathWatch { this: ActorCell ⇒
       maintainAddressTerminatedSubscription() {
         try {
           watching foreach {
-            case watchee: InternalActorRef ⇒ watchee.sendSystemMessage(Unwatch(watchee, self))
+            case watchee: InternalActorRef =>
+              watchee.sendSystemMessage(Unwatch(watchee, self))
           }
         } finally {
           watching = ActorCell.emptyActorRefSet
@@ -128,7 +129,8 @@ private[actors] trait DeathWatch { this: ActorCell ⇒
     } else if (!watcheeSelf && watcherSelf) {
       watch(watchee)
     } else {
-      publish(Warning(self.path.toString, clazz(actor), "BUG: illegal Watch(%s,%s) for %s".format(watchee, watcher, self)))
+      publish(Warning(self.path.toString, clazz(actor),
+          "BUG: illegal Watch(%s,%s) for %s".format(watchee, watcher, self)))
     }
   }
 
@@ -144,7 +146,8 @@ private[actors] trait DeathWatch { this: ActorCell ⇒
     } else if (!watcheeSelf && watcherSelf) {
       unwatch(watchee)
     } else {
-      publish(Warning(self.path.toString, clazz(actor), "BUG: illegal Unwatch(%s,%s) for %s".format(watchee, watcher, self)))
+      publish(Warning(self.path.toString, clazz(actor),
+          "BUG: illegal Unwatch(%s,%s) for %s".format(watchee, watcher, self)))
     }
   }
 
@@ -173,15 +176,17 @@ private[actors] trait DeathWatch { this: ActorCell ⇒
    * Ends subscription to AddressTerminated if subscribing and the
    * block removes the last non-local ref from watching and watchedBy.
    */
-  private def maintainAddressTerminatedSubscription[T](change: ActorRef = null)(block: ⇒ T): T = {
+  private def maintainAddressTerminatedSubscription[T](
+      change: ActorRef = null)(block: => T): T = {
     def isNonLocal(ref: ActorRef) = ref match {
       case null                              ⇒ true
-      case a: InternalActorRef if !a.isLocal ⇒ true
-      case _                                 ⇒ false
+      case a: InternalActorRef if !a.isLocal => true
+      case _                                 => false
     }
 
     if (isNonLocal(change)) {
-      def hasNonLocalAddress: Boolean = ((watching exists isNonLocal) || (watchedBy exists isNonLocal))
+      def hasNonLocalAddress: Boolean =
+        ((watching exists isNonLocal) || (watchedBy exists isNonLocal))
       val had = hasNonLocalAddress
       val result = block
       val has = hasNonLocalAddress
@@ -207,5 +212,5 @@ private[actors] trait DeathWatch { this: ActorCell ⇒
 
 private[actors] class UndefinedUidActorRef(ref: ActorRef) extends MinimalActorRef {
   override val path = ref.path.withUid(ActorCell.undefinedUid)
-  //override def provider = throw new UnsupportedOperationException("UndefinedUidActorRef does not provide")
+  override def provider = throw new UnsupportedOperationException("UndefinedUidActorRef does not provide")
 }

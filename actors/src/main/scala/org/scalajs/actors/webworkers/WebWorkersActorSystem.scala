@@ -24,7 +24,7 @@ private[actors] object WebWorkersActorSystem {
   }
 }
 
-private[actors] trait WebWorkersActorSystem { this: ActorSystemImpl =>
+private[actors] trait WebWorkersActorSystem extends ActorSystem { this: ActorSystemImpl =>
   WebWorkersActorSystem.registerPicklers()
 
   WebWorkerRouter.registerSystem(name, this)

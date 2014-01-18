@@ -43,6 +43,8 @@ private[actors] class WorkerActorRef(
 
   def getParent: InternalActorRef = parent
 
+  override def provider: ActorRefProvider = system.asInstanceOf[ActorSystemImpl].provider
+
   def getChild(name: Iterator[String]): InternalActorRef =
     Actor.noSender
 

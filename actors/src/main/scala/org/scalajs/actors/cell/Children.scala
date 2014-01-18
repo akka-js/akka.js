@@ -17,8 +17,11 @@ private[actors] trait Children { this: ActorCell =>
   final def children: immutable.Iterable[ActorRef] =
     childrenRefs.children
 
+  final def childStatsByName(name: String): Option[ChildRestartStats] =
+    childrenRefs.getByName(name)
+
   final def child(name: String): Option[ActorRef] =
-    childrenRefs.getByName(name).map(_.child)
+    childStatsByName(name).map(_.child)
 
   final def childStatsByRef(actor: ActorRef): Option[ChildRestartStats] =
     childrenRefs.getByRef(actor)
@@ -61,9 +64,6 @@ private[actors] trait Children { this: ActorCell =>
       throw new InvalidActorNameException(s"actor name [$name] is not unique!")
   }
 
-  //final def initChild(ref: ActorRef): Option[ChildRestartStats] =
-  //  childrenRefs.getByName(ref.path.name)
-
   final protected def setChildrenTerminationReason(
       reason: ChildrenContainer.SuspendReason): Boolean = {
     childrenRefs match {
@@ -84,6 +84,9 @@ private[actors] trait Children { this: ActorCell =>
   protected def isNormal = childrenRefs.isNormal
 
   protected def isTerminating = childrenRefs.isTerminating
+
+  private[actors] def initChild(child: ActorRef): Unit =
+    childrenRefs = childrenRefs.add(child.path.name, ChildRestartStats(child))
 
   protected def waitingForChildrenOrNull = childrenRefs match {
     case TerminatingChildrenContainer(_, _, w: WaitingForChildren) => w
@@ -144,10 +147,11 @@ private[actors] trait Children { this: ActorCell =>
     } else {
       checkChildNameAvailable(name)
       val childPath = new ChildActorPath(cell.self.path, name)(ActorCell.newUid())
-      val child = new LocalActorRef(system, childPath, cell.self, props, dispatcher)
+      val child = cell.provider.actorOf(cell.systemImpl, props, cell.self,
+          childPath, systemService = systemService, async = async)
       // mailbox==null during RoutedActorCell constructor, where suspends are queued otherwise
       if (mailbox ne null) for (_ <- 1 to mailbox.suspendCount) child.suspend()
-      childrenRefs = childrenRefs.add(name, ChildRestartStats(child))
+      initChild(child)
       child.start()
       child
     }

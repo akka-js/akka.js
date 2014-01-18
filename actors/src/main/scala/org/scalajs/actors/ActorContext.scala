@@ -2,6 +2,7 @@ package org.scalajs.actors
 
 import scala.collection.immutable
 import scala.concurrent.ExecutionContext
+import scala.concurrent.duration.Duration
 
 trait ActorContext extends ActorRefFactory {
   /**
@@ -13,6 +14,44 @@ trait ActorContext extends ActorRefFactory {
    * Retrieve the Props which were used to create this actor.
    */
   def props: Props
+
+  /**
+   * Gets the current receive timeout.
+   * When specified, the receive method should be able to handle a [[akka.actor.ReceiveTimeout]] message.
+   */
+  def receiveTimeout: Duration
+
+  /**
+   * Defines the inactivity timeout after which the sending of a [[akka.actor.ReceiveTimeout]] message is triggered.
+   * When specified, the receive function should be able to handle a [[akka.actor.ReceiveTimeout]] message.
+   * 1 millisecond is the minimum supported timeout.
+   *
+   * Please note that the receive timeout might fire and enqueue the `ReceiveTimeout` message right after
+   * another message was enqueued; hence it is '''not guaranteed''' that upon reception of the receive
+   * timeout there must have been an idle period beforehand as configured via this method.
+   *
+   * Once set, the receive timeout stays in effect (i.e. continues firing repeatedly after inactivity
+   * periods). Pass in `Duration.Undefined` to switch off this feature.
+   */
+  def setReceiveTimeout(timeout: Duration): Unit
+
+  /**
+   * Changes the Actor's behavior to become the new 'Receive' (PartialFunction[Any, Unit]) handler.
+   * This method acts upon the behavior stack as follows:
+   *
+   *  - if `discardOld = true` it will replace the top element (i.e. the current behavior)
+   *  - if `discardOld = false` it will keep the current behavior and push the given one atop
+   *
+   * The default of replacing the current behavior has been chosen to avoid memory leaks in
+   * case client code is written without consulting this documentation first (i.e. always pushing
+   * new closures and never issuing an `unbecome()`)
+   */
+  def become(behavior: Actor.Receive, discardOld: Boolean = true): Unit
+
+  /**
+   * Reverts the Actor behavior to the previous one in the hotswap stack.
+   */
+  def unbecome(): Unit
 
   /**
    * Returns the sender 'ActorRef' of the current message.

@@ -14,7 +14,7 @@ class GreetingResponseActor extends Actor {
     case Start =>
       global.console.log("Start")
       val root = RootActorPath(Address("WorkerSystem", Main.workerAddress))
-      val path = root / "greeter"
+      val path = root / "user" / "greeter"
       context.system.sendToPath(path, Greeting("John Parker"))
 
     case Greeting(who) =>

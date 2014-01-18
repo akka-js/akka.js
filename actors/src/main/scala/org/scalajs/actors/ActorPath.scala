@@ -116,7 +116,7 @@ final case class RootActorPath(address: Address, name: String = "/") extends Act
 
   override def elements: immutable.Iterable[String] = ActorPath.emptyActorPath
 
-  //override val toString: String = address + name
+  override val toString: String = address + name
 
   override val toSerializationFormat: String = toString
 
@@ -185,16 +185,11 @@ final case class ChildActorPath private[actors] (
     if (uid == this.uid) this
     else new ChildActorPath(parent, name)(uid)
 
-  /*override def toString: String = {
-    val length = toStringLength
-    buildToString(new JStringBuilder(length), length, 0, _.toString).toString
-  }*/
-
-  override def toSerializationFormat: String = {
-    val length = toStringLength
-    val sb = buildToString(new JStringBuilder(length + 12), length, 0, _.toString)
-    sb.toString
+  override def toString: String = {
+    buildToString(_.toString)
   }
+
+  override def toSerializationFormat: String = toString()
 
   private def toStringLength: Int = toStringOffset + name.length
 
@@ -204,16 +199,11 @@ final case class ChildActorPath private[actors] (
   }
 
   override def toStringWithAddress(addr: Address): String = {
-    val diff = addressStringLengthDiff(addr)
-    val length = toStringLength + diff
-    buildToString(new JStringBuilder(length), length, diff, _.toStringWithAddress(addr)).toString
+    buildToString(_.toStringWithAddress(addr))
   }
 
   override def toSerializationFormatWithAddress(addr: Address): String = {
-    val diff = addressStringLengthDiff(addr)
-    val length = toStringLength + diff
-    val sb = buildToString(new JStringBuilder(length + 12), length, diff, _.toStringWithAddress(addr))
-    sb.toString
+    toStringWithAddress(addr)
   }
 
   private def addressStringLengthDiff(addr: Address): Int = {
@@ -225,30 +215,18 @@ final case class ChildActorPath private[actors] (
   /**
    * Optimized toString construction. Used by `toString`, `toSerializationFormat`,
    * and friends `WithAddress`
-   * @param sb builder that will be modified (and same instance is returned)
-   * @param length pre-calculated length of the to be constructed String, not
-   *   necessarily same as sb.capacity because more things may be appended to the
-   *   sb afterwards
-   * @param diff difference in offset for each child element, due to different address
    * @param rootString function to construct the root element string
    */
-  private def buildToString(sb: JStringBuilder, length: Int, diff: Int, rootString: RootActorPath ⇒ String): JStringBuilder = {
+  private def buildToString(rootString: RootActorPath => String): String = {
     @tailrec
-    def rec(p: ActorPath): JStringBuilder = p match {
+    def rec(p: ActorPath, suffix: String): String = p match {
       case r: RootActorPath =>
-        val rootStr = rootString(r)
-        sb.replace(0, rootStr.length, rootStr)
+        rootString(r) + suffix
       case c: ChildActorPath =>
-        val start = c.toStringOffset + diff
-        val end = start + c.name.length
-        sb.replace(start, end, c.name)
-        if (c ne this)
-          sb.replace(end, end + 1, "/")
-        rec(c.parent)
+        rec(c.parent, c.name + "/" + suffix)
     }
 
-    sb.setLength(length)
-    rec(this)
+    rec(this.parent, this.name)
   }
 
   override def compareTo(other: ActorPath): Int = {

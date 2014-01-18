@@ -6,7 +6,7 @@ import scala.collection.immutable
 import scala.util.control.NonFatal
 
 import dispatch.MessageDispatcher
-import event.Logging.LogEvent
+import event.Logging._
 import sysmsg._
 
 private[actors] object ActorCell {
@@ -59,6 +59,11 @@ private[actors] class ActorCell(
   import ActorCell._
 
   val parent: InternalActorRef = _parent
+
+  final def systemImpl = system.asInstanceOf[ActorSystemImpl]
+  protected final def guardian = self   // huh??
+  protected final def lookupRoot = self // huh??
+  final def provider = system.provider
 
   protected def uid: Int = self.path.uid
   private[this] var myActor: Actor = _
@@ -172,15 +177,16 @@ private[actors] class ActorCell(
 
   final def invoke(messageHandle: Envelope): Unit = try {
     currentMessage = messageHandle
+    cancelReceiveTimeout() // FIXME: leave this here???
     messageHandle.message match {
       case msg: AutoReceivedMessage => autoReceiveMessage(messageHandle)
       case msg                      => receiveMessage(msg)
     }
     currentMessage = null // reset current message after successful invocation
-  } catch {
-    case e: Throwable =>
-      System.err.println("Error in invoke: " + e)
-      handleInvokeFailure(e)
+  } catch handleNonFatalOrInterruptedException { e =>
+    handleInvokeFailure(Nil, e)
+  } finally {
+    checkReceiveTimeout() // Reschedule receive timeout
   }
 
   def autoReceiveMessage(msg: Envelope): Unit = {
@@ -215,10 +221,6 @@ private[actors] class ActorCell(
 
   protected def receiveMessage(msg: Any): Unit = {
     behaviorStack.head.applyOrElse(msg, actor.unhandled)
-  }
-
-  private def handleInvokeFailure(e: Throwable): Unit = {
-    ???
   }
 
   /*
@@ -280,15 +282,16 @@ private[actors] class ActorCell(
   }
 
   private def supervise(child: ActorRef, async: Boolean): Unit = {
-    if (!isTerminating) {
-      // TODO Supervise is the first thing we get from a new child, so store
-      // away the UID for later use in handleFailure()
-      if (!isChild(child)) {
-        // TODO publish to event stream
-        //publish(Error(self.path.toString, clazz(actor), "received Supervise from unregistered child " + child + ", this will not end well"))
-        Console.err.println(s"received Supervise from unregistered child $child, this will not end well")
+    // huh? This is totally useless
+    /*if (!isTerminating) {
+      if (childStatsByName(child.path.name).isDefined) {
+        initChild(child)
+        if (system.settings.DebugLifecycle)
+          publish(Debug(self.path.toString, clazz(actor), "now supervising " + child))
+      } else {
+        publish(Error(self.path.toString, clazz(actor), "received Supervise from unregistered child " + child + ", this will not end well"))
       }
-    }
+    }*/
   }
 
   final protected def clearActorCellFields(cell: ActorCell): Unit = {

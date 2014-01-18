@@ -8,57 +8,29 @@ import org.scalajs.actors.util.Helpers
 
 import ActorPath.ElementRegex
 
-private[actors] object Children {
-
-  private final val sharedEmptyChildrenRefs: JSMap[ChildRestartStats] = JSMap.empty
-
-  sealed trait SuspendReason
-  sealed trait WaitingForChildren extends SuspendReason
-  case object UserRequest extends SuspendReason
-  // careful with those system messages, all handling to be taking place in ActorCell.scala!
-  final case class Recreation(cause: Throwable) extends SuspendReason with WaitingForChildren
-  final case class Creation() extends SuspendReason with WaitingForChildren
-  case object Termination extends SuspendReason
-
-}
-
 private[actors] trait Children { this: ActorCell =>
 
-  import Children._
+  import ChildrenContainer._
 
-  private[this] var childrenRefs: JSMap[ChildRestartStats] = sharedEmptyChildrenRefs
-  private[this] var suspendReason: SuspendReason = _ // default = null
-  private[this] var terminating: Boolean = _ // default = false
+  private[this] var childrenRefs: ChildrenContainer = EmptyChildrenContainer
 
   final def children: immutable.Iterable[ActorRef] =
-    childrenRefs.values.map(_.child).toList
+    childrenRefs.children
 
   final def child(name: String): Option[ActorRef] =
-    childrenRefs.get(name).map(_.child)
+    childrenRefs.getByName(name).map(_.child)
 
   final def childStatsByRef(actor: ActorRef): Option[ChildRestartStats] =
-    childrenRefs.get(actor.path.name).filter(_.child == actor)
+    childrenRefs.getByRef(actor)
 
   final def childByRef(actor: ActorRef): Option[ActorRef] =
     childStatsByRef(actor).map(_.child)
 
-  protected def getAllChildStats: immutable.Iterable[ChildRestartStats] =
-    childrenRefs.values.toList
+  final def isChild(actor: ActorRef): Boolean =
+    childrenRefs.isChild(actor)
 
-  protected def removeChildAndGetStateChange(child: ActorRef): Option[SuspendReason] = {
-    if (suspendReason ne null) {
-      childrenRefs.remove(child.path.name)
-      if (suspendReason == Termination && childrenRefs.isEmpty) {
-        setTerminated()
-        None
-      } else {
-        Some(suspendReason)
-      }
-    } else {
-      childrenRefs.remove(child.path.name)
-      None
-    }
-  }
+  protected def getAllChildStats: immutable.Iterable[ChildRestartStats] =
+    childrenRefs.stats
 
   def actorOf(props: Props): ActorRef =
     makeChild(this, props, randomName(), async = false, systemService = false)
@@ -78,61 +50,71 @@ private[actors] trait Children { this: ActorCell =>
   }
 
   final def stop(actor: ActorRef): Unit = {
-    if (isChild(actor)) {
-      //this.shallDie += actor
-      if (suspendReason eq null)
-        suspendReason = UserRequest
+    if (childrenRefs.isChild(actor)) {
+      childrenRefs = childrenRefs.shallDie(actor)
     }
     actor.asInstanceOf[InternalActorRef].stop()
   }
 
   final def checkChildNameAvailable(name: String): Unit = {
-    if (childrenRefs contains name)
+    if (childrenRefs.isChild(name))
       throw new InvalidActorNameException(s"actor name [$name] is not unique!")
   }
 
-  final def isChild(ref: ActorRef): Boolean = {
-    child(ref.path.name) == Some(ref)
+  //final def initChild(ref: ActorRef): Option[ChildRestartStats] =
+  //  childrenRefs.getByName(ref.path.name)
+
+  final protected def setChildrenTerminationReason(
+      reason: ChildrenContainer.SuspendReason): Boolean = {
+    childrenRefs match {
+      case c: ChildrenContainer.TerminatingChildrenContainer =>
+        childrenRefs = c.copy(reason = reason)
+        true
+      case _ => false
+    }
   }
 
-  final protected def setChildrenTerminationReason(reason: SuspendReason): Boolean = {
-    if (suspendReason ne null) {
-      suspendReason = reason
-      true
-    } else
-      false
-  }
-
-  final protected def setTerminated(): Unit = {
-    childrenRefs = sharedEmptyChildrenRefs
-    suspendReason = null
-    terminating = true
-  }
+  final protected def setTerminated(): Unit =
+    childrenRefs = TerminatedChildrenContainer
 
   /*
    * ActorCell-internal API
    */
 
-  protected def isNormal = !terminating && (suspendReason eq null)
+  protected def isNormal = childrenRefs.isNormal
 
-  protected def isTerminating = terminating
+  protected def isTerminating = childrenRefs.isTerminating
 
-  protected def waitingForChildrenOrNull = suspendReason match {
-    case w: WaitingForChildren => w
+  protected def waitingForChildrenOrNull = childrenRefs match {
+    case TerminatingChildrenContainer(_, _, w: WaitingForChildren) => w
     case _ => null
   }
 
-  protected def suspendChildren(exceptFor: Set[ActorRef] = Set.empty): Unit = {
-    childrenRefs.values foreach { stats =>
-      if (!(exceptFor contains stats.child))
-        (stats.child: InternalActorRef).suspend()
+  protected def suspendChildren(exceptFor: Set[ActorRef] = Set.empty): Unit =
+    childrenRefs.stats foreach {
+      case ChildRestartStats(child, _, _) if !(exceptFor contains child) =>
+        child.asInstanceOf[InternalActorRef].suspend()
+      case _ =>
     }
-  }
 
-  protected def resumeChildren(causedByFailure: Throwable, perp: ActorRef): Unit = {
-    childrenRefs.values foreach { stats =>
-      (stats.child: InternalActorRef).resume(
-          if (perp == stats.child) causedByFailure else null)
+  protected def resumeChildren(causedByFailure: Throwable, perp: ActorRef): Unit =
+    childrenRefs.stats foreach {
+      case ChildRestartStats(child, _, _) =>
+        child.asInstanceOf[InternalActorRef].resume(
+            if (perp == child) causedByFailure else null)
+    }
+
+  protected def removeChildAndGetStateChange(child: ActorRef): Option[SuspendReason] = {
+    childrenRefs match { // The match must be performed BEFORE the removeChild
+      case TerminatingChildrenContainer(_, _, reason) =>
+        childrenRefs = childrenRefs.remove(child)
+        childrenRefs match {
+          case _: TerminatingChildrenContainer => None
+          case _                               => Some(reason)
+        }
+      case _ =>
+        childrenRefs = childrenRefs.remove(child)
+        None
     }
   }
 
@@ -165,9 +147,7 @@ private[actors] trait Children { this: ActorCell =>
       val child = new LocalActorRef(system, childPath, cell.self, props, dispatcher)
       // mailbox==null during RoutedActorCell constructor, where suspends are queued otherwise
       if (mailbox ne null) for (_ <- 1 to mailbox.suspendCount) child.suspend()
-      if (childrenRefs eq sharedEmptyChildrenRefs)
-        childrenRefs = JSMap.empty
-      childrenRefs(name) = ChildRestartStats(child)
+      childrenRefs = childrenRefs.add(name, ChildRestartStats(child))
       child.start()
       child
     }

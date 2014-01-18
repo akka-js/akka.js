@@ -68,7 +68,7 @@ private[actors] trait FaultHandling { this: ActorCell =>
         }
       }
       assert(mailbox.isSuspended, "mailbox must be suspended during restart") //, status=" + mailbox.status)
-      if (!setChildrenTerminationReason(Children.Recreation(cause)))
+      if (!setChildrenTerminationReason(ChildrenContainer.Recreation(cause)))
         finishRecreate(cause, failedActor)
     } else {
       // need to keep that suspend counter balanced
@@ -123,7 +123,7 @@ private[actors] trait FaultHandling { this: ActorCell =>
     // stop all children, which will turn childrenRefs into TerminatingChildrenContainer (if there are children)
     children foreach stop
 
-    if (!setChildrenTerminationReason(Children.Creation()))
+    if (!setChildrenTerminationReason(ChildrenContainer.Creation()))
       finishCreate()
   }
 
@@ -148,7 +148,7 @@ private[actors] trait FaultHandling { this: ActorCell =>
 
     val wasTerminating = isTerminating
 
-    if (setChildrenTerminationReason(Children.Termination)) {
+    if (setChildrenTerminationReason(ChildrenContainer.Termination)) {
       if (!wasTerminating) {
         // do not process normal messages while waiting for all children to terminate
         suspendNonRecursive()
@@ -265,7 +265,7 @@ private[actors] trait FaultHandling { this: ActorCell =>
      */
     if (actor != null) {
       try actor.supervisorStrategy.handleChildTerminated(this, child, children)
-      catch handleNonFatalOrInterruptedException { e ⇒
+      catch handleNonFatalOrInterruptedException { e =>
         publish(Error(e, self.path.toString, clazz(actor), "handleChildTerminated failed"))
         handleInvokeFailure(Nil, e)
       }
@@ -275,10 +275,10 @@ private[actors] trait FaultHandling { this: ActorCell =>
      * then we are continuing the previously suspended recreate/create/terminate action
      */
     status match {
-      case Some(c @ Children.Recreation(cause)) => finishRecreate(cause, actor)
-      case Some(c @ Children.Creation()) => finishCreate()
-      case Some(Children.Termination) => finishTerminate()
-      case _ ⇒
+      case Some(c@ChildrenContainer.Recreation(cause)) => finishRecreate(cause, actor)
+      case Some(c@ChildrenContainer.Creation()) => finishCreate()
+      case Some(ChildrenContainer.Termination) => finishTerminate()
+      case _ =>
     }
   }
 

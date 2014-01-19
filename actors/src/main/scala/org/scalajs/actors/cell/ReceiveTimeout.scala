@@ -34,9 +34,8 @@ private[actors] trait ReceiveTimeout { this: ActorCell =>
     if (!mailbox.hasMessages) recvtimeout._1 match {
       case f: FiniteDuration =>
         recvtimeout._2.cancel() //Cancel any ongoing future
-        val task = JSTimeoutTask(f) {
-          self ! ReceiveTimeout
-        }
+        val task = system.scheduler.scheduleOnce(f, self,
+            org.scalajs.actors.ReceiveTimeout)(this.dispatcher)
         receiveTimeoutData = (f, task)
       case _ => cancelReceiveTimeout()
     }

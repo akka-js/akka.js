@@ -55,6 +55,8 @@ private[actors] trait FaultHandling { this: ActorCell =>
       faultCreate()
     } else if (isNormal) {
       val failedActor = actor
+      if (system.settings.DebugLifecycle)
+        publish(Debug(self.path.toString, clazz(failedActor), "restarting"))
       if (failedActor ne null) {
         val optionalMessage = if (currentMessage ne null) Some(currentMessage.message) else None
         try {
@@ -154,6 +156,8 @@ private[actors] trait FaultHandling { this: ActorCell =>
         suspendNonRecursive()
         // do not propagate failures during shutdown to the supervisor
         setFailed(self)
+        if (system.settings.DebugLifecycle)
+          publish(Debug(self.path.toString, clazz(actor), "stopping"))
       }
     } else {
       setTerminated()
@@ -197,8 +201,8 @@ private[actors] trait FaultHandling { this: ActorCell =>
     finally try tellWatchersWeDied(a)
     finally try unwatchWatchedActors(a) // stay here as we expect an emergency stop from handleInvokeFailure
     finally {
-      //if (system.settings.DebugLifecycle)
-      //  publish(Debug(self.path.toString, clazz(a), "stopped"))
+      if (system.settings.DebugLifecycle)
+        publish(Debug(self.path.toString, clazz(a), "stopped"))
 
       clearActorFields(a)
       clearActorCellFields(this)
@@ -220,7 +224,8 @@ private[actors] trait FaultHandling { this: ActorCell =>
         freshActor.setActorFields(this, self) // If the creator returns the same instance, we need to restore our nulled out fields.
 
       freshActor.postRestart(cause)
-      //if (system.settings.DebugLifecycle) publish(Debug(self.path.toString, clazz(freshActor), "restarted"))
+      if (system.settings.DebugLifecycle)
+        publish(Debug(self.path.toString, clazz(freshActor), "restarted"))
 
       // only after parent is up and running again do restart the children which were not stopped
       survivors foreach (child =>

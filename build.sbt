@@ -13,12 +13,9 @@ val commonSettings = Seq(
 )
 
 lazy val root = project.in(file(".")).settings(commonSettings: _*)
-  .aggregate(spickling, actors)
-
-lazy val spickling = project.settings(commonSettings: _*)
+  .aggregate(actors)
 
 lazy val actors = project.settings(commonSettings: _*)
-  .dependsOn(spickling)
 
 lazy val examples = project.settings(commonSettings: _*)
   .aggregate(webworkersExample)

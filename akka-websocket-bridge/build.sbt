@@ -8,5 +8,6 @@ resolvers += "Typesafe repository" at "http://repo.typesafe.com/typesafe/release
 
 libraryDependencies ++= Seq(
     "com.typesafe.akka" %% "akka-actor" % "2.2.3",
-    "com.typesafe.play" %% "play" % "2.2.1"
+    "com.typesafe.play" %% "play" % "2.2.1",
+    "org.scalajs" %% "scalajs-pickling-play-json" % "0.1-SNAPSHOT"
 )

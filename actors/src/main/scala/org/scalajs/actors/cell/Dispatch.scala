@@ -11,7 +11,7 @@ import sysmsg._
 
 private[actors] trait Dispatch { this: ActorCell =>
 
-  private[this] var _mailbox: Mailbox = _
+  private var _mailbox: Mailbox = _
 
   @inline final def mailbox: Mailbox = _mailbox
 

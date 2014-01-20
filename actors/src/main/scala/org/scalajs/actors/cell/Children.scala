@@ -12,7 +12,7 @@ private[actors] trait Children { this: ActorCell =>
 
   import ChildrenContainer._
 
-  private[this] var childrenRefs: ChildrenContainer = EmptyChildrenContainer
+  private var childrenRefs: ChildrenContainer = EmptyChildrenContainer
 
   final def children: immutable.Iterable[ActorRef] =
     childrenRefs.children
@@ -45,7 +45,7 @@ private[actors] trait Children { this: ActorCell =>
   private[actors] def attachChild(props: Props, name: String, systemService: Boolean): ActorRef =
     makeChild(this, props, checkName(name), async = true, systemService = systemService)
 
-  private[this] var _nextName: Long = _ // default = 0L
+  private var _nextName: Long = _ // default = 0L
   final protected def randomName(): String = {
     val current = _nextName
     _nextName += 1

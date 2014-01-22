@@ -2,6 +2,32 @@
 
 @main("Welcome to Play") {
 
-    @play20.welcome(message)
+<p>This is an example chat application to test actors across the client-server
+border.</p>
+
+<p id="status-disconnected">
+Nickname: <input id="nickname-edit" type="text" />
+<button id="connect-button">Connect</button>
+</p>
+
+<p id="status-connected" class="status-hidden">
+Connected as: <span id="nickname"></span>
+<button id="disconnect-button">Disconnect</button>
+</p>
+
+<ul id="messages">
+</ul>
+
+<p>
+<input id="msg-to-send" type="text" />
+<button id="send-button" disabled="disabled">Send</button>
+</p>
+
+<script src="@routes.Assets.at("javascripts/scalajs-actors-example-chat-client-extdeps.js")" type="text/javascript"></script>
+<script src="@routes.Assets.at("javascripts/scalajs-actors-example-chat-client-intdeps.js")" type="text/javascript"></script>
+<script src="@routes.Assets.at("javascripts/scalajs-actors-example-chat-client.js")" type="text/javascript"></script>
+<script type="text/javascript">
+ScalaJS.modules.client_Main().startup();
+</script>
 
 }

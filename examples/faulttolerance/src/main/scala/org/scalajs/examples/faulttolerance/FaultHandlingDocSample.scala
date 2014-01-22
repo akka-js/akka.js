@@ -2,12 +2,12 @@ package org.scalajs.examples.faulttolerance
 
 import scala.language.postfixOps
 
-import org.scalajs.actors._
-import org.scalajs.actors.SupervisorStrategy._
-import org.scalajs.actors.util.Timeout
-import org.scalajs.actors.event.LoggingReceive
-import org.scalajs.actors.pattern.Ask.ask
-import org.scalajs.actors.pattern.PipeTo.pipe
+import akka.actor._
+import akka.actor.SupervisorStrategy._
+import akka.util.Timeout
+import akka.event.LoggingReceive
+import akka.pattern.Ask.ask
+import akka.pattern.PipeTo.pipe
 import scala.concurrent.duration._
 
 import scala.scalajs.js

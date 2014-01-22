@@ -1,9 +1,10 @@
-package org.scalajs.actors
-package test
+package org.scalajs.actors.test
 package helloactors
 
 import scala.scalajs.js
 import js.Dynamic.global
+
+import akka.actor._
 
 case class Greeting(who: String)
 

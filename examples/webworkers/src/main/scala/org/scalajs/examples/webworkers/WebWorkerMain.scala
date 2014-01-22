@@ -4,8 +4,8 @@ import scala.scalajs.js
 import js.Dynamic.global
 
 import org.scalajs.spickling.PicklerRegistry
-import org.scalajs.actors._
-import webworkers.WebWorkerRouter
+import akka.actor._
+import akka.scalajs.webworkers.WebWorkerRouter
 
 class GreetingActor extends Actor {
   def receive = {

@@ -1,44 +1,49 @@
 package akka.scalajs.wsserver
 
+import scala.collection.mutable
+import scala.concurrent.Future
+
 import akka.actor._
+import akka.scalajs.wscommon._
 
 import play.api.libs.json._
 import play.api.libs.iteratee.Concurrent.Channel
 
-import org.scalajs.spickling.PicklerRegistry
+import org.scalajs.spickling._
 import org.scalajs.spickling.playjson._
 
 object ServerProxy {
-  case class IncomingMessage(msg: JsValue)
-  case object ConnectionClosed
+  case object SendEntryPointRef
 }
 
-case class Person(name: String, age: Int)
-
 class ServerProxy(channelToClient: Channel[JsValue],
-    entryPointProps: Props) extends Actor with ActorLogging {
+    entryPointRef: Future[ActorRef]) extends AbstractProxy {
+  def this(channelToClient: Channel[JsValue],
+    entryPointRef: ActorRef) = this(channelToClient, Future.successful(entryPointRef))
 
+  import AbstractProxy._
   import ServerProxy._
 
-  PicklerRegistry.register[Person]
+  type PickleType = JsValue
+  implicit protected def pickleBuilder: PBuilder[PickleType] = PlayJsonPBuilder
+  implicit protected def pickleReader: PReader[PickleType] = PlayJsonPReader
+
+  private implicit def ec = context.dispatcher
 
   override def preStart() = {
     super.preStart()
     log.info(s"starting $self")
+    self ! SendEntryPointRef
   }
 
-  def receive = {
-    case IncomingMessage(msg) =>
-      // TODO For now we just echo back
-      log.info(s"receiving message: $msg")
-      val value = PicklerRegistry.unpickle(msg)
-      log.info(s"unpickled is: $value")
-      val pickled = PicklerRegistry.pickle(value)
-      log.info(s"repickled is: $pickled")
-      channelToClient push pickled
+  override def receive = super.receive.orElse[Any, Unit] {
+    case SendEntryPointRef =>
+      entryPointRef foreach { ref =>
+        self ! SendToPeer(Welcome(ref))
+      }
+  }
 
-    case ConnectionClosed =>
-      log.info(s"closing $self")
-      context.stop(self)
+  override protected def sendPickleToPeer(pickle: PickleType): Unit = {
+    channelToClient push pickle
   }
 }

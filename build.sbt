@@ -53,7 +53,8 @@ lazy val chatExampleScalaJS = project.in(file("examples/chat-full-stack/scalajs"
   .dependsOn(actors)
   .settings(
       unmanagedSourceDirectories in Compile +=
-        (baseDirectory in chatExample).value / "cscommon"
+        (baseDirectory in chatExample).value / "cscommon",
+      packageJS in Compile <<= (packageJS in Compile) triggeredBy (compile in (chatExample, Compile))
   )
   .settings(
       artifactPath in (Compile, packageExternalDepsJS) :=

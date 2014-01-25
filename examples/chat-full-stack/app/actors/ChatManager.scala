@@ -94,12 +94,12 @@ class RoomManager(val room: Room) extends Actor with ActorLogging {
 
       sendToAllAttending(ReceiveMessage(message))
 
-    case RequestPrivateChat(dest: User) =>
-      attendingUsers.find(_._2 == dest).filter(_._1 != sender).fold {
+    case RequestPrivateChat(dest, origin) =>
+      attendingUsers.find(_._2 == dest).fold {
         sender ! UserDoesNotExist
       } { case (ref, _) =>
-        attendingUsers.get(sender) foreach { senderUser =>
-          ref.forward(RequestPrivateChat(senderUser))
+        attendingUsers.get(origin) foreach { senderUser =>
+          ref.forward(RequestPrivateChat(senderUser, sender))
         }
       }
 

@@ -19,8 +19,11 @@ import org.scalajs.jquery.{jQuery => jQ, _}
 object Main {
   RegisterPicklers.registerPicklers()
 
+  val notifications = jQ("#notifications")
+
   val system = ActorSystem("chat-client")
-  val manager = system.actorOf(Props(new Manager))
+  val manager = system.actorOf(Props(new Manager), name = "manager")
+  var me: User = User.Nobody
 
   private[this] var myFocusedTab: TabInfo = null
   def focusedTab: TabInfo = myFocusedTab
@@ -35,9 +38,14 @@ object Main {
 
   val roomsTab = new RoomsTabInfo
   val roomTabInfos = mutable.Map.empty[Room, DiscussionTabInfo]
+  val privateChatTabInfos = mutable.Map.empty[User, DiscussionTabInfo]
 
   def getDiscussionTabInfoOrCreate(room: Room): DiscussionTabInfo = {
-    roomTabInfos.getOrElseUpdate(room, new DiscussionTabInfo(room))
+    roomTabInfos.getOrElseUpdate(room, new DiscussionTabInfo("#"+room.name))
+  }
+
+  def getPrivateChatTabInfoOrCreate(dest: User): DiscussionTabInfo = {
+    privateChatTabInfos.getOrElseUpdate(dest, new DiscussionTabInfo("@"+dest.nick))
   }
 
   def startup(): Unit = {
@@ -74,7 +82,14 @@ object Main {
     }
   }
 
-  def startPrivateChat(dest: User): Unit = ()
+  def startPrivateChat(dest: User, roomManager: ActorRef): Unit = {
+    privateChatTabInfos.get(dest).fold {
+      roomManager ! CreatePrivateChatRoom(dest,
+          system.deadLetters, system.deadLetters)
+    } {
+      _.focusTab()
+    }
+  }
 
   def computeGravatarHash(email: String): String =
     js.Dynamic.global.hex_md5(email.trim.toLowerCase).asInstanceOf[js.String]
@@ -210,13 +225,14 @@ abstract class TabInfo(val name: String) {
 }
 
 trait CloseableTab extends TabInfo {
-  tabButton.text(tabButton.text() + " ")
+  tabButton.html(tabButton.html() + "&nbsp;")
   val closeButton = jQ("""<button type="button" class="close" aria-hidden="true">&times;</button>""").appendTo(tabButton)
   closeButton click { (e: JQueryEventObject) => closeTab(); false }
 
   def closeTab(): Unit = {
     Main.roomsTab.focusTab()
     Main.roomTabInfos.find(_._2 eq this).foreach(Main.roomTabInfos -= _._1)
+    Main.privateChatTabInfos.find(_._2 eq this).foreach(Main.privateChatTabInfos -= _._1)
     tabLi.remove()
   }
 }
@@ -256,8 +272,7 @@ class RoomsTabInfo extends TabInfo("Rooms") {
   }
 }
 
-class DiscussionTabInfo(room: Room) extends TabInfo(room.name)
-                                       with CloseableTab {
+class DiscussionTabInfo(nme: String) extends TabInfo(nme) with CloseableTab {
 
   private[this] var myManager: ActorRef = Main.system.deadLetters
   def manager: ActorRef = myManager
@@ -280,10 +295,11 @@ class DiscussionTabInfo(room: Room) extends TabInfo(room.name)
     import Main._
     for (user <- users) {
       UsersContainer.addEntry(user.nick, gravatarURL(user, 50)) {
-        /*jQ("""<a href="#" role="button"><span class="glyphicon glyphicon-user"></span> Private chat</a>""").click {
-          (e: JQueryEventObject) => startPrivateChat(user); false
-        }*/
-        jQ("""<span></span>""")
+        if (user != Main.me) {
+          jQ("""<a href="#" role="button"><span class="glyphicon glyphicon-user"></span> Private chat</a>""").click {
+            (e: JQueryEventObject) => startPrivateChat(user, this.manager); false
+          }
+        } else jQ()
       }
     }
   }
@@ -319,40 +335,33 @@ class DiscussionTabInfo(room: Room) extends TabInfo(room.name)
 
 case class ConnectAs(user: User)
 case class Send(text: String)
+case class CreatePrivateChatRoom(dest: User, origin: ActorRef, roomService: ActorRef)
+case class AcceptPrivateChatWith(peerUser: User, peer: ActorRef)
 case object Disconnect
 case object Disconnected
 
 class Manager extends Actor {
   val proxyManager = context.actorOf(Props(new ProxyManager))
-  var user: User = User.Nobody
   var service: ActorRef = context.system.deadLetters
 
   def receive = LoggingReceive {
     case m @ ConnectAs(user) =>
-      this.user = user
+      Main.me = user
       jQ("#connect-button").text("Connecting ...").prop("disabled", true)
       jQ("#nickname-edit").prop("disabled", true)
       proxyManager ! m
 
     case m @ WebSocketConnected(entryPoint) =>
       service = entryPoint
-      service ! Connect(user)
+      service ! Connect(Main.me)
       jQ("#status-disconnected").addClass("status-hidden")
       jQ("#status-connected").removeClass("status-hidden")
-      jQ("#nickname").text(user.nick)
+      jQ("#nickname").text(Main.me.nick)
       jQ("#send-button").prop("disabled", false)
       jQ("#disconnect-button").text("Disconnect").prop("disabled", false)
 
     case RoomListChanged(rooms) =>
       Main.roomsTab.rooms = rooms
-
-    case Send(text) =>
-      val message = Message(user, text, System.currentTimeMillis())
-      service ! SendMessage(message)
-
-    case ReceiveMessage(message) =>
-      Console.err.println(s"receiving message $message")
-      addMessage(message)
 
     case m @ Disconnect =>
       jQ("#disconnect-button").text("Disconnecting ...").prop("disabled", true)
@@ -366,28 +375,37 @@ class Manager extends Actor {
       jQ("#status-disconnected").removeClass("status-hidden")
       jQ("#status-connected").addClass("status-hidden")
       context.children.filterNot(proxyManager == _).foreach(context.stop(_))
+      Main.me = User.Nobody
 
     case m @ Join(room) =>
-      context.actorOf(Props(new RoomManager(user, room, service)))
-  }
+      context.actorOf(Props(new RoomManager(Main.me, room, service)))
 
-  def addMessage(message: Message) = {
-    val timeStampStr = new js.Date(message.timestamp).toString()
-    jQ(".msg-wrap").append(
-      jQ("""<div class="media msg">""").append(
-        jQ("""<a class="pull-left" href="#">""").append(
-          jQ("""<img class="media-object" alt="gravatar" style="width: 32px; height: 32px">""").attr(
-              "src", s"http://www.gravatar.com/avatar/${message.user.gravatarHash}?s=32")
-        ),
-        jQ("""<div class="media-body">""").append(
-          jQ(s"""<small class="pull-right time"><i class="fa fa-clock-o"></i> $timeStampStr</small>"""),
-          jQ("""<h5 class="media-heading">""").text(message.user.nick),
-          jQ("""<small class="col-lg-10">""").text(message.text)
-        )
+    case m @ CreatePrivateChatRoom(dest, origin, roomService) =>
+      context.actorOf(Props(new PrivateChatManager(Main.me, dest, origin, roomService)))
+
+    case m @ RequestPrivateChat(peerUser, _) =>
+      val peer = sender
+      val notification: JQuery =
+        jQ("""<div class="alert alert-info alert-block">""")
+      notification.append(
+        jQ("""<h4>""").text(s"Chat with ${peerUser.nick}?"),
+        jQ("""<span>""").text(s"${peerUser.nick} would like to start a private with you."),
+        jQ("""<br>"""),
+        jQ("""<button class="btn btn-success">Accept</button>""").click {
+          (e: JQueryEventObject) =>
+            notification.remove()
+            self ! AcceptPrivateChatWith(peerUser, peer)
+        },
+        jQ("""<button class="btn btn-danger">Reject</button>""").click {
+          (e: JQueryEventObject) =>
+            notification.remove()
+            peer.tell(RejectPrivateChat, null) // do not tell him who I am!
+        }
       )
-    )
-    // scroll to new message
-    jQ(".msg-wrap").scrollTop(jQ(".msg-wrap")(0).scrollHeight)
+      Main.notifications.append(notification)
+
+    case m @ AcceptPrivateChatWith(peerUser, peer) =>
+      context.actorOf(Props(new PrivateChatManager(Main.me, peerUser, peer)))
   }
 }
 
@@ -432,8 +450,72 @@ class RoomManager(me: User, room: Room, service: ActorRef) extends Actor {
       roomService ! Leave
       context.stop(self)
 
+    case CreatePrivateChatRoom(dest, _, _) =>
+      context.parent ! CreatePrivateChatRoom(dest, self, roomService)
+
+    case m @ RequestPrivateChat(dest, _) =>
+      context.parent.forward(m)
+
     case Terminated(ref) if ref == roomService =>
       tab.messages += Message(User.System, "The room was deleted")
+      tab.invalidate()
+  }
+}
+
+class PrivateChatManager private (
+    me: User, dest: User, var peer: ActorRef, _dummy: Boolean) extends Actor {
+  if (peer eq null)
+    peer = context.system.deadLetters
+
+  val tab = Main.getPrivateChatTabInfoOrCreate(dest)
+  tab.manager = context.self
+  tab.users ++= Seq(me, dest)
+
+  def this(me: User, dest: User, origin: ActorRef, roomService: ActorRef) = {
+    this(me, dest, null, false)
+    tab.messages += Message(User.System,
+        s"Asking ${dest.nick} to start a private chat ...")
+    roomService ! RequestPrivateChat(dest, origin)
+    tab.focusTab()
+  }
+
+  def this(me: User, dest: User, peer: ActorRef) = {
+    this(me, dest, peer, false)
+    context.watch(peer)
+    tab.messages += Message(User.System,
+        s"You have accepted ${dest.nick}'s invitation to chat privately.")
+    peer ! AcceptPrivateChat
+    tab.focusTab()
+  }
+
+  def receive = LoggingReceive {
+    case AcceptPrivateChat =>
+      peer = sender
+      context.watch(peer)
+      tab.messages += Message(User.System,
+          s"${dest.nick} accepted the private chat.")
+      tab.invalidate()
+
+    case RejectPrivateChat =>
+      tab.messages += Message(User.System,
+          s"${dest.nick} denied your request to chat privately.")
+      tab.invalidate()
+
+    case SendMessage(message) => // not ReceiveMessage: symmetric connection
+      tab.messages += message
+      tab.invalidate()
+
+    case Send(text) =>
+      val msg = Message(me, text)
+      tab.messages += msg
+      peer ! SendMessage(msg)
+      tab.invalidate()
+
+    case Leave =>
+      context.stop(self)
+
+    case Terminated(ref) if ref == peer =>
+      tab.messages += Message(User.System, s"${dest.nick} left the chat.")
       tab.invalidate()
   }
 }

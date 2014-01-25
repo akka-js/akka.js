@@ -2,27 +2,25 @@
 
 @main("Example chat application with Akka/JS") {
 
-<p>This is an example chat application to test actors across the client-server
-border.</p>
+<div class="row">
+  <div class="col-lg-12">
+    <p id="status-disconnected">
+    Nickname: <input id="nickname-edit" type="text" /><br />
+    Email (for gravatar only): <input id="email-edit" type="text" /><br />
+    <button id="connect-button">Connect</button>
+    </p>
 
-<p id="status-disconnected">
-Nickname: <input id="nickname-edit" type="text" /><br />
-Email (for gravatar only): <input id="email-edit" type="text" /><br />
-<button id="connect-button">Connect</button>
-</p>
+    <p id="status-connected" class="status-hidden">
+    Connected as: <span id="nickname"></span>
+    <button id="disconnect-button">Disconnect</button>
+    </p>
+  </div>
+</div>
 
-<p id="status-connected" class="status-hidden">
-Connected as: <span id="nickname"></span>
-<button id="disconnect-button">Disconnect</button>
-</p>
-
-<ul id="messages">
-</ul>
-
-<!--<p>
-<input id="msg-to-send" type="text" />
-<button id="send-button" disabled="disabled">Send</button>
-</p>-->
+<div class="row">
+  <div class="col-lg-12" id="notifications">
+  </div>
+</div>
 
 
 <div class="row">

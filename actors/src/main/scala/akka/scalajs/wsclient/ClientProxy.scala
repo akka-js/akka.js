@@ -30,7 +30,6 @@ class ClientProxy(wsUrl: String, connectedHandler: ActorRef) extends AbstractPro
 
   override def preStart() = {
     super.preStart()
-    log.info(s"connecting to $wsUrl")
 
     webSocket = new WebSocket(wsUrl)
     webSocket.addEventListener("message", { (event: Event) =>

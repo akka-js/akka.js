@@ -3,7 +3,6 @@ package akka.scalajs.wscommon
 import scala.collection.mutable
 
 import akka.actor._
-import akka.event.LoggingReceive
 import akka.scalajs.wscommon._
 
 import org.scalajs.spickling._
@@ -26,7 +25,7 @@ object AbstractProxy {
 /** Common between [[akka.scalajs.wsserver.ServerProxy]] and
  *  [[akka.scalajs.wsclient.ClientProxy]].
  */
-abstract class AbstractProxy extends Actor with ActorLogging {
+abstract class AbstractProxy extends Actor {
 
   import AbstractProxy._
 
@@ -51,26 +50,28 @@ abstract class AbstractProxy extends Actor with ActorLogging {
 
   def receive = {
     case IncomingMessage(pickle) =>
-      log.info(s"IncomingMessage($pickle)")
       val msg = picklerRegistry.unpickle(pickle.asInstanceOf[PickleType])
-      log.info(s"  -> unpickled: $msg")
       receiveFromPeer(msg)
 
     case ConnectionClosed =>
-      log.info(s"closing $self")
       context.stop(self)
 
     case SendToPeer(message) =>
       sendToPeer(message)
 
     case Terminated(ref) =>
-      localIDs.remove(ref).foreach(localIDsRev -= _)
+      if (localIDs.contains(ref)) {
+        sendToPeer(ForeignTerminated(ref)) // do this *before* altering localIDs
+        localIDs.remove(ref).foreach(localIDsRev -= _)
+      }
       foreignIDs -= ref
+
+    case ForeignTerminated(ref) =>
+      context.stop(ref)
   }
 
-  protected def receiveFromPeer: Receive = LoggingReceive {
+  protected def receiveFromPeer: Receive = {
     case m @ SendMessage(message, receiver, sender) =>
-      log.info(s"receiveFromPeer: $m")
       receiver.tell(message, sender)
 
     case ForeignTerminated(ref) =>
@@ -78,9 +79,7 @@ abstract class AbstractProxy extends Actor with ActorLogging {
   }
 
   protected def sendToPeer(msg: Any): Unit = {
-    log.debug(s"sendToClient($msg)")
     val pickle = picklerRegistry.pickle(msg)
-    log.debug(s"  -> pickled: $pickle")
     sendPickleToPeer(pickle)
   }
 
@@ -117,7 +116,7 @@ abstract class AbstractProxy extends Actor with ActorLogging {
 
     side match {
       case "receiver" =>
-        localIDsRev(id)
+        localIDsRev.getOrElse(id, context.system.deadLetters)
 
       case "sender" =>
         foreignIDsRev.getOrElse(id, {

@@ -32,7 +32,6 @@ class ServerProxy(channelToClient: Channel[JsValue],
 
   override def preStart() = {
     super.preStart()
-    log.info(s"starting $self")
     self ! SendEntryPointRef
   }
 

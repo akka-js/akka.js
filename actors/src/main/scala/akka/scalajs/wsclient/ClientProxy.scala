@@ -44,6 +44,11 @@ class ClientProxy(wsUrl: String, connectedHandler: ActorRef) extends AbstractPro
     }, useCapture = false)
   }
 
+  override def postStop() = {
+    super.postStop()
+    webSocket.close()
+  }
+
   override def receive = super.receive.orElse[Any, Unit] {
     case ConnectionError =>
       throw new akka.AkkaException("WebSocket connection error")

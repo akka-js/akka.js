@@ -35,6 +35,11 @@ class ServerProxy(channelToClient: Channel[JsValue],
     self ! SendEntryPointRef
   }
 
+  override def postStop() = {
+    super.postStop()
+    channelToClient.end()
+  }
+
   override def receive = super.receive.orElse[Any, Unit] {
     case SendEntryPointRef =>
       entryPointRef foreach { ref =>

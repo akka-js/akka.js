@@ -404,6 +404,9 @@ class Manager extends Actor {
       for ((room, tab) <- Main.roomTabInfos)
         self ! Join(room)
 
+      for ((peerUser, tab) <- Main.privateChatTabInfos)
+        self ! CreatePrivateChatRoom(peerUser)
+
     case RoomListChanged(rooms) =>
       Main.roomsTab.rooms = rooms
 
@@ -434,24 +437,30 @@ class Manager extends Actor {
 
     case m @ RequestPrivateChat(peerUser) =>
       val peer = sender
-      val notification: JQuery =
-        jQ("""<div class="alert alert-info alert-block">""")
-      notification.append(
-        jQ("""<h4>""").text(s"Chat with ${peerUser.nick}?"),
-        jQ("""<span>""").text(s"${peerUser.nick} would like to start a private with you."),
-        jQ("""<br>"""),
-        jQ("""<button class="btn btn-success">Accept</button>""").click {
-          (e: JQueryEventObject) =>
-            notification.remove()
-            self ! AcceptPrivateChatWith(peerUser, peer)
-        },
-        jQ("""<button class="btn btn-danger">Reject</button>""").click {
-          (e: JQueryEventObject) =>
-            notification.remove()
-            peer.tell(RejectPrivateChat, Actor.noSender) // do not tell him who I am!
-        }
-      )
-      Main.notifications.append(notification)
+      Main.privateChatTabInfos.get(peerUser).fold[Unit] {
+        val notification: JQuery =
+          jQ("""<div class="alert alert-info alert-block">""")
+        notification.append(
+          jQ("""<h4>""").text(s"Chat with ${peerUser.nick}?"),
+          jQ("""<span>""").text(
+              s"${peerUser.nick} would like to start a private with you."),
+          jQ("""<br>"""),
+          jQ("""<button class="btn btn-success">Accept</button>""").click {
+            (e: JQueryEventObject) =>
+              notification.remove()
+              self ! AcceptPrivateChatWith(peerUser, peer)
+          },
+          jQ("""<button class="btn btn-danger">Reject</button>""").click {
+            (e: JQueryEventObject) =>
+              notification.remove()
+              peer.tell(RejectPrivateChat, Actor.noSender) // do not tell him who I am!
+          }
+        )
+        Main.notifications.append(notification)
+      } { tab =>
+        // auto-reaccept if we already have a tab for that user
+        context.actorOf(Props(new PrivateChatManager(peerUser, service, peer)))
+      }
 
     case m @ AcceptPrivateChatWith(peerUser, peer) =>
       context.actorOf(Props(new PrivateChatManager(peerUser, service, peer)))
@@ -523,7 +532,8 @@ class PrivateChatManager private (
 
   val tab = Main.getPrivateChatTabInfoOrCreate(dest)
   tab.manager = context.self
-  tab.users ++= Seq(me, dest)
+  if (tab.users.isEmpty)
+    tab.users ++= Seq(me, dest)
 
   def this(dest: User, service: ActorRef) = {
     this(dest, null, 0)

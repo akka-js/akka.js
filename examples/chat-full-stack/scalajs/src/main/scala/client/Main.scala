@@ -402,6 +402,9 @@ class Manager extends Actor {
         alert.fadeOut()
       }
 
+      for ((room, tab) <- Main.roomTabInfos)
+        self ! Join(room)
+
     case RoomListChanged(rooms) =>
       Main.roomsTab.rooms = rooms
 
@@ -415,7 +418,12 @@ class Manager extends Actor {
       context.children.filterNot(proxyManager == _).foreach(context.stop(_))
       statusAlert = makeStatusAlert("danger").append(
         jQ("""<strong>You have been disconnected from the server.</strong>"""),
-        jQ("""<span> Refresh to get a chance to connect again.</span>""")
+        jQ("""<span> </span>""").append(
+          jQ("""<a href="#">""").text("Reconnect").click {
+            (e: JQueryEventObject) =>
+              self ! AttemptToConnect
+          }
+        )
       )
       // TODO Handle auto-reconnect
 
@@ -441,7 +449,7 @@ class Manager extends Actor {
         jQ("""<button class="btn btn-danger">Reject</button>""").click {
           (e: JQueryEventObject) =>
             notification.remove()
-            peer.tell(RejectPrivateChat, null) // do not tell him who I am!
+            peer.tell(RejectPrivateChat, Actor.noSender) // do not tell him who I am!
         }
       )
       Main.notifications.append(notification)
@@ -462,6 +470,12 @@ class RoomManager(room: Room, service: ActorRef) extends Actor {
   tab.focusTab()
 
   service ! Join(room)
+
+  override def postStop(): Unit = {
+    super.postStop()
+    tab.users.clear()
+    tab.invalidate()
+  }
 
   def receive = LoggingReceive {
     case JoinedRoom(users) =>
@@ -503,6 +517,7 @@ class RoomManager(room: Room, service: ActorRef) extends Actor {
     case Terminated(ref) if ref == roomService =>
       tab.messages += Message(User.System, "The room was deleted")
       tab.invalidate()
+      context.stop(self)
   }
 }
 

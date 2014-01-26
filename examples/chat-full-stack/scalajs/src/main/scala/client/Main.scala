@@ -193,8 +193,14 @@ object SendMessageButton {
 
 abstract class TabInfo(val name: String) {
   val tabLi = jQ("""<li>""").appendTo(jQ("#room-tabs"))
-  val tabButton = jQ("""<a href="#">""").text(name).appendTo(tabLi)
+  val tabButton = jQ("""<a href="#">""").text(name+" ").appendTo(tabLi)
   tabButton click { (e: JQueryEventObject) => focusTab(); false }
+  jQ("""<span class="badge">""").appendTo(tabButton)
+
+  lazy val tabBadge = tabButton.children().filter("span")
+
+  def badgeText: String = tabBadge.text()
+  def badgeText_=(v: String): Unit = tabBadge.text(v)
 
   def isFocused: Boolean = Main.focusedTab eq this
 
@@ -205,11 +211,12 @@ abstract class TabInfo(val name: String) {
   def activate(): Unit = {
     assert(isFocused, s"Trying to activate non-focused tab $name")
     tabLi.addClass("active")
-    render()
+    invalidate()
   }
 
   def deactivate(): Unit = {
     tabLi.removeClass("active")
+    invalidate()
   }
 
   def invalidate(): Unit = {
@@ -284,6 +291,17 @@ class DiscussionTabInfo(nme: String) extends TabInfo(nme) with CloseableTab {
 
   val users = new mutable.ListBuffer[User]
   val messages = new mutable.ListBuffer[Message]
+  var messagesSeen: Int = 0
+
+  override def invalidate(): Unit = {
+    super.invalidate()
+
+    if (isFocused)
+      messagesSeen = messages.size
+
+    val newMessages = messages.drop(messagesSeen).count(_.user != User.System)
+    badgeText = if (newMessages == 0) "" else newMessages.toString
+  }
 
   override def render(): Unit = {
     super.render()

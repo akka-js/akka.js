@@ -88,10 +88,9 @@ object Main {
     }
   }
 
-  def startPrivateChat(dest: User, roomManager: ActorRef): Unit = {
+  def startPrivateChat(dest: User): Unit = {
     privateChatTabInfos.get(dest).fold {
-      roomManager ! CreatePrivateChatRoom(dest,
-          system.deadLetters, system.deadLetters)
+      manager ! CreatePrivateChatRoom(dest)
     } {
       _.focusTab()
     }
@@ -321,7 +320,7 @@ class DiscussionTabInfo(nme: String) extends TabInfo(nme) with CloseableTab {
       UsersContainer.addEntry(user.nick, gravatarURL(user, 50)) {
         if (user != Main.me) {
           jQ("""<a href="#" role="button"><span class="glyphicon glyphicon-user"></span> Private chat</a>""").click {
-            (e: JQueryEventObject) => startPrivateChat(user, this.manager); false
+            (e: JQueryEventObject) => startPrivateChat(user); false
           }
         } else jQ()
       }
@@ -359,7 +358,7 @@ class DiscussionTabInfo(nme: String) extends TabInfo(nme) with CloseableTab {
 
 case object AttemptToConnect
 case class Send(text: String)
-case class CreatePrivateChatRoom(dest: User, origin: ActorRef, roomService: ActorRef)
+case class CreatePrivateChatRoom(dest: User)
 case class AcceptPrivateChatWith(peerUser: User, peer: ActorRef)
 case object Disconnect
 case object Disconnected
@@ -430,10 +429,10 @@ class Manager extends Actor {
     case m @ Join(room) =>
       context.actorOf(Props(new RoomManager(room, service)))
 
-    case m @ CreatePrivateChatRoom(dest, origin, roomService) =>
-      context.actorOf(Props(new PrivateChatManager(dest, origin, roomService)))
+    case m @ CreatePrivateChatRoom(dest) =>
+      context.actorOf(Props(new PrivateChatManager(dest, service)))
 
-    case m @ RequestPrivateChat(peerUser, _) =>
+    case m @ RequestPrivateChat(peerUser) =>
       val peer = sender
       val notification: JQuery =
         jQ("""<div class="alert alert-info alert-block">""")
@@ -455,7 +454,7 @@ class Manager extends Actor {
       Main.notifications.append(notification)
 
     case m @ AcceptPrivateChatWith(peerUser, peer) =>
-      context.actorOf(Props(new PrivateChatManager(peerUser, peer)))
+      context.actorOf(Props(new PrivateChatManager(peerUser, service, peer)))
   }
 }
 
@@ -508,12 +507,6 @@ class RoomManager(room: Room, service: ActorRef) extends Actor {
       roomService ! Leave
       context.stop(self)
 
-    case CreatePrivateChatRoom(dest, _, _) =>
-      context.parent ! CreatePrivateChatRoom(dest, self, roomService)
-
-    case m @ RequestPrivateChat(dest, _) =>
-      context.parent.forward(m)
-
     case Terminated(ref) if ref == roomService =>
       tab.messages += Message(User.System, "The room was deleted")
       tab.invalidate()
@@ -522,7 +515,7 @@ class RoomManager(room: Room, service: ActorRef) extends Actor {
 }
 
 class PrivateChatManager private (
-    dest: User, var peer: ActorRef, _dummy: Boolean) extends Actor {
+    dest: User, var peer: ActorRef, _dummy: Int) extends Actor {
   import Main.me
 
   if (peer eq null)
@@ -532,16 +525,16 @@ class PrivateChatManager private (
   tab.manager = context.self
   tab.users ++= Seq(me, dest)
 
-  def this(dest: User, origin: ActorRef, roomService: ActorRef) = {
-    this(dest, null, false)
+  def this(dest: User, service: ActorRef) = {
+    this(dest, null, 0)
     tab.messages += Message(User.System,
         s"Asking ${dest.nick} to start a private chat ...")
-    roomService ! RequestPrivateChat(dest, origin)
+    service ! RequestPrivateChat(dest)
     tab.focusTab()
   }
 
-  def this(dest: User, peer: ActorRef) = {
-    this(dest, peer, false)
+  def this(dest: User, service: ActorRef, peer: ActorRef) = {
+    this(dest, peer, 0)
     context.watch(peer)
     tab.messages += Message(User.System,
         s"You have accepted ${dest.nick}'s invitation to chat privately.")

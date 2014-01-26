@@ -9,7 +9,7 @@ case object Leave
 case class SendMessage(message: Message)
 
 // Requests
-case class RequestPrivateChat(peer: User, origin: ActorRef)
+case class RequestPrivateChat(peer: User)
 case object AcceptPrivateChat
 case object RejectPrivateChat
 case object UserDoesNotExist

@@ -1,8 +1,14 @@
 package actors
 
+import scala.language.postfixOps
+
+import scala.concurrent.duration._
+
 import akka.actor._
 import akka.actor.SupervisorStrategy.{Stop, Escalate}
 import akka.event.LoggingReceive
+import akka.pattern.{ask, pipe}
+import akka.util.Timeout
 import akka.scalajs.wsserver._
 
 import models._
@@ -94,15 +100,6 @@ class RoomManager(val room: Room) extends Actor with ActorLogging {
 
       sendToAllAttending(ReceiveMessage(message))
 
-    case RequestPrivateChat(dest, origin) =>
-      attendingUsers.find(_._2 == dest).fold {
-        sender ! UserDoesNotExist
-      } { case (ref, _) =>
-        attendingUsers.get(origin) foreach { senderUser =>
-          ref.forward(RequestPrivateChat(senderUser, sender))
-        }
-      }
-
     case Terminated(ref) =>
       userLeave(ref)
   }
@@ -121,6 +118,9 @@ class RoomManager(val room: Room) extends Actor with ActorLogging {
     attendingUsers.keys.foreach(_ ! msg)
 }
 
+object UsersManager {
+  case class GetUserManager(user: User)
+}
 class UsersManager(val roomsManager: ActorRef) extends Actor with ActorLogging {
   var connectedUsers = Map.empty[ActorRef, User]
 
@@ -135,11 +135,21 @@ class UsersManager(val roomsManager: ActorRef) extends Actor with ActorLogging {
     case m @ RoomListChanged(rooms) =>
       context.children.foreach(_ ! m)
 
+    case UsersManager.GetUserManager(user) =>
+      connectedUsers.find(_._2 == user).fold {
+        sender ! None
+      } {
+        x => sender ! Some(x._1)
+      }
+
     case Terminated(child) =>
       connectedUsers -= child
   }
 }
 
+object UserManager {
+  case class ReceiveRequestPrivateChat(peer: User)
+}
 class UserManager(val roomsManager: ActorRef) extends Actor with ActorLogging {
   var peer: ActorRef = context.system.deadLetters
   var user: User = User.Nobody
@@ -161,6 +171,23 @@ class UserManager(val roomsManager: ActorRef) extends Actor with ActorLogging {
 
     case m @ Join(room: Room) =>
       roomsManager.forward(RoomsManager.UserJoin(user, room))
+
+    case m @ RequestPrivateChat(peer) =>
+      implicit val timeout = new Timeout(3 seconds)
+      implicit val ec = context.dispatcher
+      val sender = this.sender
+      val f = (context.parent ? UsersManager.GetUserManager(peer))
+      f.onSuccess {
+        case Some(ref: ActorRef) =>
+          ref.tell(UserManager.ReceiveRequestPrivateChat(user), sender)
+        case None => sender ! UserDoesNotExist
+      }
+      f.onFailure {
+        case _ => sender ! UserDoesNotExist
+      }
+
+    case m @ UserManager.ReceiveRequestPrivateChat(chatPeer) =>
+      peer.forward(RequestPrivateChat(chatPeer))
 
     case Terminated(peerOrProxy) =>
       context.stop(self)

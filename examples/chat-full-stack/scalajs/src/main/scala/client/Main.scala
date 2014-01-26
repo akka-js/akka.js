@@ -101,6 +101,17 @@ object Main {
 
   def gravatarURL(user: User, size: Int): String =
     s"http://www.gravatar.com/avatar/${user.gravatarHash}?s=$size"
+
+  // Workaround for https://github.com/scala-js/scala-js/issues/172
+  def longNumberOfLeadingZeros(l: Long): Int = {
+    import java.lang.Integer.{numberOfLeadingZeros => leading}
+    if (l < 0) 0
+    else {
+      val up = leading((l >>> 32).toInt)
+      if (up < 32) up
+      else up + leading((l & 0xffffffff).toInt)
+    }
+  }
 }
 
 object UsersContainer {
@@ -365,9 +376,6 @@ case object Disconnected
 
 class Manager extends Actor {
   val proxyManager = context.actorOf(Props(new ProxyManager))
-  var service: ActorRef = context.system.deadLetters
-
-  var disconnected: Boolean = true
 
   private[this] var myStatusAlert: JQuery = jQ()
   def statusAlert: JQuery = myStatusAlert
@@ -377,21 +385,53 @@ class Manager extends Actor {
     myStatusAlert.prependTo(Main.notifications)
   }
 
-  def clearStatusAlert(): Unit = statusAlert = jQ()
-
   def makeStatusAlert(style: String): JQuery =
     jQ(s"""<div class="alert alert-$style">""")
 
-  def receive = LoggingReceive {
-    case m @ AttemptToConnect if disconnected =>
-      disconnected = false
+  def receive = disconnected()
+
+  def disconnected(nextReconnectTimeout: FiniteDuration = 1 seconds): Receive = LoggingReceive {
+    case m @ AttemptToConnect =>
       proxyManager ! m
       statusAlert = makeStatusAlert("info").append(
-        jQ("<strong>Connecting ...</strong>")
+        jQ("<strong>Connecting ...</strong>"),
+        jQ("<span> </span>").append(
+          jQ("""<a href="#">""").text("Cancel").click {
+            (e: JQueryEventObject) =>
+              self ! Disconnect
+              false
+          }
+        )
       )
+      context.setReceiveTimeout(5 seconds)
+      context.become(connecting(nextReconnectTimeout))
+  }
 
-    case m @ WebSocketConnected(entryPoint) if !disconnected =>
-      service = entryPoint
+  def waitingToAutoReconnect(autoReconnectDeadline: FiniteDuration,
+      nextReconnectTimeout: FiniteDuration): Receive = LoggingReceive {
+    case m @ AttemptToConnect =>
+      context.become(disconnected(nextReconnectTimeout))
+      self ! m
+
+    case m @ ReceiveTimeout =>
+      val now = nowDuration
+      if (now >= autoReconnectDeadline)
+        self ! AttemptToConnect
+      else {
+        val remaining = autoReconnectDeadline - nowDuration
+        jQ(".reconnect-remaining-seconds").text(remaining.toSeconds.toString)
+      }
+  }
+
+  def connecting(nextReconnectTimeout: FiniteDuration): Receive = LoggingReceive { withDisconnected(nextReconnectTimeout) {
+    case ReceiveTimeout | Disconnect =>
+      context.setReceiveTimeout(Duration.Undefined)
+      proxyManager ! Disconnect
+
+    case m @ WebSocketConnected(entryPoint) =>
+      context.setReceiveTimeout(Duration.Undefined)
+
+      val service = entryPoint
       service ! Connect(Main.me)
       val alert = makeStatusAlert("success").append(
         jQ("<strong>").text(s"Connected as ${Main.me.nick}")
@@ -403,31 +443,18 @@ class Manager extends Actor {
 
       for ((room, tab) <- Main.roomTabInfos)
         self ! Join(room)
-
       for ((peerUser, tab) <- Main.privateChatTabInfos)
         self ! CreatePrivateChatRoom(peerUser)
 
+      context.become(connected(service))
+  } }
+
+  def connected(service: ActorRef): Receive = LoggingReceive { withDisconnected() {
     case RoomListChanged(rooms) =>
       Main.roomsTab.rooms = rooms
 
-    case m @ Disconnect if !disconnected =>
-      jQ("#disconnect-button").text("Disconnecting ...").prop("disabled", true)
+    case m @ Disconnect =>
       proxyManager ! m
-
-    case Disconnected if !disconnected =>
-      disconnected = true
-      service = context.system.deadLetters
-      context.children.filterNot(proxyManager == _).foreach(context.stop(_))
-      statusAlert = makeStatusAlert("danger").append(
-        jQ("""<strong>You have been disconnected from the server.</strong>"""),
-        jQ("""<span> </span>""").append(
-          jQ("""<a href="#">""").text("Reconnect").click {
-            (e: JQueryEventObject) =>
-              self ! AttemptToConnect
-          }
-        )
-      )
-      // TODO Handle auto-reconnect
 
     case m @ Join(room) =>
       context.actorOf(Props(new RoomManager(room, service)))
@@ -464,7 +491,31 @@ class Manager extends Actor {
 
     case m @ AcceptPrivateChatWith(peerUser, peer) =>
       context.actorOf(Props(new PrivateChatManager(peerUser, service, peer)))
+  } }
+
+  def withDisconnected(nextReconnectTimeout: FiniteDuration = 1 seconds)(
+      receive: Receive): Receive = receive.orElse[Any, Unit] {
+    case Disconnected =>
+      context.children.filterNot(proxyManager == _).foreach(context.stop(_))
+      statusAlert = makeStatusAlert("danger").append(
+        jQ("""<strong>You have been disconnected from the server.</strong>"""),
+        jQ("""<span>Will try to reconnect in """+
+            """<span class="reconnect-remaining-seconds"></span>"""+
+            """ seconds. </span>""").append(
+          jQ("""<a href="#">""").text("Reconnect now").click {
+            (e: JQueryEventObject) =>
+              self ! AttemptToConnect
+          }
+        )
+      )
+      jQ(".reconnect-remaining-seconds").text(nextReconnectTimeout.toSeconds.toString)
+      val autoReconnectDeadline = nowDuration + nextReconnectTimeout
+      context.setReceiveTimeout(1 seconds)
+      context.become(waitingToAutoReconnect(
+          autoReconnectDeadline, nextReconnectTimeout*2))
   }
+
+  private def nowDuration = System.currentTimeMillis() milliseconds
 }
 
 class RoomManager(room: Room, service: ActorRef) extends Actor {

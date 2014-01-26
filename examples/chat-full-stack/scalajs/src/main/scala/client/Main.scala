@@ -10,10 +10,12 @@ import akka.pattern.Ask.ask
 import akka.scalajs.wsclient._
 import akka.event.LoggingReceive
 import akka.util.Timeout
+import akka.scalajs.jsapi.Timers
 
 import models._
 
 import scala.scalajs.js
+import org.scalajs.dom
 import org.scalajs.jquery.{jQuery => jQ, _}
 
 object Main {
@@ -49,9 +51,13 @@ object Main {
   }
 
   def startup(): Unit = {
-    jQ("#connect-button") click { (event: JQueryEventObject) => connect }
-    jQ("#disconnect-button") click { (event: JQueryEventObject) => disconnect }
-    jQ("#send-button") click { (event: JQueryEventObject) => send }
+    jQ(".not-landing").hide()
+
+    jQ("#connect-button") click {
+      (event: JQueryEventObject) =>
+        connect()
+        false
+    }
 
     roomsTab.focusTab()
   }
@@ -59,19 +65,19 @@ object Main {
   def connect(): Unit = {
     val nickname = jQ("#nickname-edit").value().toString()
     val email = jQ("#email-edit").value().toString()
+    if (nickname == "") {
+      dom.alert("Nickname cannot be empty")
+      return
+    }
+
     val gravatarHash = computeGravatarHash(email)
-    val user = User(nickname, gravatarHash)
-    manager ! ConnectAs(user)
-  }
+    me = User(nickname, gravatarHash)
+    manager ! AttemptToConnect
 
-  def disconnect(): Unit = {
-    manager ! Disconnect
-  }
-
-  def send(): Unit = {
-    val text = jQ("#msg-to-send").value().toString()
-    manager ! Send(text)
-    jQ("#msg-to-send").value("")
+    jQ(".landing").fadeOut("fast")
+    Timers.setInterval(200) {
+      jQ(".not-landing").fadeIn("fast")
+    }
   }
 
   def joinRoom(room: Room): Unit = {
@@ -351,7 +357,7 @@ class DiscussionTabInfo(nme: String) extends TabInfo(nme) with CloseableTab {
   }
 }
 
-case class ConnectAs(user: User)
+case object AttemptToConnect
 case class Send(text: String)
 case class CreatePrivateChatRoom(dest: User, origin: ActorRef, roomService: ActorRef)
 case class AcceptPrivateChatWith(peerUser: User, peer: ActorRef)
@@ -362,44 +368,62 @@ class Manager extends Actor {
   val proxyManager = context.actorOf(Props(new ProxyManager))
   var service: ActorRef = context.system.deadLetters
 
-  def receive = LoggingReceive {
-    case m @ ConnectAs(user) =>
-      Main.me = user
-      jQ("#connect-button").text("Connecting ...").prop("disabled", true)
-      jQ("#nickname-edit").prop("disabled", true)
-      proxyManager ! m
+  var disconnected: Boolean = true
 
-    case m @ WebSocketConnected(entryPoint) =>
+  private[this] var myStatusAlert: JQuery = jQ()
+  def statusAlert: JQuery = myStatusAlert
+  def statusAlert_=(v: JQuery): Unit = {
+    myStatusAlert.remove()
+    myStatusAlert = v
+    myStatusAlert.prependTo(Main.notifications)
+  }
+
+  def clearStatusAlert(): Unit = statusAlert = jQ()
+
+  def makeStatusAlert(style: String): JQuery =
+    jQ(s"""<div class="alert alert-$style">""")
+
+  def receive = LoggingReceive {
+    case m @ AttemptToConnect if disconnected =>
+      disconnected = false
+      proxyManager ! m
+      statusAlert = makeStatusAlert("info").append(
+        jQ("<strong>Connecting ...</strong>")
+      )
+
+    case m @ WebSocketConnected(entryPoint) if !disconnected =>
       service = entryPoint
       service ! Connect(Main.me)
-      jQ("#status-disconnected").addClass("status-hidden")
-      jQ("#status-connected").removeClass("status-hidden")
-      jQ("#nickname").text(Main.me.nick)
-      jQ("#send-button").prop("disabled", false)
-      jQ("#disconnect-button").text("Disconnect").prop("disabled", false)
+      val alert = makeStatusAlert("success").append(
+        jQ("<strong>").text(s"Connected as ${Main.me.nick}")
+      )
+      statusAlert = alert
+      Timers.setTimeout(3000) {
+        alert.fadeOut()
+      }
 
     case RoomListChanged(rooms) =>
       Main.roomsTab.rooms = rooms
 
-    case m @ Disconnect =>
+    case m @ Disconnect if !disconnected =>
       jQ("#disconnect-button").text("Disconnecting ...").prop("disabled", true)
       proxyManager ! m
 
-    case Disconnected =>
+    case Disconnected if !disconnected =>
+      disconnected = true
       service = context.system.deadLetters
-      jQ("#connect-button").text("Connect").prop("disabled", false)
-      jQ("#nickname-edit").prop("disabled", false)
-      jQ("#send-button").prop("disabled", true)
-      jQ("#status-disconnected").removeClass("status-hidden")
-      jQ("#status-connected").addClass("status-hidden")
       context.children.filterNot(proxyManager == _).foreach(context.stop(_))
-      Main.me = User.Nobody
+      statusAlert = makeStatusAlert("danger").append(
+        jQ("""<strong>You have been disconnected from the server.</strong>"""),
+        jQ("""<span> Refresh to get a chance to connect again.</span>""")
+      )
+      // TODO Handle auto-reconnect
 
     case m @ Join(room) =>
-      context.actorOf(Props(new RoomManager(Main.me, room, service)))
+      context.actorOf(Props(new RoomManager(room, service)))
 
     case m @ CreatePrivateChatRoom(dest, origin, roomService) =>
-      context.actorOf(Props(new PrivateChatManager(Main.me, dest, origin, roomService)))
+      context.actorOf(Props(new PrivateChatManager(dest, origin, roomService)))
 
     case m @ RequestPrivateChat(peerUser, _) =>
       val peer = sender
@@ -423,11 +447,13 @@ class Manager extends Actor {
       Main.notifications.append(notification)
 
     case m @ AcceptPrivateChatWith(peerUser, peer) =>
-      context.actorOf(Props(new PrivateChatManager(Main.me, peerUser, peer)))
+      context.actorOf(Props(new PrivateChatManager(peerUser, peer)))
   }
 }
 
-class RoomManager(me: User, room: Room, service: ActorRef) extends Actor {
+class RoomManager(room: Room, service: ActorRef) extends Actor {
+  import Main.me
+
   var roomService: ActorRef = context.system.deadLetters
 
   val tab = Main.getDiscussionTabInfoOrCreate(room)
@@ -481,7 +507,9 @@ class RoomManager(me: User, room: Room, service: ActorRef) extends Actor {
 }
 
 class PrivateChatManager private (
-    me: User, dest: User, var peer: ActorRef, _dummy: Boolean) extends Actor {
+    dest: User, var peer: ActorRef, _dummy: Boolean) extends Actor {
+  import Main.me
+
   if (peer eq null)
     peer = context.system.deadLetters
 
@@ -489,16 +517,16 @@ class PrivateChatManager private (
   tab.manager = context.self
   tab.users ++= Seq(me, dest)
 
-  def this(me: User, dest: User, origin: ActorRef, roomService: ActorRef) = {
-    this(me, dest, null, false)
+  def this(dest: User, origin: ActorRef, roomService: ActorRef) = {
+    this(dest, null, false)
     tab.messages += Message(User.System,
         s"Asking ${dest.nick} to start a private chat ...")
     roomService ! RequestPrivateChat(dest, origin)
     tab.focusTab()
   }
 
-  def this(me: User, dest: User, peer: ActorRef) = {
-    this(me, dest, peer, false)
+  def this(dest: User, peer: ActorRef) = {
+    this(dest, peer, false)
     context.watch(peer)
     tab.messages += Message(User.System,
         s"You have accepted ${dest.nick}'s invitation to chat privately.")
@@ -540,7 +568,7 @@ class PrivateChatManager private (
 
 class ProxyManager extends Actor {
   def receive = {
-    case ConnectAs(user) =>
+    case AttemptToConnect =>
       context.watch(context.actorOf(
           Props(new ClientProxy("ws://localhost:9000/chat-ws-entry", context.parent))))
 

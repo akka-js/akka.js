@@ -264,7 +264,7 @@ private[akka] class LocalActorRefProvider private[akka] (
       //new Deployer(settings, dynamicAccess),
       None)
 
-  override val rootPath: ActorPath = RootActorPath(Address("akka", _systemName))
+  override val rootPath: ActorPath = RootActorPath(Address(/*"akka",*/ _systemName))
 
   //private[actors] val log: LoggingAdapter =
   //  Logging(eventStream, "LocalActorRefProvider(" + rootPath.address + ")")

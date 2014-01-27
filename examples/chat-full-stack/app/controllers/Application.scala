@@ -24,8 +24,12 @@ object Application extends Controller {
 
   val chatManager = Akka.system.actorOf(Props[ChatManager], name = "chat")
 
-  def index = Action {
-    Ok(views.html.index("Your new application is ready."))
+  def indexDev = Action {
+    Ok(views.html.index(devMode = true))
+  }
+
+  def indexOpt = Action {
+    Ok(views.html.index(devMode = false))
   }
 
   def chatWSEntry = ActorWebSocket { request =>

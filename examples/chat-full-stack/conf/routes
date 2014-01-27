@@ -3,7 +3,8 @@
 # ~~~~
 
 # Home page
-GET     /                           controllers.Application.index
+GET     /                           controllers.Application.indexDev
+GET     /opt                        controllers.Application.indexOpt
 
 # Web socket entry point
 GET     /chat-ws-entry              controllers.Application.chatWSEntry

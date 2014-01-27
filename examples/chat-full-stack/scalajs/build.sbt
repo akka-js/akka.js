@@ -6,3 +6,6 @@ normalizedName := "scalajs-actors-example-chat-client"
 
 libraryDependencies +=
   "org.scala-lang.modules.scalajs" %% "scalajs-jquery" % "0.1-SNAPSHOT"
+
+sources in (Compile, packageExportedProductsJS) +=
+  baseDirectory.value / "../public/javascripts/startup.js"

@@ -101,17 +101,6 @@ object Main {
 
   def gravatarURL(user: User, size: Int): String =
     s"http://www.gravatar.com/avatar/${user.gravatarHash}?s=$size"
-
-  // Workaround for https://github.com/scala-js/scala-js/issues/172
-  def longNumberOfLeadingZeros(l: Long): Int = {
-    import java.lang.Integer.{numberOfLeadingZeros => leading}
-    if (l < 0) 0
-    else {
-      val up = leading((l >>> 32).toInt)
-      if (up < 32) up
-      else up + leading((l & 0xffffffff).toInt)
-    }
-  }
 }
 
 object UsersContainer {

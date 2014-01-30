@@ -8,10 +8,17 @@ import akka.scalajs.wscommon._
 import org.scalajs.spickling._
 
 object AbstractProxy {
+  // Messages sent across the network
+  case class Welcome(entryPoint: ActorRef)
+  case class SendMessage(msg: Any, receiver: ActorRef, sender: ActorRef)
+  case class ForeignTerminated(ref: ActorRef)
+
+  // Local messages
   case class IncomingMessage(pickle: Any) // JsValue/js.Any = P
   case object ConnectionClosed
   case class SendToPeer(message: Any)
 
+  /** Register the messages sent across the network to the pickler registry. */
   private lazy val _registerPicklers: Unit = {
     import PicklerRegistry.register
     register[Welcome]
@@ -34,7 +41,8 @@ abstract class AbstractProxy extends Actor {
   implicit protected def pickleReader: PReader[PickleType]
 
   registerPicklers()
-  protected val picklerRegistry = new ActorRefAwarePicklerRegistry(this)
+  protected val picklerRegistry: PicklerRegistry =
+    new ActorRefAwarePicklerRegistry(this)
 
   private[this] var _nextLocalID: Long = 0
   private def nextLocalID(): String = {
@@ -130,7 +138,7 @@ abstract class AbstractProxy extends Actor {
   }
 }
 
-class ForeignActorProxy extends Actor {
+private class ForeignActorProxy extends Actor {
   import AbstractProxy._
 
   def receive = {
@@ -140,7 +148,7 @@ class ForeignActorProxy extends Actor {
 }
 
 /** My pickler registry with hooks for pickling and unpickling ActorRefs. */
-class ActorRefAwarePicklerRegistry(proxy: AbstractProxy) extends PicklerRegistry {
+private class ActorRefAwarePicklerRegistry(proxy: AbstractProxy) extends PicklerRegistry {
   val base = PicklerRegistry
 
   override def pickle[P](value: Any)(implicit builder: PBuilder[P],

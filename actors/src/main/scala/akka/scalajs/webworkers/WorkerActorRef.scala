@@ -18,18 +18,7 @@ private[akka] class WorkerActorRef(
     else new WorkerActorRef(system, path.parent)
 
   def !(msg: Any)(implicit sender: ActorRef): Unit = {
-    val messagePickle: js.Any = PicklerRegistry.pickle(msg)
-    val senderID = sender match {
-      case Actor.noSender => null
-      case _ => system.globalizePath(sender.path)
-    }
-    val senderIDPickle: js.Any = PicklerRegistry.pickle(senderID)
-    val data = js.Dynamic.literal(
-        kind = "bang",
-        sender = senderIDPickle,
-        receiver = pickledPath,
-        message = messagePickle)
-    WebWorkerRouter.postMessageTo(path.address, data)
+    system.sendMessageAcrossWorkers(path.address, msg, this, sender)
   }
 
   // InternalActorRef API

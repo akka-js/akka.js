@@ -7,35 +7,30 @@ import js.annotation.JSBracketAccess
 
 final class JSMap[A] private () extends Map[String, A]
                                    with MapLike[String, A, JSMap[A]] {
-  private[this] val dict: js.Dictionary = js.Dictionary.empty
+  private[this] val dict: js.Dictionary[A] = js.Dictionary.empty[A]
 
   override def empty: JSMap[A] = new JSMap[A]
 
   override def get(key: String): Option[A] = {
-    val value = dict(key)
-    if (value.isInstanceOf[js.Undefined]) None
-    else Some(value.asInstanceOf[A])
+    if (dict.hasOwnProperty(key)) Some(dict(key))
+    else None
   }
 
   override def +=(kv: (String, A)): this.type = {
-    assert(!kv._2.isInstanceOf[js.Undefined], "Cannot put undefined in JSMap")
-    dict(kv._1) = kv._2.asInstanceOf[js.Any]
+    dict(kv._1) = kv._2
     this
   }
 
   override def -=(key: String): this.type = {
-    // TODO Actually use the 'delete' instruction of JavaScript
-    dict(key) = ((): js.Undefined)
+    dict.delete(key)
     this
   }
 
   override def iterator: Iterator[(String, A)] = {
     for {
-      key <- js.Object.keys(dict.asInstanceOf[js.Object]).iterator
-      value = dict(key)
-      if !value.isInstanceOf[js.Undefined]
+      key <- js.Object.keys(dict).iterator
     } yield {
-      (key, value.asInstanceOf[A])
+      (key, dict(key))
     }
   }
 }

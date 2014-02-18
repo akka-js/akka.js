@@ -57,19 +57,9 @@ lazy val chatExampleScalaJS = project.in(file("examples/chat-full-stack/scalajs"
       packageJS in Compile <<= (packageJS in Compile) triggeredBy (compile in (chatExample, Compile))
   )
   .settings(
-      artifactPath in (Compile, packageExternalDepsJS) :=
-        ((baseDirectory in chatExample).value / "public/javascripts" / ((moduleName in (Compile, packageExternalDepsJS)).value + "-extdeps.js")),
-      artifactPath in (Compile, packageInternalDepsJS) :=
-        ((baseDirectory in chatExample).value / "public/javascripts" / ((moduleName in (Compile, packageInternalDepsJS)).value + "-intdeps.js")),
-      artifactPath in (Compile, packageExportedProductsJS) :=
-        ((baseDirectory in chatExample).value / "public/javascripts" / ((moduleName in (Compile, packageExportedProductsJS)).value + ".js")),
-      //
-      optimizeJS in Compile := {
-        val prev = (optimizeJS in Compile).value
-        val output = (
-            (baseDirectory in chatExample).value / "public/javascripts" /
-            ((moduleName in (Compile, packageExportedProductsJS)).value + "-opt.js"))
-        IO.copyFile(prev, output, true)
-        output
-      }
+      Seq(packageExternalDepsJS, packageInternalDepsJS, packageExportedProductsJS, optimizeJS) map {
+        packageJSKey =>
+          crossTarget in (Compile, packageJSKey) :=
+            (baseDirectory in chatExample).value / "public/javascripts"
+      }: _*
   )

@@ -3,6 +3,7 @@ import ScalaJSKeys._
 val commonSettings = Seq(
     organization := "org.scalajs",
     version := "0.1-SNAPSHOT",
+    scalaVersion := "2.10.3",
     normalizedName ~= { _.replace("scala-js", "scalajs") },
     scalacOptions ++= Seq(
         "-deprecation",
@@ -54,10 +55,10 @@ lazy val chatExampleScalaJS = project.in(file("examples/chat-full-stack/scalajs"
   .settings(
       unmanagedSourceDirectories in Compile +=
         (baseDirectory in chatExample).value / "cscommon",
-      packageJS in Compile <<= (packageJS in Compile) triggeredBy (compile in (chatExample, Compile))
+      fastOptJS in Compile <<= (fastOptJS in Compile) triggeredBy (compile in (chatExample, Compile))
   )
   .settings(
-      Seq(packageExternalDepsJS, packageInternalDepsJS, packageExportedProductsJS, optimizeJS) map {
+      Seq(fastOptJS, fullOptJS) map {
         packageJSKey =>
           crossTarget in (Compile, packageJSKey) :=
             (baseDirectory in chatExample).value / "public/javascripts"

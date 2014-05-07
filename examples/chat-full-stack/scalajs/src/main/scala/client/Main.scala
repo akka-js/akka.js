@@ -15,9 +15,11 @@ import akka.scalajs.jsapi.Timers
 import models._
 
 import scala.scalajs.js
+import js.annotation.JSExport
 import org.scalajs.dom
 import org.scalajs.jquery.{jQuery => jQ, _}
 
+@JSExport("Client")
 object Main {
   RegisterPicklers.registerPicklers()
 
@@ -50,6 +52,7 @@ object Main {
     privateChatTabInfos.getOrElseUpdate(dest, new DiscussionTabInfo("@"+dest.nick))
   }
 
+  @JSExport
   def startup(): Unit = {
     jQ(".not-landing").hide()
 

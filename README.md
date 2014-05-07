@@ -24,9 +24,9 @@ supervision, death watch notifications and the like.
 
 Build it with:
 
-    > faultToleranceExample/packageJS
+    > faultToleranceExample/fastOptJS
 
-then open `examples/faulttolerance/index-dev.html` in your browser and look
+then open `examples/faulttolerance/index-fastopt.html` in your browser and look
 at the Web console for the output.
 
 ### Web Workers example
@@ -35,10 +35,10 @@ The Web Workers example demonstrates the communication between Web Workers.
 
 Build it with:
 
-    > webworkersExample/packageJS
+    > webworkersExample/fastOptJS
 
-then open `examples/webworkers/index-dev` in your browser and look at the Web
-console for the output.
+then open `examples/webworkers/index-fastopt.html` in your browser and look at
+the Webconsole for the output.
 
 ### Chat example (with client-server communication)
 
@@ -47,12 +47,13 @@ and server communicate transparently between Akka/JVM and "Akka/JS".
 
 Build the client then run the server with:
 
-    > chatExampleScalaJS/optimizeJS
+    > chatExampleScalaJS/fullOptJS
     > project chatExample
     [scalajs-actors-examples-chat] $ run
 
-then navigate to http://localhost/opt with your browser. To have some fun, open
-multiple tabs (or multiple browsers) and start playing with the chat.
+then navigate to [http://localhost:9000/opt](http://localhost:9000/opt) with
+your browser. To have some fun, open multiple tabs (or multiple browsers) and
+start playing with the chat.
 
 ## Design documentation
 

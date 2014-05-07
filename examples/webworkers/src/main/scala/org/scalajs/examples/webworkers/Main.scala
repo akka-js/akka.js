@@ -1,6 +1,7 @@
 package org.scalajs.examples.webworkers
 
 import scala.scalajs.js
+import js.annotation.JSExport
 import js.Dynamic.global
 
 import org.scalajs.spickling.PicklerRegistry
@@ -23,6 +24,7 @@ class GreetingResponseActor extends Actor {
   }
 }
 
+@JSExport
 object Main {
   PicklerRegistry.register(Start)
   PicklerRegistry.register[Greeting]
@@ -33,6 +35,7 @@ object Main {
 
   val system = ActorSystem("MainSystem")
 
+  @JSExport
   def main(): Unit = {
     val greeter = system.actorOf(Props(new GreetingResponseActor),
         name = "greetingresponse")

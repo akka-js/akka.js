@@ -6,16 +6,16 @@ import akka.scalajs.jsapi.Timers
 import akka.actor.Cancellable
 
 class JSIntervalTask(interval: FiniteDuration, task: => Any) extends Cancellable {
-  private[this] var underlying: Timers.IntervalID =
-    Timers.setInterval(interval)(task)
+  private[this] var underlying: Option[Timers.IntervalID] =
+    Some(Timers.setInterval(interval)(task))
 
-  def isCancelled: Boolean = underlying ne null
+  def isCancelled: Boolean = underlying.isEmpty
 
   def cancel(): Boolean = {
     if (isCancelled) false
     else {
-      Timers.clearInterval(underlying)
-      underlying = null
+      Timers.clearInterval(underlying.get)
+      underlying = None
       true
     }
   }

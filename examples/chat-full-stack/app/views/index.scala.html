@@ -48,11 +48,12 @@
 </div>
 
 @if(devMode) {
-<script src="@routes.Assets.at("javascripts/scalajs-actors-example-chat-client-extdeps.js")" type="text/javascript"></script>
-<script src="@routes.Assets.at("javascripts/scalajs-actors-example-chat-client-intdeps.js")" type="text/javascript"></script>
-<script src="@routes.Assets.at("javascripts/scalajs-actors-example-chat-client.js")" type="text/javascript"></script>
+<script src="@routes.Assets.at("javascripts/scalajs-actors-example-chat-client-fastopt.js")" type="text/javascript"></script>
 } else {
 <script src="@routes.Assets.at("javascripts/scalajs-actors-example-chat-client-opt.js")" type="text/javascript"></script>
 }
+<script type="text/javascript">
+Client().startup();
+</script>
 
 }

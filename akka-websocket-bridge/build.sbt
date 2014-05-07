@@ -13,5 +13,5 @@ resolvers += Resolver.url("scala-js-releases",
 libraryDependencies ++= Seq(
     "com.typesafe.akka" %% "akka-actor" % "2.2.3",
     "com.typesafe.play" %% "play" % "2.2.1",
-    "org.scalajs" %% "scalajs-pickling-play-json" % "0.1"
+    "org.scalajs" %% "scalajs-pickling-play-json" % "0.3-SNAPSHOT"
 )

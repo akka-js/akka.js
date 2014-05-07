@@ -6,16 +6,16 @@ import akka.scalajs.jsapi.Timers
 import akka.actor.Cancellable
 
 class JSTimeoutTask(delay: FiniteDuration, task: => Any) extends Cancellable {
-  private[this] var underlying: Timers.TimeoutID =
-    Timers.setTimeout(delay)(task)
+  private[this] var underlying: Option[Timers.TimeoutID] =
+    Some(Timers.setTimeout(delay)(task))
 
-  def isCancelled: Boolean = underlying ne null
+  def isCancelled: Boolean = underlying.isEmpty
 
   def cancel(): Boolean = {
     if (isCancelled) false
     else {
-      Timers.clearTimeout(underlying)
-      underlying = null
+      Timers.clearTimeout(underlying.get)
+      underlying = None
       true
     }
   }

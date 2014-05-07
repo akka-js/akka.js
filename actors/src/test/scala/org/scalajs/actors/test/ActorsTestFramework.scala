@@ -15,8 +15,11 @@ object ActorsTestFramework extends TestFramework {
     val oldSetInterval = global.setInterval
     val oldClearInterval = global.clearInterval
 
+    var lastID: js.Number = 0
     global.setTimeout = { (f: js.Function0[_], delay: js.Number) =>
       eventQueue.enqueue(f)
+      lastID += 1
+      lastID
     }
     global.clearTimeout = { () => sys.error("Stub for clearTimeout") }
     global.setInterval  = { () => sys.error("Stub for setInterval") }
@@ -37,9 +40,14 @@ object ActorsTestFramework extends TestFramework {
     }
   }
 
-  def runTests(testOutput: TestOutput)(tests: => Unit): Unit = {
+  override def runTests(testOutput: TestOutput, args: js.Array[String])(
+    tests: js.Function0[Unit]): Unit = {
     withEventQueue {
-      tests
+      try {
+        tests()
+      } catch {
+        case e: Throwable => testOutput.error(e.getMessage, e.getStackTrace)
+      }
     }
   }
 }

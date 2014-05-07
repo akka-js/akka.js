@@ -1,6 +1,7 @@
 package org.scalajs.examples.webworkers
 
 import scala.scalajs.js
+import js.annotation.JSExport
 import js.Dynamic.global
 
 import org.scalajs.spickling.PicklerRegistry
@@ -15,6 +16,7 @@ class GreetingActor extends Actor {
   }
 }
 
+@JSExport
 object WebWorkerMain {
   println("Starting WebWorkerMain")
   PicklerRegistry.register[Greeting]
@@ -23,6 +25,7 @@ object WebWorkerMain {
 
   var system: ActorSystem = _
 
+  @JSExport
   def main(): Unit = {
     WebWorkerRouter.onInitialized {
       global.console.log("Worker initialized with address "+WebWorkerRouter.address)

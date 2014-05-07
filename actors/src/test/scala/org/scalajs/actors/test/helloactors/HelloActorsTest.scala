@@ -17,6 +17,8 @@ class GreetingActor extends Actor {
 object HelloActorsTest extends ActorsTest {
   global.console.log("Starting test")
   val system = ActorSystem("MySystem")
+  global.console.log("Actor system created")
   val greeter = system.actorOf(Props(new GreetingActor), name = "greeter")
+  global.console.log("Actor created")
   greeter ! Greeting("Charlie Parker")
 }

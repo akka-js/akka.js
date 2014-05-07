@@ -11,6 +11,7 @@ import akka.pattern.PipeTo.pipe
 import scala.concurrent.duration._
 
 import scala.scalajs.js
+import js.annotation.JSExport
 
 /*import org.scalajs.actors.pattern.{ ask, pipe }
 import com.typesafe.config.ConfigFactory*/
@@ -28,10 +29,12 @@ trait ActorLogging {
 /**
  * Runs the sample
  */
+@JSExport
 object FaultHandlingDocSample {
   import Worker._
 
-  def main(args: Array[String]): Unit = {
+  @JSExport
+  def main(): Unit = {
     /*val config = ConfigFactory.parseString("""
       akka.loglevel = "DEBUG"
       akka.actor.debug {

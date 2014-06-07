@@ -13,7 +13,7 @@ import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits._
 
 object ActorWebSocket {
-  def apply(f: RequestHeader => Future[Any]): WebSocket[JsValue] = {
+  def apply(f: RequestHeader => Future[Any]) = {
     WebSocket.async[JsValue] { request =>
       f(request).map(_.asInstanceOf[(Iteratee[JsValue, Unit], Enumerator[JsValue])])
     }

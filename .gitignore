@@ -3,3 +3,41 @@ target/
 .classpath
 .project
 .settings/
+
+*.class
+*.log
+*~
+
+# sbt specific
+boot/
+lib_managed/
+target/
+.history
+dist/*
+src_managed/
+project/boot/
+project/plugins/project/
+
+# Scala-IDE specific
+.scala_dependencies
+
+# Eclipse
+.cache
+.classpath
+.project
+.scala_dependencies
+.settings
+.target/
+
+# IntelliJ
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+
+# TextMate
+*.tmproj
+
+# Mac
+.DS_Store

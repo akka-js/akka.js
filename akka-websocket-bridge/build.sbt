@@ -1,4 +1,4 @@
-scalaVersion := "2.10.3"
+scalaVersion := "2.10.4"
 
 name := "Scala.js-Akka Websocket Bridge"
 
@@ -11,7 +11,7 @@ resolvers += Resolver.url("scala-js-releases",
     Resolver.ivyStylePatterns)
 
 libraryDependencies ++= Seq(
-    "com.typesafe.akka" %% "akka-actor" % "2.2.3",
-    "com.typesafe.play" %% "play" % "2.2.1",
-    "org.scalajs" %% "scalajs-pickling-play-json" % "0.3-SNAPSHOT"
+    "com.typesafe.akka" %% "akka-actor" % "2.3.3",
+    "com.typesafe.play" %% "play" % "2.3.0",
+    "org.scalajs" %% "scalajs-pickling-play-json" % "0.3"
 )

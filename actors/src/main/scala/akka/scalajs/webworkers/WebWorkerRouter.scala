@@ -3,6 +3,7 @@ package akka.scalajs.webworkers
 import scala.scalajs.js
 import js.Dynamic.global
 import akka.scalajs.jsapi._
+import scala.scalajs.js.DynamicImplicits._
 
 import akka.actor._
 import akka.util.JSMap
@@ -86,7 +87,7 @@ object WebWorkerRouter {
         ParentWorkerConnection.addEventListener(
             "message", cruiseListener, useCapture = false)
 
-        val address = data.address.asInstanceOf[js.String]
+        val address = data.address.asInstanceOf[String]
         initializeWithAddress(address)
       } else if (!(!data.isWebWorkerRouterPostMessage)) {
         onInitialized {
@@ -217,11 +218,11 @@ object WebWorkerRouter {
   }
 
   private def forwardMessage(data: js.Dynamic): Unit = {
-    val address: String = data.address.asInstanceOf[js.String]
+    val address: String = data.address.asInstanceOf[String]
 
     if (address == myAddress) {
       // Arrived at destination
-      deliverMessage(data.system.asInstanceOf[js.String], data.message)
+      deliverMessage(data.system.asInstanceOf[String], data.message)
     } else if (address.startsWith(myAddress)) {
       // Destination is one of my descendants
       val childName = address.substring(myAddress.length).split("/")(0)

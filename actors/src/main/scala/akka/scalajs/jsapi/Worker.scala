@@ -3,13 +3,13 @@ package akka.scalajs.jsapi
 import scala.scalajs.js
 
 trait WorkerConnection extends EventTarget {
-  def postMessage(message: js.Any): Unit = ???
+  def postMessage(message: js.Any): Unit = js.native
 
-  var onmessage: js.Function1[MessageEvent, _] = ???
+  var onmessage: js.Function1[MessageEvent, _] = js.native
 }
 
-class Worker(url: js.String) extends WorkerConnection {
-  def terminate(): Unit = ???
+class Worker(url: String) extends WorkerConnection {
+  def terminate(): Unit = js.native
 }
 
 object ParentWorkerConnection extends WorkerConnection with js.GlobalScope

@@ -1,11 +1,14 @@
-import ScalaJSKeys._
-
-scalaJSSettings
+enablePlugins(ScalaJSPlugin)
 
 name := "Scala.js actors"
 
-libraryDependencies += "org.scalajs" %%% "scalajs-pickling" % "0.3"
+scalaVersion := "2.11.5"
 
-libraryDependencies += "org.scala-lang.modules.scalajs" %% "scalajs-test-bridge" % scalaJSVersion % "test"
+unmanagedSourceDirectories in Compile += baseDirectory.value / "src" / "main"/ "wscommon"
 
-scalaJSTestFramework in Test := "org.scalajs.actors.test.ActorsTestFramework"
+libraryDependencies += "org.scalajs" %%% "scalajs-pickling" % "0.4-SNAPSHOT"
+
+libraryDependencies += "com.lihaoyi" %%% "utest" % "0.3.0" % "test"
+//libraryDependencies += "org.scala-lang.modules.scalajs" %% "scalajs-test-bridge" % scalaJSVersion % "test"
+
+testFrameworks += new TestFramework("org.scalajs.actors.test.ActorsTestFramework")

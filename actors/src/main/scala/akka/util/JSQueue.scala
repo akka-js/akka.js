@@ -16,15 +16,16 @@ class JSQueue[A] {
   def enqueue(item: A): Unit = queue.push(item)
 
   def dequeue(): A = {
-    if (queue.length.toInt == 0)
+    val queueLength = queue.length.toInt
+    if (queueLength == 0)
       throw new NoSuchElementException("queue empty")
 
     val item = queue(offset)
     offset += 1
 
     // shrink the underlying queue if necessary
-    if (offset*2 >= queue.length.toInt) {
-      queue = queue.slice(offset)
+    if (offset*2 >= queueLength) {
+      queue = queue.slice(offset, queueLength)
       offset = 0
     }
 

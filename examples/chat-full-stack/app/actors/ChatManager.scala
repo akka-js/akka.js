@@ -27,6 +27,10 @@ class ChatManager extends Actor with ActorLogging {
       log.info("chat manager, new connection")
       usersManager.forward(m)
   }
+  
+  override def postStop() = {
+    println("Chat manager MORTO")
+  }
 }
 
 object RoomsManager {

@@ -100,7 +100,7 @@ object Main {
   }
 
   def computeGravatarHash(email: String): String =
-    js.Dynamic.global.hex_md5(email.trim.toLowerCase).asInstanceOf[js.String]
+    js.Dynamic.global.hex_md5(email.trim.toLowerCase).asInstanceOf[String]
 
   def gravatarURL(user: User, size: Int): String =
     s"http://www.gravatar.com/avatar/${user.gravatarHash}?s=$size"
@@ -173,7 +173,7 @@ object SendMessageButton {
   val button = jQ("#send-button")
   val messageInput = jQ("#msg-to-send")
 
-  def disabled: Boolean = button.prop("disabled").asInstanceOf[js.Boolean]
+  def disabled: Boolean = button.prop("disabled").asInstanceOf[Boolean]
   def disabled_=(v: Boolean): Unit = button.prop("disabled", v)
 
   var target: ActorRef = Main.system.deadLetters
@@ -183,7 +183,7 @@ object SendMessageButton {
     false
   }
   messageInput keydown { (e: JQueryEventObject) =>
-    if (e.which == (13: js.Number)) {
+    if (e.which == (13: Number)) {
       e.preventDefault()
       sendMessage()
     }

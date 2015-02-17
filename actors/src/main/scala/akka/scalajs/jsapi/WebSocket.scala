@@ -2,10 +2,10 @@ package akka.scalajs.jsapi
 
 import scala.scalajs.js
 
-class WebSocket(url: js.String) extends js.Object with EventTarget {
-  def send(message: js.String): Unit = ???
+class WebSocket(url: String) extends js.Object with EventTarget {
+  def send(message: String): Unit = js.native
 
-  def close(code: js.Number, reason: js.String): Unit = ???
-  def close(code: js.Number): Unit = ???
-  def close(): Unit = ???
+  def close(code: Number, reason: String): Unit = js.native
+  def close(code: Number): Unit = js.native
+  def close(): Unit = js.native
 }

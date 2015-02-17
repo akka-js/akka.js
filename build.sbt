@@ -1,9 +1,9 @@
-import ScalaJSKeys._
+enablePlugins(ScalaJSPlugin)
 
 val commonSettings = Seq(
     organization := "org.scalajs",
     version := "0.1-SNAPSHOT",
-    scalaVersion := "2.10.4",
+    scalaVersion := "2.11.5",
     normalizedName ~= { _.replace("scala-js", "scalajs") },
     scalacOptions ++= Seq(
         "-deprecation",
@@ -50,7 +50,7 @@ lazy val chatExample = project.in(file("examples/chat-full-stack")).enablePlugin
   )
 
 lazy val chatExampleScalaJS = project.in(file("examples/chat-full-stack/scalajs"))
-  .settings((commonSettings ++ scalaJSSettings): _*)
+  .settings((commonSettings): _*)
   .dependsOn(actors)
   .settings(
       unmanagedSourceDirectories in Compile +=

@@ -9,8 +9,11 @@ import play.api.libs.json._
 import play.api.libs.iteratee._
 import play.api.libs.concurrent.Akka
 
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits._
+//import scala.concurrent.Future
+//import scala.concurrent.ExecutionContext.Implicits._
+
+import play.api.mvc._
+import play.api.Play.current
 
 object ActorWebSocket {
   def apply(f: RequestHeader => Future[Any]) = {
@@ -18,7 +21,20 @@ object ActorWebSocket {
       f(request).map(_.asInstanceOf[(Iteratee[JsValue, Unit], Enumerator[JsValue])])
     }
   }
+  
+  def socket = WebSocket.using[JsValue] { request =>
 
+    val (out, channel) = Concurrent.broadcast[String]
+
+    val in = Iteratee.foreach[JsValue] {
+    	msg => 
+    	  	serverProxy ! AbstractProxy.IncomingMessage(msg)
+    		channel push("I received your message: " + msg)
+    }
+    (in,out)
+  }
+  
+  
   def actorForWebSocketHandler(entryPointRef: ActorRef)(
       implicit context: ActorRefFactory): (Iteratee[JsValue, Unit], Enumerator[JsValue]) = {
 

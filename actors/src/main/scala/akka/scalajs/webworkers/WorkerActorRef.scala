@@ -1,8 +1,8 @@
 package akka.scalajs.webworkers
 
 import scala.scalajs.js
-import org.scalajs.spickling.PicklerRegistry
-import org.scalajs.spickling.jsany._
+import be.doeraene.spickling.PicklerRegistry
+import be.doeraene.spickling.jsany._
 
 import akka.actor._
 import akka.dispatch.sysmsg.SystemMessage

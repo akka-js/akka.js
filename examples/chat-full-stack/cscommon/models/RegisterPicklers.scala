@@ -1,6 +1,6 @@
 package models
 
-import org.scalajs.spickling._
+import be.doeraene.spickling._
 
 object RegisterPicklers {
   import PicklerRegistry.register

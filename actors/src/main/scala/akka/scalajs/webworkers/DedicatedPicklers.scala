@@ -1,6 +1,6 @@
 package akka.scalajs.webworkers
 
-import org.scalajs.spickling._
+import be.doeraene.spickling._
 
 import akka.actor._
 

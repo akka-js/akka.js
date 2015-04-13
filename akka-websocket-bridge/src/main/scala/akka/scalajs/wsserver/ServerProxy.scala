@@ -9,8 +9,8 @@ import akka.scalajs.wscommon._
 import play.api.libs.json._
 import play.api.libs.iteratee.Concurrent.Channel
 
-import org.scalajs.spickling._
-import org.scalajs.spickling.playjson._
+import be.doeraene.spickling._
+import be.doeraene.spickling.playjson._
 
 object ServerProxy {
   case object SendEntryPointRef

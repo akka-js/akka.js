@@ -5,7 +5,7 @@ import scala.collection.mutable
 import akka.actor._
 import akka.scalajs.wscommon._
 
-import org.scalajs.spickling._
+import be.doeraene.spickling._
 
 object AbstractProxy {
   // Messages sent across the network

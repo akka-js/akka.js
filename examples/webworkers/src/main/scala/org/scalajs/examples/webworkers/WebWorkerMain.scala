@@ -4,7 +4,7 @@ import scala.scalajs.js
 import js.annotation.JSExport
 import js.Dynamic.global
 
-import org.scalajs.spickling.PicklerRegistry
+import be.doeraene.spickling.PicklerRegistry
 import akka.actor._
 import akka.scalajs.webworkers.WebWorkerRouter
 

@@ -6,8 +6,8 @@ import akka.scalajs.wscommon._
 import scala.scalajs.js
 import akka.scalajs.jsapi._
 
-import org.scalajs.spickling._
-import org.scalajs.spickling.jsany._
+import be.doeraene.spickling._
+import be.doeraene.spickling.jsany._
 
 object ClientProxy {
   case object ConnectionError

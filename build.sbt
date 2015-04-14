@@ -49,6 +49,31 @@ lazy val chatExample = project.in(file("examples/chat-full-stack")).enablePlugin
         baseDirectory.value / "cscommon"
   )
 
+lazy val newChatExample = project.in(file("examples/chat-full-stack-new")).enablePlugins(PlayScala)
+  .settings(commonSettings: _*)
+  .dependsOn(akkaWebsocketBridge)
+  .settings(
+    unmanagedSourceDirectories in Compile +=
+      baseDirectory.value / "cscommon"
+  )
+
+lazy val newChatExampleJS = project.in(file("examples/chat-full-stack-new/scalajs"))
+  .settings((commonSettings): _*)
+  .dependsOn(actors)
+  .settings(
+    unmanagedSourceDirectories in Compile +=
+      (baseDirectory in newChatExample).value / "cscommon",
+    fastOptJS in Compile <<= (fastOptJS in Compile) triggeredBy (compile in (newChatExample, Compile))
+  )
+  .settings(
+    Seq(fastOptJS, fullOptJS) map {
+      packageJSKey =>
+        crossTarget in (Compile, packageJSKey) :=
+          (baseDirectory in newChatExample).value / "public/javascripts"
+    }: _*
+  )
+
+
 lazy val chatExampleScalaJS = project.in(file("examples/chat-full-stack/scalajs"))
   .settings((commonSettings): _*)
   .dependsOn(actors)

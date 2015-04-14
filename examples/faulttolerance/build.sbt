@@ -2,7 +2,7 @@ enablePlugins(ScalaJSPlugin)
 
 name := "Scala.js actors examples - fault tolerance"
 
-scalaVersion := "2.11.5"
+scalaVersion := "2.11.6"
 
 libraryDependencies += "scala-js-actors" %%% "scala-js-actors" % "0.1-SNAPSHOT"
 

@@ -1,10 +1,10 @@
 enablePlugins(ScalaJSPlugin)
 
 val commonSettings = Seq(
-    organization := "org.scalajs",
+    //organization := "org.scalajs",
     version := "0.1-SNAPSHOT",
-    scalaVersion := "2.11.5",
-    normalizedName ~= { _.replace("scala-js", "scalajs") },
+    scalaVersion := "2.11.6",
+    //normalizedName ~= { _.replace("scala-js", "scalajs") },
     scalacOptions ++= Seq(
         "-deprecation",
         "-unchecked",

@@ -1,6 +1,6 @@
 name := "scalajs-actors-examples-chat"
 
-scalaVersion := "2.11.5"
+scalaVersion := "2.11.6"
 
 libraryDependencies ++= Seq(
     "be.doeraene" %% "scalajs-pickling-play-json" % "0.4.0",

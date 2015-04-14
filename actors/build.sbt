@@ -2,7 +2,7 @@ enablePlugins(ScalaJSPlugin)
 
 name := "Scala.js actors"
 
-scalaVersion := "2.11.5"
+scalaVersion := "2.11.6"
 
 unmanagedSourceDirectories in Compile += baseDirectory.value / "src" / "main"/ "wscommon"
 

@@ -16,13 +16,14 @@ import akka.scalajs.wsserver.ActorWebSocket
 import actors._
 
 object Application extends Controller {
+  val ourSystem = ActorSystem("chat-app-scalajs")
 
   import play.api.Play.current
 
   implicit val timeout = akka.util.Timeout(5 seconds)
-  implicit def ec = Akka.system.dispatcher
+  implicit def ec = ourSystem.dispatcher
 
-  val chatManager = Akka.system.actorOf(Props[ChatManager], name = "chat")
+  val chatManager = ourSystem.actorOf(Props[ChatManager], name = "chat")
 
   def indexDev = Action {
     Ok(views.html.index(devMode = true))

@@ -7,10 +7,10 @@ logLevel := Level.Warn
 resolvers += "Typesafe repository" at "http://repo.typesafe.com/typesafe/releases/"
 
 // Use the Play sbt plugin for Play projects
-addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.3.0")
+addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.4.0-M3")
 
 //to generate eclipse project
-addSbtPlugin("com.typesafe.sbteclipse" % "sbteclipse-plugin" % "2.5.0")
+addSbtPlugin("com.typesafe.sbteclipse" % "sbteclipse-plugin" % "3.0.0")
 
 //to generate idea project
 addSbtPlugin("com.github.mpeltonen" % "sbt-idea" % "1.6.0")

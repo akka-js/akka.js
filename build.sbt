@@ -51,13 +51,13 @@ lazy val chatExample = project.in(file("examples/chat-full-stack")).enablePlugin
 
 lazy val newChatExample = project.in(file("examples/chat-full-stack-new")).enablePlugins(PlayScala)
   .settings(commonSettings: _*)
-  .dependsOn(akkaWebsocketBridge)
+  .dependsOn(actors)
   .settings(
     unmanagedSourceDirectories in Compile +=
       baseDirectory.value / "cscommon"
   )
 
-lazy val newChatExampleJS = project.in(file("examples/chat-full-stack-new/scalajs"))
+/*lazy val newChatExampleJS = project.in(file("examples/chat-full-stack-new/scalajs"))
   .settings((commonSettings): _*)
   .dependsOn(actors)
   .settings(
@@ -71,7 +71,7 @@ lazy val newChatExampleJS = project.in(file("examples/chat-full-stack-new/scalaj
         crossTarget in (Compile, packageJSKey) :=
           (baseDirectory in newChatExample).value / "public/javascripts"
     }: _*
-  )
+  )*/
 
 
 lazy val chatExampleScalaJS = project.in(file("examples/chat-full-stack/scalajs"))

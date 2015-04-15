@@ -1,7 +1,5 @@
 name := "Scala.js - Akka Websocket Bridge"
 
-normalizedName := "akka-websocket"
-
 resolvers += "Typesafe repository" at "http://repo.typesafe.com/typesafe/releases/"
 
 lazy val root = project.in(file(".")).

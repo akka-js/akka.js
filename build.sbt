@@ -15,8 +15,8 @@ val commonSettings = Seq(
 lazy val root = project.in(file(".")).settings(commonSettings: _*)
   .aggregate(akkaActor)
 
-lazy val akkaWebSocket = project.in(file("akka-websocket"))
+lazy val akkaWebSocket = project.in(file("akka-js-websocket"))
   .settings(commonSettings: _*)
 
-lazy val akkaActor = project.in(file("akka-actor"))
+lazy val akkaActor = project.in(file("akka-js-actor"))
   .settings(commonSettings: _*)

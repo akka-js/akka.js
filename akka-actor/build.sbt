@@ -2,13 +2,13 @@ enablePlugins(ScalaJSPlugin)
 
 name := "Scala.js actors"
 
-scalaVersion := "2.11.6"
+normalizedName := "akka-js-actors"
 
-unmanagedSourceDirectories in Compile += baseDirectory.value / "src" / "main"/ "wscommon"
+organization := "akka.js"
 
-libraryDependencies += "be.doeraene" %%% "scalajs-pickling" % "0.4.0"
-
-libraryDependencies += "com.lihaoyi" %%% "utest" % "0.3.0" % "test"
-//libraryDependencies += "org.scala-lang.modules.scalajs" %% "scalajs-test-bridge" % scalaJSVersion % "test"
+libraryDependencies ++= Seq(
+  "be.doeraene" %%% "scalajs-pickling" % "0.4.0",
+  "com.lihaoyi" %%% "utest" % "0.3.0" % "test"
+)
 
 testFrameworks += new TestFramework("org.scalajs.actors.test.ActorsTestFramework")

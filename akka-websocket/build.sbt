@@ -14,6 +14,7 @@ lazy val root = project.in(file(".")).
 lazy val akkaWebSocket = crossProject.in(file(".")).
   settings(
     name := "akka-websocket",
+    organization := "akka.js",
     version := "0.1-SNAPSHOT",
     scalaVersion := "2.11.6"
   ).
@@ -33,6 +34,3 @@ lazy val akkaWebSocket = crossProject.in(file(".")).
 
 lazy val akkaWebSocketJVM = akkaWebSocket.jvm
 lazy val akkaWebSocketJS = akkaWebSocket.js
-
-
-

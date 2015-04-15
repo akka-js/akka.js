@@ -3,6 +3,7 @@ enablePlugins(ScalaJSPlugin)
 val commonSettings = Seq(
     version := "0.1-SNAPSHOT",
     scalaVersion := "2.11.6",
+    organization := "akka.js",
     scalacOptions ++= Seq(
         "-deprecation",
         "-unchecked",
@@ -12,19 +13,10 @@ val commonSettings = Seq(
 )
 
 lazy val root = project.in(file(".")).settings(commonSettings: _*)
-  .aggregate(akkaActor, akkaWebsocket)
+  .aggregate(akkaActor)
 
-lazy val akkaActors = project.in("akka-actor")
+lazy val akkaWebSocket = project.in(file("akka-websocket"))
   .settings(commonSettings: _*)
-  .settings(
-      unmanagedSourceDirectories in Compile +=
-        (sourceDirectory in Compile).value / "wscommon"
-  )
 
-lazy val akkaWebsocket = project.in(file("akka-websocket"))
+lazy val akkaActor = project.in(file("akka-actor"))
   .settings(commonSettings: _*)
-  .settings(
-      unmanagedSourceDirectories in Compile +=
-        (sourceDirectory in (actors, Compile)).value / "wscommon"
-  )
-

@@ -17,12 +17,6 @@ import play.api.Play.current
 import play.api.libs.concurrent.Execution.Implicits._
 
 object ActorWebSocket {
-  def apply(f: RequestHeader => Future[Any]) = {
-    WebSocket.async[JsValue] { request =>
-      f(request).map(_.asInstanceOf[(Iteratee[JsValue, Unit], Enumerator[JsValue])])
-    }
-  }
-  
   /*def socket = WebSocket.using[JsValue] { request =>
 
     val (out, channel) = Concurrent.broadcast[String]
@@ -30,15 +24,29 @@ object ActorWebSocket {
         Props(classOf[ServerProxy], channel, entryPointRef))
 
     val in = Iteratee.foreach[JsValue] {
-    	msg => 
+    	msg =>
     	  	serverProxy ! AbstractProxy.IncomingMessage(msg)
     		channel push("I received your message: " + msg)
     }
     (in,out)
   }*/
-  
-  
-  def actorForWebSocketHandler(entryPointRef: ActorRef)(
+
+  /*def apply(f: RequestHeader => Future[Any]) = {
+    WebSocket.async[JsValue] { request =>
+      f(request).map(_.asInstanceOf[(Iteratee[JsValue, Unit], Enumerator[JsValue])])
+    }
+  }*/
+
+  def actorForWebSocketHandler(out: ActorRef, entryPointRef: ActorRef)(
+    implicit context: ActorRefFactory): Props = {
+
+    /*val serverProxy = context.actorOf(
+      Props(classOf[MyActor], out, entryPointRef))*/
+    val serverProxy = Props(classOf[ServerProxyActor], out, entryPointRef)
+    // Forward incoming messages as messages to the proxy
+    serverProxy
+  }
+/*  def actorForWebSocketHandler(entryPointRef: ActorRef)(
       implicit context: ActorRefFactory): (Iteratee[JsValue, Unit], Enumerator[JsValue]) = {
 
     val (out, channel) = Concurrent.broadcast[JsValue]
@@ -53,5 +61,5 @@ object ActorWebSocket {
     }
 
     (in, out)
-  }
+  }*/
 }

@@ -29,38 +29,3 @@ lazy val akkaWebsocketBridge = project.in(file("akka-websocket-bridge"))
         (sourceDirectory in (actors, Compile)).value / "wscommon"
   )
 
-lazy val examples = project.settings(commonSettings: _*)
-  .aggregate(webworkersExample, faultToleranceExample,
-      chatExample, chatExampleScalaJS)
-
-lazy val webworkersExample = project.in(file("examples/webworkers"))
-  .settings(commonSettings: _*)
-  .dependsOn(actors)
-
-lazy val faultToleranceExample = project.in(file("examples/faulttolerance"))
-  .settings(commonSettings: _*)
-  .dependsOn(actors)
-
-lazy val chatExample = project.in(file("examples/chat-full-stack")).enablePlugins(PlayScala)
-  .settings(commonSettings: _*)
-  .dependsOn(akkaWebsocketBridge)
-  .settings(
-      unmanagedSourceDirectories in Compile +=
-        baseDirectory.value / "cscommon"
-  )
-
-lazy val chatExampleScalaJS = project.in(file("examples/chat-full-stack/scalajs"))
-  .settings((commonSettings): _*)
-  .dependsOn(actors)
-  .settings(
-      unmanagedSourceDirectories in Compile +=
-        (baseDirectory in chatExample).value / "cscommon",
-      fastOptJS in Compile <<= (fastOptJS in Compile) triggeredBy (compile in (chatExample, Compile))
-  )
-  .settings(
-      Seq(fastOptJS, fullOptJS) map {
-        packageJSKey =>
-          crossTarget in (Compile, packageJSKey) :=
-            (baseDirectory in chatExample).value / "public/javascripts"
-      }: _*
-  )

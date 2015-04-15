@@ -1,19 +1,38 @@
-scalaVersion := "2.11.6"
+name := "Scala.js - Akka Websocket Bridge"
 
-name := "Scala.js-Akka Websocket Bridge"
-
-normalizedName := "akka-websocket-bridge"
+normalizedName := "akka-websocket"
 
 resolvers += "Typesafe repository" at "http://repo.typesafe.com/typesafe/releases/"
 
-unmanagedSourceDirectories in Compile += baseDirectory.value / "src" / "main"/ "wscommon"
+lazy val root = project.in(file(".")).
+  aggregate(akkaWebSocketJS, akkaWebSocketJVM).
+  settings(
+    publish := {},
+    publishLocal := {}
+  )
 
-resolvers += Resolver.url("scala-js-releases",
-    url("http://dl.bintray.com/content/scala-js/scala-js-releases"))(
-    Resolver.ivyStylePatterns)
+lazy val akkaWebSocket = crossProject.in(file(".")).
+  settings(
+    name := "akka-websocket",
+    version := "0.1-SNAPSHOT",
+    scalaVersion := "2.11.6"
+  ).
+  jvmSettings(
+    libraryDependencies ++= Seq(
+      "com.typesafe.akka" %% "akka-actor" % "2.3.9",
+      "com.typesafe.play" % "play_2.11" % "2.3.8",
+      "be.doeraene" %% "scalajs-pickling-play-json" % "0.4.0"
+    )
+  ).
+  jsSettings(
+    libraryDependencies ++= Seq(
+      "scala-js-actors" %%% "scala-js-actors" % "0.1-SNAPSHOT",
+      "be.doeraene" %%% "scalajs-pickling" % "0.4.0"
+    )    
+  )
 
-libraryDependencies ++= Seq(
-    "com.typesafe.akka" %% "akka-actor" % "2.3.9",
-    "com.typesafe.play" % "play_2.11" % "2.3.8",
-    "be.doeraene" %% "scalajs-pickling-play-json" % "0.4.0"
-)
+lazy val akkaWebSocketJVM = akkaWebSocket.jvm
+lazy val akkaWebSocketJS = akkaWebSocket.js
+
+
+

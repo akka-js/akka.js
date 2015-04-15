@@ -17,6 +17,7 @@ object ServerProxyActor {
 }
 
 class ServerProxyActor(out: ActorRef, entryPointRef: Future[ActorRef]) extends AbstractProxy {
+  def this(out: ActorRef, entryPointRef: ActorRef) = this(out, Future.successful(entryPointRef))
 
   import AbstractProxy._
   import ServerProxyActor._
@@ -33,6 +34,7 @@ class ServerProxyActor(out: ActorRef, entryPointRef: Future[ActorRef]) extends A
   }
 
   override def postStop() = {
+    self ! AbstractProxy.ConnectionClosed
     super.postStop()
     //channelToClient.end()
   }
@@ -42,6 +44,7 @@ class ServerProxyActor(out: ActorRef, entryPointRef: Future[ActorRef]) extends A
       entryPointRef foreach { ref =>
         self ! SendToPeer(Welcome(ref))
       }
+    case msg => self ! AbstractProxy.IncomingMessage(msg)
   }
 
   override protected def sendPickleToPeer(pickle: PickleType): Unit = {

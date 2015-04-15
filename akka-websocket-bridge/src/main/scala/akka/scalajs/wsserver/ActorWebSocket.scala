@@ -16,23 +16,6 @@ import play.api.mvc.WebSocket
 import play.api.Play.current
 import play.api.libs.concurrent.Execution.Implicits._
 
-object MyActor {
-  //def props(out: ActorRef) = Props(new MyActor(out))
-}
-
-class MyActor(out: ActorRef, entryPointRef: ActorRef) extends Actor {
-  val serverProxy = context.actorOf(
-    Props(classOf[ServerProxyActor], out, Future.successful(entryPointRef)))
-
-  def receive = {
-    case msg => serverProxy ! AbstractProxy.IncomingMessage(msg)
-  }
-
-  override def postStop() = {
-    serverProxy ! AbstractProxy.ConnectionClosed
-  }
-}
-
 object ActorWebSocket {
   /*def socket = WebSocket.using[JsValue] { request =>
 
@@ -59,7 +42,7 @@ object ActorWebSocket {
 
     /*val serverProxy = context.actorOf(
       Props(classOf[MyActor], out, entryPointRef))*/
-    val serverProxy = Props(classOf[MyActor], out, entryPointRef)
+    val serverProxy = Props(classOf[ServerProxyActor], out, entryPointRef)
     // Forward incoming messages as messages to the proxy
     serverProxy
   }

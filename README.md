@@ -17,43 +17,7 @@ To build the libraries, use
 
 in an sbt console.
 
-### Fault-tolerance example
-
-The fault-tolerance example is taken from Akka's documentation and showcases
-supervision, death watch notifications and the like.
-
-Build it with:
-
-    > faultToleranceExample/fastOptJS
-
-then open `examples/faulttolerance/index-fastopt.html` in your browser and look
-at the Web console for the output.
-
-### Web Workers example
-
-The Web Workers example demonstrates the communication between Web Workers.
-
-Build it with:
-
-    > webworkersExample/fastOptJS
-
-then open `examples/webworkers/index-fastopt.html` in your browser and look at
-the Webconsole for the output.
-
-### Chat example (with client-server communication)
-
-The Chat example is a full-stack Play/Akka/Scala.js application where client
-and server communicate transparently between Akka/JVM and "Akka/JS".
-
-Build the client then run the server with:
-
-    > chatExampleScalaJS/fullOptJS
-    > project chatExample
-    [scalajs-actors-examples-chat] $ run
-
-then navigate to [http://localhost:9000/opt](http://localhost:9000/opt) with
-your browser. To have some fun, open multiple tabs (or multiple browsers) and
-start playing with the chat.
+Then get the examples [here](https://github.com/yawnt/scala-js-actors-examples)
 
 ## Design documentation
 

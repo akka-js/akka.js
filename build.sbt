@@ -12,15 +12,16 @@ val commonSettings = Seq(
 )
 
 lazy val root = project.in(file(".")).settings(commonSettings: _*)
-  .aggregate(actors, akkaWebsocketBridge)
+  .aggregate(akkaActor, akkaWebsocket)
 
-lazy val actors = project.settings(commonSettings: _*)
+lazy val akkaActors = project.in("akka-actor")
+  .settings(commonSettings: _*)
   .settings(
       unmanagedSourceDirectories in Compile +=
         (sourceDirectory in Compile).value / "wscommon"
   )
 
-lazy val akkaWebsocketBridge = project.in(file("akka-websocket-bridge"))
+lazy val akkaWebsocket = project.in(file("akka-websocket"))
   .settings(commonSettings: _*)
   .settings(
       unmanagedSourceDirectories in Compile +=

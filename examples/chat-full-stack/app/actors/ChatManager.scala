@@ -23,7 +23,7 @@ class ChatManager extends Actor with ActorLogging {
   roomsManager ! RoomsManager.SetUsersManager(usersManager)
 
   def receive = LoggingReceive {
-    case m @ NewConnection() =>
+    case m: NewConnection =>
       log.info("chat manager, new connection")
       usersManager.forward(m)
   }
@@ -129,7 +129,7 @@ class UsersManager(val roomsManager: ActorRef) extends Actor with ActorLogging {
   var connectedUsers = Map.empty[ActorRef, User]
 
   def receive = LoggingReceive {
-    case m @ NewConnection() =>
+    case m: NewConnection =>
       context.watch(context.actorOf(
           Props(classOf[UserManager], roomsManager))).forward(m)
 
@@ -159,8 +159,8 @@ class UserManager(val roomsManager: ActorRef) extends Actor with ActorLogging {
   var user: User = User.Nobody
 
   def receive = LoggingReceive {
-    case m @ NewConnection() =>
-      sender ! ActorWebSocket.actorForWebSocketHandler(self)
+    case m @ NewConnection(out) =>
+      sender ! ActorWebSocket.actorForWebSocketHandler(out, self)
       context.children.foreach(context.watch(_))
 
     case Connect(user) =>

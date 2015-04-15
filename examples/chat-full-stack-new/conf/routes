@@ -9,7 +9,7 @@ GET     /                           controllers.Application.index
 GET     /chat-ws-entry              controllers.Application.chatWSEntry
 
 #webjars
-GET     /webjars/*file               controllers.WebJarAssets.at(file)
+#GET     /webjars/*file               controllers.WebJarAssets.at(file)
 
 # Map static resources from the /public folder to the /assets URL path
-GET     /assets/*file               controllers.Assets.at(path="/public", file)
+#GET     /assets/*file               controllers.Assets.at(path="/public", file)

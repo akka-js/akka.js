@@ -1,3 +1,5 @@
 package actors
 
-case class NewConnection()
+import akka.actor.ActorRef
+
+case class NewConnection(out: ActorRef)

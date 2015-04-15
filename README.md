@@ -17,7 +17,7 @@ To build the libraries, use
 
 in an sbt console.
 
-Then get the examples [here](https://github.com/yawnt/scala-js-actors-examples)
+Then get the examples **[here](https://github.com/yawnt/scala-js-actors-examples)**
 
 ## Design documentation
 

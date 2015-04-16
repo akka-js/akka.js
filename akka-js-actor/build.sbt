@@ -2,7 +2,7 @@ enablePlugins(ScalaJSPlugin)
 
 name := "Scala.js actors"
 
-normalizedName := "akka-js-actors"
+normalizedName := "akka-js-actor"
 
 organization := "akka.js"
 

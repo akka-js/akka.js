@@ -19,12 +19,13 @@ lazy val akkaWebSocket = crossProject.in(file(".")).
   jvmSettings(
     libraryDependencies ++= Seq( 
       "com.typesafe.akka" %% "akka-actor" % "2.3.9",
-      "com.typesafe.play" % "play_2.11" % "2.3.8",
+      "com.typesafe.play" % "play_2.11" % "2.4.0-M3",
       "be.doeraene" %% "scalajs-pickling-play-json" % "0.4.0"
     )
   ).
   jsSettings(
     libraryDependencies ++= Seq(
+      "org.scala-js" %%% "scalajs-dom" % "0.8.0",
       "akka.js" %%% "akka-js-actor" % "0.1-SNAPSHOT",
       "be.doeraene" %%% "scalajs-pickling" % "0.4.0"
     )    

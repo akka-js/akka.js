@@ -7,7 +7,8 @@ import scala.concurrent.ExecutionContext
 
 import akka.actor._
 import akka.dispatch.sysmsg._
-import akka.scalajs.jsapi.Timers
+
+import scalajs.js.timers.setTimeout
 
 class MessageDispatcher(
     val mailboxes: Mailboxes) extends ExecutionContext {
@@ -137,7 +138,7 @@ class MessageDispatcher(
   // ExecutionContext API
 
   override def execute(runnable: Runnable): Unit = {
-    Timers.setImmediate {
+    setTimeout(0) {
       runnable.run()
     }
   }

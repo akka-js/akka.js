@@ -2,7 +2,8 @@ package akka.scalajs.webworkers
 
 import scala.scalajs.js
 import js.Dynamic.global
-import akka.scalajs.jsapi._
+import akka.scalajs.jsapi.{ParentWorkerConnection, Worker, MessageEvent}
+import scalajs.js.timers.setTimeout
 import scala.scalajs.js.DynamicImplicits._
 
 import akka.actor._
@@ -139,7 +140,7 @@ object WebWorkerRouter {
    *  This works even when the router is not initialized.
    */
   def postLocalMessageTo(system: String, message: js.Any): Unit = {
-    Timers.setImmediate {
+    setTimeout(0) {
       deliverMessage(system, message)
     }
   }

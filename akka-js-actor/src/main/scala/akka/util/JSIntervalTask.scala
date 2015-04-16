@@ -2,19 +2,19 @@ package akka.util
 
 import scala.concurrent.duration.FiniteDuration
 
-import akka.scalajs.jsapi.Timers
+import scala.scalajs.js.timers.{SetIntervalHandle, setInterval, clearInterval}
 import akka.actor.Cancellable
 
 class JSIntervalTask(interval: FiniteDuration, task: => Any) extends Cancellable {
-  private[this] var underlying: Option[Timers.IntervalID] =
-    Some(Timers.setInterval(interval)(task))
+  private[this] var underlying: Option[SetIntervalHandle] =
+    Some(setInterval(interval)(task))
 
   def isCancelled: Boolean = underlying.isEmpty
 
   def cancel(): Boolean = {
     if (isCancelled) false
     else {
-      Timers.clearInterval(underlying.get)
+      clearInterval(underlying.get)
       underlying = None
       true
     }

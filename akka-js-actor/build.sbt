@@ -13,6 +13,8 @@ libraryDependencies ++= Seq(
   "com.lihaoyi" %%% "utest" % "0.3.1"
 )
 
-scalaJSStage in Global := FastOptStage
+preLinkJSEnv := PhantomJSEnv().value
+
+postLinkJSEnv := PhantomJSEnv().value
 
 testFrameworks += new TestFramework("utest.runner.Framework")

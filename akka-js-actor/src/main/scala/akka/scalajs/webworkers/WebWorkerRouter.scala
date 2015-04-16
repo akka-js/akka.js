@@ -2,12 +2,16 @@ package akka.scalajs.webworkers
 
 import scala.scalajs.js
 import js.Dynamic.global
-import akka.scalajs.jsapi.{ParentWorkerConnection, Worker, MessageEvent}
+import akka.scalajs.jsapi.{ParentWorkerConnection, Worker}
 import scalajs.js.timers.setTimeout
 import scala.scalajs.js.DynamicImplicits._
 
 import akka.actor._
 import akka.util.JSMap
+
+trait MessageEvent extends js.Object {
+  val data: js.Dynamic = js.native // XXX: FIX! should inherit from MessageEvent, router has to be rewritten!
+}
 
 /** Router of the current web worker.
  *  It provides a means to send messages to any actor system on any worker in

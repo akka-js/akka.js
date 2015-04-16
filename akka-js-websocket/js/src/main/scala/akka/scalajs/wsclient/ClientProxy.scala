@@ -4,10 +4,11 @@ import akka.actor._
 import akka.scalajs.wscommon._
 
 import scala.scalajs.js
-import akka.scalajs.jsapi._
 
 import be.doeraene.spickling._
 import be.doeraene.spickling.jsany._
+
+import org.scalajs.dom.{WebSocket, MessageEvent, Event}
 
 object ClientProxy {
   case object ConnectionError

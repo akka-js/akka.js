@@ -2,7 +2,7 @@ package akka.scalajs.jsapi
 
 import scala.scalajs.js
 
-trait WorkerConnection extends EventTarget {
+trait WorkerConnection extends org.scalajs.dom.EventTarget {
   def postMessage(message: js.Any): Unit = js.native
 
   var onmessage: js.Function1[MessageEvent, _] = js.native

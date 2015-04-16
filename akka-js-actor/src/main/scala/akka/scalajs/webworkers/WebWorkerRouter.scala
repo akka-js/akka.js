@@ -2,12 +2,19 @@ package akka.scalajs.webworkers
 
 import scala.scalajs.js
 import js.Dynamic.global
-import akka.scalajs.jsapi.{ParentWorkerConnection, Worker}
+import org.scalajs.dom.Worker
 import scalajs.js.timers.setTimeout
 import scala.scalajs.js.DynamicImplicits._
 
 import akka.actor._
 import akka.util.JSMap
+
+trait WorkerConnection extends org.scalajs.dom.EventTarget {
+  def postMessage(message: js.Any): Unit = js.native
+
+  var onmessage: js.Function1[MessageEvent, _] = js.native
+}
+object ParentWorkerConnection extends WorkerConnection with js.GlobalScope
 
 trait MessageEvent extends js.Object {
   val data: js.Dynamic = js.native // XXX: FIX! should inherit from MessageEvent, router has to be rewritten!

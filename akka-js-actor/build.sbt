@@ -9,6 +9,7 @@ organization := "akka.js"
 scalaVersion := "2.11.6"
 
 libraryDependencies ++= Seq(
+  "org.scala-js" %%% "scalajs-dom" % "0.8.1-SNAPSHOT",
   "be.doeraene" %%% "scalajs-pickling" % "0.4.0",
   "com.lihaoyi" %%% "utest" % "0.3.1"
 )

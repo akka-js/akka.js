@@ -89,7 +89,11 @@ trait AskSupport {
    *
    * All of the above use an implicit [[akka.util.Timeout]].
    */
-  implicit def ask(actorSelection: ActorSelection): AskableActorSelection = new AskableActorSelection(actorSelection)
+  /**
+   * @todo IMPLEMENT IN SCALA.JS
+   *
+   * implicit def ask(actorSelection: ActorSelection): AskableActorSelection = new AskableActorSelection(actorSelection)
+   */
 
   /**
    * Sends a message asynchronously and returns a [[scala.concurrent.Future]]
@@ -118,7 +122,11 @@ trait AskSupport {
    * }}}
    *
    */
-  def ask(actorSelection: ActorSelection, message: Any)(implicit timeout: Timeout): Future[Any] = actorSelection ? message
+  /**
+   * @todo IMPLEMENT IN SCALA.JS
+   *
+   * def ask(actorSelection: ActorSelection, message: Any)(implicit timeout: Timeout): Future[Any] = actorSelection ? message
+   */
 }
 
 /*
@@ -127,9 +135,13 @@ trait AskSupport {
 final class AskableActorRef(val actorRef: ActorRef) extends AnyVal {
 
   def ask(message: Any)(implicit timeout: Timeout): Future[Any] = actorRef match {
-    case ref: InternalActorRef if ref.isTerminated ⇒
-      actorRef ! message
-      Future.failed[Any](new AskTimeoutException(s"Recipient[$actorRef] had already been terminated."))
+    /**
+     * @note IMPLEMENT IN SCALA.JS
+     *
+     * case ref: InternalActorRef if ref.isTerminated ⇒
+     *   actorRef ! message
+     *   Future.failed[Any](new AskTimeoutException(s"Recipient[$actorRef] had already been terminated."))
+     */
     case ref: InternalActorRef ⇒
       if (timeout.duration.length <= 0)
         Future.failed[Any](new IllegalArgumentException(s"Timeout length must not be negative, question not sent to [$actorRef]"))
@@ -147,23 +159,27 @@ final class AskableActorRef(val actorRef: ActorRef) extends AnyVal {
 /*
  * Implementation class of the “ask” pattern enrichment of ActorSelection
  */
-final class AskableActorSelection(val actorSel: ActorSelection) extends AnyVal {
-
-  def ask(message: Any)(implicit timeout: Timeout): Future[Any] = actorSel.anchor match {
-    case ref: InternalActorRef ⇒
-      if (timeout.duration.length <= 0)
-        Future.failed[Any](
-          new IllegalArgumentException(s"Timeout length must not be negative, question not sent to [$actorSel]"))
-      else {
-        val a = PromiseActorRef(ref.provider, timeout, targetName = actorSel.toString)
-        actorSel.tell(message, a)
-        a.result.future
-      }
-    case _ ⇒ Future.failed[Any](new IllegalArgumentException(s"Unsupported recipient ActorRef type, question not sent to [$actorSel]"))
-  }
-
-  def ?(message: Any)(implicit timeout: Timeout): Future[Any] = ask(message)(timeout)
-}
+/**
+ * @note IMPLEMENT IN SCALA.JS
+ *
+ * final class AskableActorSelection(val actorSel: ActorSelection) extends AnyVal {
+ *
+ *   def ask(message: Any)(implicit timeout: Timeout): Future[Any] = actorSel.anchor match {
+ *     case ref: InternalActorRef ⇒
+ *       if (timeout.duration.length <= 0)
+ *         Future.failed[Any](
+ *           new IllegalArgumentException(s"Timeout length must not be negative, question not sent to [$actorSel]"))
+ *       else {
+ *         val a = PromiseActorRef(ref.provider, timeout, targetName = actorSel.toString)
+ *         actorSel.tell(message, a)
+ *         a.result.future
+ *       }
+ *     case _ ⇒ Future.failed[Any](new IllegalArgumentException(s"Unsupported recipient ActorRef type, question not sent to [$actorSel]"))
+ *   }
+ *
+ *   def ?(message: Any)(implicit timeout: Timeout): Future[Any] = ask(message)(timeout)
+ * }
+ */
 
 /**
  * Akka private optimized representation of the temporary actor spawned to
@@ -330,7 +346,16 @@ private[akka] object PromiseActorRef {
     val result = Promise[Any]()
     val scheduler = provider.guardian.underlying.system.scheduler
     val a = new PromiseActorRef(provider, result)
-    implicit val ec = a.internalCallingThreadExecutionContext
+
+    /**
+     * @note We have to use the JSExecutionContext so
+     *
+     *   implicit val ec = a.internalCallingThreadExecutionContext
+     *
+     * becomes
+     */
+    implicit val ec = scala.scalajs.concurrent.JSExecutionContext.queue
+
     val f = scheduler.scheduleOnce(timeout.duration) {
       result tryComplete Failure(new AskTimeoutException(s"Ask timed out on [$targetName] after [${timeout.duration.toMillis} ms]"))
     }

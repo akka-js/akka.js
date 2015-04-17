@@ -190,8 +190,14 @@ final class AskableActorRef(val actorRef: ActorRef) extends AnyVal {
 private[akka] final class PromiseActorRef private (val provider: ActorRefProvider, val result: Promise[Any])
   extends MinimalActorRef {
   import PromiseActorRef._
-  import AbstractPromiseActorRef.stateOffset
-  import AbstractPromiseActorRef.watchedByOffset
+
+  /**
+   * @note IMPLEMENT IN SCALA.JS
+   * We do not want to rely on Unsafe in Scala.js
+   *
+   *   import AbstractPromiseActorRef.stateOffset
+   *   import AbstractPromiseActorRef.watchedByOffset
+   */
 
   /**
    * As an optimization for the common (local) case we only register this PromiseActorRef
@@ -205,51 +211,109 @@ private[akka] final class PromiseActorRef private (val provider: ActorRefProvide
    * StoppedWithPath(path) => stopped, path available
    * Stopped               => stopped, path not yet created
    */
-  @volatile
-  private[this] var _stateDoNotCallMeDirectly: AnyRef = _
-
-  @volatile
-  private[this] var _watchedByDoNotCallMeDirectly: Set[ActorRef] = ActorCell.emptyActorRefSet
+ /**
+  * @note IMPLEMENT IN SCALA.JS
+  * These two are useless because, being JS single threaded, we can access the variables directly
+  *
+  *   @volatile
+  *   private[this] var _stateDoNotCallMeDirectly: AnyRef = _
+  *
+  *   @volatile
+  *   private[this] var _watchedByDoNotCallMeDirectly: Set[ActorRef] = ActorCell.emptyActorRefSet
+  */
 
   @inline
-  private[this] def watchedBy: Set[ActorRef] = Unsafe.instance.getObjectVolatile(this, watchedByOffset).asInstanceOf[Set[ActorRef]]
+  private[this] var watchedBy: Set[ActorRef] =
+   /**
+    * @note IMPLEMENT IN SCALA.JS
+    *
+    * Unsafe.instance.getObjectVolatile(this, watchedByOffset).asInstanceOf[Set[ActorRef]]
+    */
+    ActorCell.emptyActorRefSet
 
-  @inline
-  private[this] def updateWatchedBy(oldWatchedBy: Set[ActorRef], newWatchedBy: Set[ActorRef]): Boolean =
-    Unsafe.instance.compareAndSwapObject(this, watchedByOffset, oldWatchedBy, newWatchedBy)
+ /**
+  * @note IMPLEMENT IN SCALA.JS
+  *
+  *   @inline
+  *   private[this] def updateWatchedBy(oldWatchedBy: Set[ActorRef], newWatchedBy: Set[ActorRef]): Boolean =
+  *     Unsafe.instance.compareAndSwapObject(this, watchedByOffset, oldWatchedBy, newWatchedBy)
+  */
 
   @tailrec // Returns false if the Promise is already completed
   private[this] final def addWatcher(watcher: ActorRef): Boolean = watchedBy match {
     case null  ⇒ false
-    case other ⇒ updateWatchedBy(other, other + watcher) || addWatcher(watcher)
+    case other ⇒
+    /**
+     * @note IMPLEMENT IN SCALA.JS
+     *
+     *   updateWatchedBy(other, other + watcher) || addWatcher(watcher)
+     */
+     watchedBy = other + watcher; true
   }
 
   @tailrec
   private[this] final def remWatcher(watcher: ActorRef): Unit = watchedBy match {
     case null  ⇒ ()
-    case other ⇒ if (!updateWatchedBy(other, other - watcher)) remWatcher(watcher)
+    case other ⇒
+     /**
+      * @note IMPLEMENT IN SCALA.JS
+      *
+      *   if (!updateWatchedBy(other, other - watcher)) remWatcher(watcher)
+      */
+      watchedBy = other - watcher
   }
 
   @tailrec
   private[this] final def clearWatchers(): Set[ActorRef] = watchedBy match {
     case null  ⇒ ActorCell.emptyActorRefSet
-    case other ⇒ if (!updateWatchedBy(other, null)) clearWatchers() else other
+    case other ⇒
+     /**
+      * @note IMPLEMENT IN SCALA.JS
+      *
+      *   if (!updateWatchedBy(other, null)) clearWatchers() else other
+      */
+      watchedBy = null; other
   }
 
   @inline
-  private[this] def state: AnyRef = Unsafe.instance.getObjectVolatile(this, stateOffset)
+  private[this] var state: AnyRef =
+   /**
+    * @note IMPLEMENT IN SCALA.JS
+    *
+    * Unsafe.instance.getObjectVolatile(this, stateOffset)
+    */
+    _
 
   @inline
   private[this] def updateState(oldState: AnyRef, newState: AnyRef): Boolean =
-    Unsafe.instance.compareAndSwapObject(this, stateOffset, oldState, newState)
+   /**
+    * @note IMPLEMENT IN SCALA.JS
+    *
+    * Unsafe.instance.compareAndSwapObject(this, stateOffset, oldState, newState)
+    */
+    state = newState; true
 
   @inline
-  private[this] def setState(newState: AnyRef): Unit = Unsafe.instance.putObjectVolatile(this, stateOffset, newState)
+  private[this] def setState(newState: AnyRef): Unit =
+   /**
+    * @note IMPLEMENT IN SCALA.JS
+    *
+    * Unsafe.instance.compareAndSwapObject(this, stateOffset, oldState, newState)
+    */
+    state = newState; true
 
   override def getParent: InternalActorRef = provider.tempContainer
 
   def internalCallingThreadExecutionContext: ExecutionContext =
-    provider.guardian.underlying.systemImpl.internalCallingThreadExecutionContext
+    /**
+     * @note IMPLEMENT IN SCALA.JS
+     * We have to use the JSExecutionContext so
+     *
+     *   provider.guardian.underlying.systemImpl.internalCallingThreadExecutionContext
+     *
+     * becomes
+     */
+    scala.scalajs.concurrent.JSExecutionContext.queue
 
   /**
    * Contract of this method:
@@ -346,16 +410,7 @@ private[akka] object PromiseActorRef {
     val result = Promise[Any]()
     val scheduler = provider.guardian.underlying.system.scheduler
     val a = new PromiseActorRef(provider, result)
-
-    /**
-     * @note We have to use the JSExecutionContext so
-     *
-     *   implicit val ec = a.internalCallingThreadExecutionContext
-     *
-     * becomes
-     */
-    implicit val ec = scala.scalajs.concurrent.JSExecutionContext.queue
-
+    implicit val ec = a.internalCallingThreadExecutionContext
     val f = scheduler.scheduleOnce(timeout.duration) {
       result tryComplete Failure(new AskTimeoutException(s"Ask timed out on [$targetName] after [${timeout.duration.toMillis} ms]"))
     }

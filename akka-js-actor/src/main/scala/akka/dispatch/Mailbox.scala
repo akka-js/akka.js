@@ -8,7 +8,7 @@ import java.util.concurrent._
 import akka.AkkaException
 import akka.dispatch.sysmsg._
 import akka.actor.{ ActorCell, ActorRef, Cell, ActorSystem, InternalActorRef, DeadLetter }
-import akka.util.{ Unsafe, BoundedBlockingQueue }
+import akka.util.{JSQueue, Unsafe, BoundedBlockingQueue}
 import akka.util.Helpers.ConfigOps
 import akka.event.Logging.Error
 import scala.concurrent.duration.Duration
@@ -72,6 +72,7 @@ private[akka] abstract class Mailbox(val messageQueue: MessageQueue)
    */
   @volatile
   var actor: ActorCell = _
+
   def setActor(cell: ActorCell): Unit = actor = cell
 
   def dispatcher: MessageDispatcher = actor.dispatcher
@@ -98,20 +99,26 @@ private[akka] abstract class Mailbox(val messageQueue: MessageQueue)
    */
   def numberOfMessages: Int = messageQueue.numberOfMessages
 
-/**
- * @note IMPLEMENT IN SCALA.JS
- *
-   @volatile
+  /**
+   * @note IMPLEMENT IN SCALA.JS
+   *
+  @volatile
    protected var _statusDoNotCallMeDirectly: Status = _ //0 by default
 
-   @volatile
+  @volatile
    protected var _systemQueueDoNotCallMeDirectly: SystemMessage = _ //null by default
- */
+   */
 
-  private[this] var status: Status = _ // = initialize to 0 = Open
-  private[this] val systemMessageQueue: SystemMessage = _
-
-
+  private[this] var status: Status = _
+  // = initialize to 0 = Open
+  /**
+   * @note IMPLEMENT IN SCALA.JS
+   *
+   private[this] val systemMessageQueue: SystemMessage = null
+   */
+  private[this] val systemMessageQueue = new JSQueue[SystemMessage]
+  def systemEnqueue(receiver: ActorRef, msg: SystemMessage): Unit =
+    systemMessageQueue.enqueue(msg)
   /**
    * @note IMPLEMENT IN SCALA.JS
    *
@@ -136,13 +143,16 @@ private[akka] abstract class Mailbox(val messageQueue: MessageQueue)
   final def isScheduled: Boolean = (currentStatus & Scheduled) != 0
 
   @inline
-  protected final def updateStatus(oldStatus: Status, newStatus: Status): Boolean =
-    /**
-     * @note IMPLEMENT IN SCALA.JS
-     *
-     Unsafe.instance.compareAndSwapInt(this, AbstractMailbox.mailboxStatusOffset, oldStatus, newStatus)
-     */
+  protected final def updateStatus(oldStatus: Status, newStatus: Status): Boolean = {
+
+  /**
+   * @note IMPLEMENT IN SCALA.JS
+   *
+           Unsafe.instance.compareAndSwapInt(this, AbstractMailbox.mailboxStatusOffset, oldStatus, newStatus)
+   */
     status = newStatus
+    true
+  }
 
   @inline
   protected final def setStatus(newStatus: Status): Unit =
@@ -231,16 +241,18 @@ private[akka] abstract class Mailbox(val messageQueue: MessageQueue)
     */
     new LatestFirstSystemMessageList(systemMessageQueue)
 
-  protected final def systemQueuePut(_old: LatestFirstSystemMessageList, _new: LatestFirstSystemMessageList): Boolean =
-  // Note: calling .head is not actually existing on the bytecode level as the parameters _old and _new
-  // are SystemMessage instances hidden during compile time behind the SystemMessageList value class.
-  // Without calling .head the parameters would be boxed in SystemMessageList wrapper.
+  protected final def systemQueuePut(_old: LatestFirstSystemMessageList, _new: LatestFirstSystemMessageList): Boolean = {
+    // Note: calling .head is not actually existing on the bytecode level as the parameters _old and _new
+    // are SystemMessage instances hidden during compile time behind the SystemMessageList value class.
+    // Without calling .head the parameters would be boxed in SystemMessageList wrapper.
     /**
      * @note IMPLEMENT IN SCALA.JS
      *
-     Unsafe.instance.compareAndSwapObject(this, AbstractMailbox.systemMessageOffset, _old.head, _new.head)
+             Unsafe.instance.compareAndSwapObject(this, AbstractMailbox.systemMessageOffset, _old.head, _new.head)
      */
     systemMessageQueue = _new.head
+    true
+  }
 
   final def canBeScheduledForExecution(hasMessageHint: Boolean, hasSystemMessageHint: Boolean): Boolean = currentStatus match {
     case Open | Scheduled ⇒ hasMessageHint || hasSystemMessageHint || hasSystemMessages || hasMessages
@@ -260,11 +272,12 @@ private[akka] abstract class Mailbox(val messageQueue: MessageQueue)
     }
   }
 
-  override final def getRawResult(): Unit = ()
-  override final def setRawResult(unit: Unit): Unit = ()
+
 /**
  * @note IMPLEMENT IN SCALA.JS
  *
+   override final def getRawResult(): Unit = ()
+   override final def setRawResult(unit: Unit): Unit = ()
    final override def exec(): Boolean = try { run(); false } catch {
      case ie: InterruptedException ⇒
        Thread.currentThread.interrupt()
@@ -441,3 +454,7 @@ trait MessageQueue {
    }
  }
  */
+
+trait MailboxType {
+  def create(owner: Option[ActorRef], system: Option[ActorSystem]): MessageQueue
+}

@@ -1,3 +1,5 @@
+package akka.actor
+
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.FiniteDuration
 import scala.util.control.NoStackTrace

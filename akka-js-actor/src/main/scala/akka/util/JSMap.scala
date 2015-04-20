@@ -7,6 +7,7 @@ import js.annotation.JSBracketAccess
 
 final class JSMap[A] private () extends Map[String, A]
                                    with MapLike[String, A, JSMap[A]] {
+
   private[this] val dict: js.Dictionary[A] = js.Dictionary.empty[A]
 
   override def empty: JSMap[A] = new JSMap[A]

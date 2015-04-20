@@ -1,81 +1,135 @@
-package akka.actor
-package dungeon
+/**
+ * Copyright (C) 2009-2014 Typesafe Inc. <http://www.typesafe.com>
+ */
+
+package akka.actor.dungeon
 
 import scala.annotation.tailrec
-import scala.collection.{ immutable, mutable }
+import scala.util.control.NonFatal
+import scala.collection.immutable
+import akka.actor._
+/**
+ * @note IMPLEMENT IN SCALA.JS
+ *
+ import akka.serialization.SerializationExtension
+ */
+import akka.util.{ /** @note IMPLEMENT IN SCALA.JS Unsafe, */ Helpers }
 
-import akka.util.Helpers
-
-import ActorPath.ElementRegex
-
-private[akka] trait Children { this: ActorCell =>
+private[akka] trait Children { this: ActorCell ⇒
 
   import ChildrenContainer._
 
-  private var childrenRefs: ChildrenContainer = EmptyChildrenContainer
+  @volatile
+  private var _childrenRefsDoNotCallMeDirectly: ChildrenContainer = EmptyChildrenContainer
 
-  final def children: immutable.Iterable[ActorRef] =
-    childrenRefs.children
+  def childrenRefs: ChildrenContainer =
+    /**
+     * @note IMPLEMENT IN SCALA.JS
+     *
+         Unsafe.instance.getObjectVolatile(this, AbstractActorCell.childrenOffset).asInstanceOf[ChildrenContainer]
+     */
+    _childrenRefsDoNotCallMeDirectly
 
-  final def childStatsByName(name: String): Option[ChildRestartStats] =
-    childrenRefs.getByName(name)
+  final def children: immutable.Iterable[ActorRef] = childrenRefs.children
+  final def getChildren(): java.lang.Iterable[ActorRef] =
+    scala.collection.JavaConverters.asJavaIterableConverter(children).asJava
 
-  final def child(name: String): Option[ActorRef] =
-    childStatsByName(name).map(_.child)
-
-  final def childStatsByRef(actor: ActorRef): Option[ChildRestartStats] =
-    childrenRefs.getByRef(actor)
-
-  final def childByRef(actor: ActorRef): Option[ActorRef] =
-    childStatsByRef(actor).map(_.child)
-
-  final def isChild(actor: ActorRef): Boolean =
-    childrenRefs.isChild(actor)
-
-  protected def getAllChildStats: immutable.Iterable[ChildRestartStats] =
-    childrenRefs.stats
+  final def child(name: String): Option[ActorRef] = Option(getChild(name))
+  final def getChild(name: String): ActorRef = childrenRefs.getByName(name) match {
+    case Some(s: ChildRestartStats) ⇒ s.child
+    case _                          ⇒ null
+  }
 
   def actorOf(props: Props): ActorRef =
     makeChild(this, props, randomName(), async = false, systemService = false)
   def actorOf(props: Props, name: String): ActorRef =
     makeChild(this, props, checkName(name), async = false, systemService = false)
-
   private[akka] def attachChild(props: Props, systemService: Boolean): ActorRef =
     makeChild(this, props, randomName(), async = true, systemService = systemService)
   private[akka] def attachChild(props: Props, name: String, systemService: Boolean): ActorRef =
     makeChild(this, props, checkName(name), async = true, systemService = systemService)
 
-  private var _nextName: Long = _ // default = 0L
+  @volatile private var _nextNameDoNotCallMeDirectly = 0L
   final protected def randomName(): String = {
-    val current = _nextName
-    _nextName += 1
-    Helpers.base64(current)
+    /** @note IMPLEMENT IN SCALA.JS @tailrec */ def inc(): Long = {
+      _nextNameDoNotCallMeDirectly + 1
+      /**
+       * @note IMPLEMENT IN SCALA.JS
+       *
+             val current = Unsafe.instance.getLongVolatile(this, AbstractActorCell.nextNameOffset)
+             if (Unsafe.instance.compareAndSwapLong(this, AbstractActorCell.nextNameOffset, current, current + 1)) current
+             else inc()
+       */
+    }
+    Helpers.base64(inc())
   }
 
   final def stop(actor: ActorRef): Unit = {
-    if (childrenRefs.isChild(actor)) {
-      childrenRefs = childrenRefs.shallDie(actor)
+    if (childrenRefs.getByRef(actor).isDefined) {
+      @tailrec def shallDie(ref: ActorRef): Boolean = {
+        val c = childrenRefs
+        swapChildrenRefs(c, c.shallDie(ref)) || shallDie(ref)
+      }
+
+      if (actor match {
+        case r: RepointableRef ⇒ r.isStarted
+        case _                 ⇒ true
+      }) shallDie(actor)
     }
     actor.asInstanceOf[InternalActorRef].stop()
   }
 
-  final def checkChildNameAvailable(name: String): Unit = {
-    if (childrenRefs.isChild(name))
-      throw new InvalidActorNameException(s"actor name [$name] is not unique!")
+  /*
+   * low level CAS helpers
+   */
+  @inline private final def swapChildrenRefs(oldChildren: ChildrenContainer, newChildren: ChildrenContainer): Boolean = {
+    /**
+     * @note IMPLEMENT IN SCALA.JS
+     *
+             Unsafe.instance.compareAndSwapObject(this, AbstractActorCell.childrenOffset, oldChildren, newChildren)
+     */
+    _childrenRefsDoNotCallMeDirectly = newChildren
+    true
   }
 
-  final protected def setChildrenTerminationReason(
-      reason: ChildrenContainer.SuspendReason): Boolean = {
-    childrenRefs match {
-      case c: ChildrenContainer.TerminatingChildrenContainer =>
-        childrenRefs = c.copy(reason = reason)
-        true
-      case _ => false
+
+
+  @tailrec final def reserveChild(name: String): Boolean = {
+    val c = childrenRefs
+    swapChildrenRefs(c, c.reserve(name)) || reserveChild(name)
+  }
+
+  @tailrec final protected def unreserveChild(name: String): Boolean = {
+    val c = childrenRefs
+    swapChildrenRefs(c, c.unreserve(name)) || unreserveChild(name)
+  }
+
+  @tailrec final def initChild(ref: ActorRef): Option[ChildRestartStats] = {
+    val cc = childrenRefs
+    cc.getByName(ref.path.name) match {
+      case old @ Some(_: ChildRestartStats) ⇒ old.asInstanceOf[Option[ChildRestartStats]]
+      case Some(ChildNameReserved) ⇒
+        val crs = ChildRestartStats(ref)
+        val name = ref.path.name
+        if (swapChildrenRefs(cc, cc.add(name, crs))) Some(crs) else initChild(ref)
+      case None ⇒ None
     }
   }
 
-  final protected def setTerminated(): Unit =
-    childrenRefs = TerminatedChildrenContainer
+  @tailrec final protected def setChildrenTerminationReason(reason: ChildrenContainer.SuspendReason): Boolean = {
+    childrenRefs match {
+      case c: ChildrenContainer.TerminatingChildrenContainer ⇒
+        swapChildrenRefs(c, c.copy(reason = reason)) || setChildrenTerminationReason(reason)
+      case _ ⇒ false
+    }
+  }
+
+  /**
+   * @note IMPLEMENT IN SCALA.JS
+   *
+   final protected def setTerminated(): Unit = Unsafe.instance.putObjectVolatile(this, AbstractActorCell.childrenOffset, TerminatedChildrenContainer)
+   */
+  final protected def setTerminated(): Unit = _childrenRefsDoNotCallMeDirectly = TerminatedChildrenContainer
 
   /*
    * ActorCell-internal API
@@ -85,38 +139,60 @@ private[akka] trait Children { this: ActorCell =>
 
   protected def isTerminating = childrenRefs.isTerminating
 
-  private[akka] def initChild(child: ActorRef): Unit =
-    childrenRefs = childrenRefs.add(child.path.name, ChildRestartStats(child))
-
   protected def waitingForChildrenOrNull = childrenRefs match {
-    case TerminatingChildrenContainer(_, _, w: WaitingForChildren) => w
-    case _ => null
+    case TerminatingChildrenContainer(_, _, w: WaitingForChildren) ⇒ w
+    case _ ⇒ null
   }
 
   protected def suspendChildren(exceptFor: Set[ActorRef] = Set.empty): Unit =
     childrenRefs.stats foreach {
-      case ChildRestartStats(child, _, _) if !(exceptFor contains child) =>
-        child.asInstanceOf[InternalActorRef].suspend()
-      case _ =>
+      case ChildRestartStats(child, _, _) if !(exceptFor contains child) ⇒ child.asInstanceOf[InternalActorRef].suspend()
+      case _ ⇒
     }
 
   protected def resumeChildren(causedByFailure: Throwable, perp: ActorRef): Unit =
     childrenRefs.stats foreach {
-      case ChildRestartStats(child, _, _) =>
-        child.asInstanceOf[InternalActorRef].resume(
-            if (perp == child) causedByFailure else null)
+      case ChildRestartStats(child: InternalActorRef, _, _) ⇒
+        child.resume(if (perp == child) causedByFailure else null)
+    }
+
+  def getChildByName(name: String): Option[ChildStats] = childrenRefs.getByName(name)
+
+  protected def getChildByRef(ref: ActorRef): Option[ChildRestartStats] = childrenRefs.getByRef(ref)
+
+  protected def getAllChildStats: immutable.Iterable[ChildRestartStats] = childrenRefs.stats
+
+  override def getSingleChild(name: String): InternalActorRef =
+    if (name.indexOf('#') == -1) {
+      // optimization for the non-uid case
+      getChildByName(name) match {
+        case Some(crs: ChildRestartStats) ⇒ crs.child.asInstanceOf[InternalActorRef]
+        case _                            ⇒ Nobody
+      }
+    } else {
+      val (childName, uid) = ActorCell.splitNameAndUid(name)
+      getChildByName(childName) match {
+        case Some(crs: ChildRestartStats) if uid == ActorCell.undefinedUid || uid == crs.uid ⇒
+          crs.child.asInstanceOf[InternalActorRef]
+        case _ ⇒ Nobody
+      }
     }
 
   protected def removeChildAndGetStateChange(child: ActorRef): Option[SuspendReason] = {
+    @tailrec def removeChild(ref: ActorRef): ChildrenContainer = {
+      val c = childrenRefs
+      val n = c.remove(ref)
+      if (swapChildrenRefs(c, n)) n else removeChild(ref)
+    }
+
     childrenRefs match { // The match must be performed BEFORE the removeChild
-      case TerminatingChildrenContainer(_, _, reason) =>
-        childrenRefs = childrenRefs.remove(child)
-        childrenRefs match {
-          case _: TerminatingChildrenContainer => None
-          case _                               => Some(reason)
+      case TerminatingChildrenContainer(_, _, reason) ⇒
+        removeChild(child) match {
+          case _: TerminatingChildrenContainer ⇒ None
+          case _                               ⇒ Some(reason)
         }
-      case _ =>
-        childrenRefs = childrenRefs.remove(child)
+      case _ ⇒
+        removeChild(child)
         None
     }
   }
@@ -127,34 +203,55 @@ private[akka] trait Children { this: ActorCell =>
 
   private def checkName(name: String): String = {
     name match {
-      case null           => throw new InvalidActorNameException("actor name must not be null")
-      case ""             => throw new InvalidActorNameException("actor name must not be empty")
-      case ElementRegex() => name
-      case _              => throw new InvalidActorNameException(s"illegal actor name [$name], must conform to $ElementRegex")
+      case null                                    ⇒ throw new InvalidActorNameException("actor name must not be null")
+      case ""                                      ⇒ throw new InvalidActorNameException("actor name must not be empty")
+      case _ if ActorPath.isValidPathElement(name) ⇒ name
+      case _                                       ⇒ throw new InvalidActorNameException(s"Illegal actor name [$name]. Actor paths MUST: not start with `$$`, include only ASCII letters and can only contain these special characters: ${ActorPath.ValidSymbols}.")
     }
   }
 
-  private def makeChild(cell: ActorCell, props: Props, name: String,
-      async: Boolean, systemService: Boolean): ActorRef = {
-
+  private def makeChild(cell: ActorCell, props: Props, name: String, async: Boolean, systemService: Boolean): ActorRef = {
+/**
+ * @note IMPLEMENT IN SCALA.JS
+ *
+     if (cell.system.settings.SerializeAllCreators && !systemService && props.deploy.scope != LocalScope)
+       try {
+         val ser = SerializationExtension(cell.system)
+         props.args forall (arg ⇒
+           arg.isInstanceOf[NoSerializationVerificationNeeded] ||
+             ser.deserialize(ser.serialize(arg.asInstanceOf[AnyRef]).get, arg.getClass).get != null)
+       } catch {
+         case NonFatal(e) ⇒ throw new IllegalArgumentException(s"pre-creation serialization check failed at [${cell.self.path}/$name]", e)
+       }
+ */
     /*
      * in case we are currently terminating, fail external attachChild requests
      * (internal calls cannot happen anyway because we are suspended)
      */
-    if (isTerminating) {
-      throw new IllegalStateException(
-          "cannot create children while terminating or terminated")
-    } else {
-      checkChildNameAvailable(name)
-      val childPath = new ChildActorPath(cell.self.path, name)(ActorCell.newUid())
-      val child = cell.provider.actorOf(cell.systemImpl, props, cell.self,
-          childPath, systemService = systemService, async = async)
+    if (cell.childrenRefs.isTerminating) throw new IllegalStateException("cannot create children while terminating or terminated")
+    else {
+      reserveChild(name)
+      // this name will either be unreserved or overwritten with a real child below
+      val actor =
+        try {
+          val childPath = new ChildActorPath(cell.self.path, name, ActorCell.newUid())
+          cell.provider.actorOf(cell.systemImpl, props, cell.self, childPath,
+            systemService = systemService/** @note IMPLEMENT IN SCALA.JS , deploy = None, lookupDeploy = true */, async = async)
+        } catch {
+          case e: InterruptedException ⇒
+            unreserveChild(name)
+            Thread.interrupted() // clear interrupted flag before throwing according to java convention
+            throw e
+          case NonFatal(e) ⇒
+            unreserveChild(name)
+            throw e
+        }
       // mailbox==null during RoutedActorCell constructor, where suspends are queued otherwise
-      if (mailbox ne null) for (_ <- 1 to mailbox.suspendCount) child.suspend()
-      initChild(child)
-      child.start()
-      child
+      if (mailbox ne null) for (_ ← 1 to mailbox.suspendCount) actor.suspend()
+      initChild(actor)
+      actor.start()
+      actor
     }
-
   }
+
 }

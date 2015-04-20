@@ -8,7 +8,11 @@ import akka.AkkaException
 import scala.annotation.tailrec
 import scala.beans.BeanProperty
 import scala.util.control.NoStackTrace
-import akka.event.LoggingAdapter
+/**
+ * @note IMPLEMENT IN SCALA.JS
+ *
+ import akka.event.LoggingAdapter
+ */
 
 /**
  * INTERNAL API
@@ -423,13 +427,23 @@ trait Actor {
    * context.
    */
   implicit val context: ActorContext = {
-    val contextStack = ActorCell.contextStack.get
+    /**
+     * @note IMPLEMENT IN SCALA.JS
+     *
+     val contextStack = ActorCell.contextStack.get
+     */
+    val contextStack = ActorCell.contextStack
     if ((contextStack.isEmpty) || (contextStack.head eq null))
       throw ActorInitializationException(
         s"You cannot create an instance of [${getClass.getName}] explicitly using the constructor (new). " +
           "You have to use one of the 'actorOf' factory methods to create a new actor. See the documentation.")
     val c = contextStack.head
-    ActorCell.contextStack.set(null :: contextStack)
+    /**
+     * @note IMPLEMENT IN SCALA.JS
+     *
+     ActorCell.contextStack.set(null :: contextStack)
+     */
+    ActorCell.contextStack = null :: contextStack
     c
   }
 

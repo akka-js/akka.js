@@ -5,11 +5,19 @@
 package akka.actor
 
 import akka.dispatch.sysmsg._
-import akka.dispatch.{ UnboundedMessageQueueSemantics, RequiresMessageQueue }
-import akka.routing._
+/**
+ * @note IMPLEMENT IN SCALA.JS
+ *
+ import akka.dispatch.{ UnboundedMessageQueueSemantics, RequiresMessageQueue }
+ import akka.routing._
+ */
 import akka.event._
-import akka.util.{ Switch, Helpers }
-import akka.japi.Util.immutableSeq
+import akka.util.{ /** @note IMPLEMENT IN SCALA.JS Switch,*/ Helpers }
+/**
+ * @note IMPLEMENT IN SCALA.JS
+ *
+ import akka.japi.Util.immutableSeq
+ */
 import akka.util.Collections.EmptyImmutableSeq
 import scala.util.{ Success, Failure }
 import scala.util.control.NonFatal
@@ -466,8 +474,8 @@ private[akka] class LocalActorRefProvider private[akka] (
   // this is the constructor needed for reflectively instantiating the provider
   def this(_systemName: String,
            settings: ActorSystem.Settings,
-           eventStream: EventStream,
-           /** @note IMPLEMENT IN SCALA.JS dynamicAccess: DynamicAccess */) =
+           eventStream: EventStream
+           /** @note IMPLEMENT IN SCALA.JS , dynamicAccess: DynamicAccess */) =
     this(_systemName,
       settings,
       eventStream,

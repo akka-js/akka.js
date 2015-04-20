@@ -5,13 +5,25 @@
 package akka.actor
 
 import java.io.Closeable
-import java.util.concurrent.{ ConcurrentHashMap, ThreadFactory, CountDownLatch, TimeoutException, RejectedExecutionException }
+/**
+ * @note IMPLEMENT IN SCALA.JS
+ *
+ import java.util.concurrent.{ ConcurrentHashMap, ThreadFactory, CountDownLatch, TimeoutException, RejectedExecutionException }
+ */
 import java.util.concurrent.TimeUnit.MILLISECONDS
-import com.typesafe.config.{ Config, ConfigFactory }
+/**
+ * @note IMPLEMENT IN SCALA.JS
+ *
+ import com.typesafe.config.{ Config, ConfigFactory }
+ */
 import akka.event._
 import akka.dispatch._
 import akka.dispatch.sysmsg.{ SystemMessageList, EarliestFirstSystemMessageList, LatestFirstSystemMessageList, SystemMessage }
-import akka.japi.Util.immutableSeq
+/**
+ * @note IMPLEMENT IN SCALA.JS
+ *
+ import akka.japi.Util.immutableSeq
+ */
 import akka.actor.dungeon.ChildrenContainer
 import akka.util._
 import scala.annotation.tailrec
@@ -360,7 +372,11 @@ abstract class ActorSystem extends ActorRefFactory {
   /**
    * Java API: Recursively create a descendant’s path by appending all child names.
    */
-  def descendant(names: java.lang.Iterable[String]): ActorPath = /(immutableSeq(names))
+  /**
+   * @note IMPLEMENT IN SCALA.JS
+   *
+   def descendant(names: java.lang.Iterable[String]): ActorPath = /(immutableSeq(names))
+   */
 
   /**
    * Start-up time in milliseconds since the epoch.
@@ -380,7 +396,11 @@ abstract class ActorSystem extends ActorRefFactory {
   /**
    * Convenient logging adapter for logging to the [[ActorSystem.eventStream]].
    */
-  def log: LoggingAdapter
+  /**
+   * @note IMPLEMENT IN SCALA.JS
+   *
+   def log: LoggingAdapter
+   */
 
   /**
    * Actor reference where messages are re-routed to which were addressed to
@@ -399,7 +419,11 @@ abstract class ActorSystem extends ActorRefFactory {
   /**
    * Helper object for looking up configured dispatchers.
    */
-  def dispatchers: Dispatchers
+  /**
+   * @note IMPLEMENT IN SCALA.JS
+   *
+   def dispatchers: Dispatchers
+   */
 
   /**
    * Default dispatcher as configured. This dispatcher is used for all actors
@@ -527,7 +551,11 @@ abstract class ExtendedActorSystem extends ActorSystem {
   /**
    * A ThreadFactory that can be used if the transport needs to create any Threads
    */
-  def threadFactory: ThreadFactory
+  /**
+   * @note IMPLEMENT IN SCALA.JS
+   *
+   def threadFactory: ThreadFactory
+   */
 
   /**
    * ClassLoader wrapper which is used for reflective accesses internally. This is set
@@ -536,7 +564,11 @@ abstract class ExtendedActorSystem extends ActorSystem {
    * set on all threads created by the ActorSystem, if one was set during
    * creation.
    */
-  def dynamicAccess: DynamicAccess
+  /**
+   * @note IMPLEMENT IN SCALA.JS
+   *
+   def dynamicAccess: DynamicAccess
+   */
 
   /**
    * For debugging: traverse actor hierarchy and make string representation.
@@ -646,7 +678,6 @@ private[akka] class ActorSystemImpl(val name: String, applicationConfig: ActorSy
   * val scheduler: Scheduler = createScheduler()
   */
   val scheduler: Scheduler = new EventLoopScheduler
-  val eventStream: EventStream = new EventStream
 
  /**
   * @note IMPLEMENT IN SCALA.JS

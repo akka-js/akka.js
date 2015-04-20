@@ -11,7 +11,12 @@ import akka.dispatch.sysmsg._
 import scala.annotation.tailrec
 import scala.util.control.NonFatal
 import scala.concurrent.{ Future, Promise, ExecutionContext }
-import akka.util.{ Timeout, Unsafe }
+/**
+ * @note IMPLEMENT IN SCALA.JS
+ *
+ import akka.util.{ Timeout, Unsafe }
+ */
+import akka.util.Timeout
 import scala.util.{ Success, Failure }
 
 /**
@@ -285,13 +290,15 @@ private[akka] final class PromiseActorRef private (val provider: ActorRefProvide
     _
 
   @inline
-  private[this] def updateState(oldState: AnyRef, newState: AnyRef): Boolean =
-   /**
-    * @note IMPLEMENT IN SCALA.JS
-    *
-    * Unsafe.instance.compareAndSwapObject(this, stateOffset, oldState, newState)
-    */
-    state = newState; true
+  private[this] def updateState(oldState: AnyRef, newState: AnyRef): Boolean = {
+    /**
+     * @note IMPLEMENT IN SCALA.JS
+     *
+     *       Unsafe.instance.compareAndSwapObject(this, stateOffset, oldState, newState)
+     */
+    state = newState
+    true
+  }
 
   @inline
   private[this] def setState(newState: AnyRef): Unit =
@@ -300,7 +307,7 @@ private[akka] final class PromiseActorRef private (val provider: ActorRefProvide
     *
     * Unsafe.instance.compareAndSwapObject(this, stateOffset, oldState, newState)
     */
-    state = newState; true
+    state = newState
 
   override def getParent: InternalActorRef = provider.tempContainer
 

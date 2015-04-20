@@ -161,7 +161,7 @@ object WebWorkerRouter {
     if (address.hasLocalScope)
       postLocalMessageTo(address.system, message)
     else
-      postMessageTo(address.worker.get, address.system, message)
+      ()//postMessageTo(address.worker.get, address.system, message)
   }
 
   /** Registers a worker as child of this one and returns its address.
@@ -250,6 +250,6 @@ object WebWorkerRouter {
 
   private def deliverMessage(system: String, message: js.Any): Unit = {
     val sys = systems(system)
-    sys.deliverMessageFromRouter(message.asInstanceOf[js.Dynamic])
+    //sys.deliverMessageFromRouter(message.asInstanceOf[js.Dynamic])
   }
 }

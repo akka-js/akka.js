@@ -25,7 +25,7 @@ import java.util.concurrent.atomic.AtomicLong
 import scala.concurrent.{ ExecutionContext, ExecutionContextExecutor, Future, Promise }
 import scala.annotation.implicitNotFound
 import akka.ConfigurationException
-import akka.dispatch.Mailboxes
+import akka.dispatch.{MessageDispatcher, Mailboxes}
 
 /**
  * Interface for all ActorRef providers to implement.
@@ -137,8 +137,12 @@ trait ActorRefProvider {
    * Create actor reference for a specified local or remote path. If no such
    * actor exists, it will be (equivalent to) a dead letter reference.
    */
-  @deprecated("use actorSelection instead of actorFor", "2.2")
-  def actorFor(path: ActorPath): InternalActorRef
+/**
+ * @note IMPLEMENT IN SCALA.JS
+ *
+   @deprecated("use actorSelection instead of actorFor", "2.2")
+   def actorFor(path: ActorPath): InternalActorRef
+ */
 
   /**
    * Create actor reference for a specified local or remote path, which will
@@ -146,8 +150,12 @@ trait ActorRefProvider {
    * (equivalent to) a dead letter reference. If `s` is a relative URI, resolve
    * it relative to the given ref.
    */
-  @deprecated("use actorSelection instead of actorFor", "2.2")
-  def actorFor(ref: InternalActorRef, s: String): InternalActorRef
+/**
+ * @note IMPLEMENT IN SCALA.JS
+ *
+   @deprecated("use actorSelection instead of actorFor", "2.2")
+   def actorFor(ref: InternalActorRef, s: String): InternalActorRef
+ */
 
   /**
    * Create actor reference for the specified child path starting at the
@@ -155,14 +163,22 @@ trait ActorRefProvider {
    * i.e. it cannot be used to obtain a reference to an actor which is not
    * physically or logically attached to this actor system.
    */
-  @deprecated("use actorSelection instead of actorFor", "2.2")
-  def actorFor(ref: InternalActorRef, p: Iterable[String]): InternalActorRef
+/**
+ * @note IMPLEMENT IN SCALA.JS
+ *
+   @deprecated("use actorSelection instead of actorFor", "2.2")
+   def actorFor(ref: InternalActorRef, p: Iterable[String]): InternalActorRef
+ */
 
   /**
    * Create actor reference for a specified path. If no such
    * actor exists, it will be (equivalent to) a dead letter reference.
    */
-  def resolveActorRef(path: String): ActorRef
+/**
+ * @note IMPLEMENT IN SCALA.JS
+ *
+   def resolveActorRef(path: String): ActorRef
+ */
 
   /**
    * Create actor reference for a specified path. If no such
@@ -255,8 +271,12 @@ trait ActorRefFactory {
    * `watch(ref)` to be notified of the target’s termination, which is also
    * signaled if the queried path cannot be resolved.
    */
-  @deprecated("use actorSelection instead of actorFor", "2.2")
-  def actorFor(path: ActorPath): ActorRef = provider.actorFor(path)
+/**
+ * @note IMPLEMENT IN SCALA.JS
+ *
+   @deprecated("use actorSelection instead of actorFor", "2.2")
+   def actorFor(path: ActorPath): ActorRef = provider.actorFor(path)
+ */
 
   /**
    * Look-up an actor by path represented as string.
@@ -272,8 +292,12 @@ trait ActorRefFactory {
    * relative to the current context as described for look-ups by
    * `actorOf(Iterable[String])`
    */
-  @deprecated("use actorSelection instead of actorFor", "2.2")
-  def actorFor(path: String): ActorRef = provider.actorFor(lookupRoot, path)
+/**
+ * @note IMPLEMENT IN SCALA.JS
+ *
+   @deprecated("use actorSelection instead of actorFor", "2.2")
+   def actorFor(path: String): ActorRef = provider.actorFor(lookupRoot, path)
+ */
 
   /**
    * Look-up an actor by applying the given path elements, starting from the
@@ -293,8 +317,12 @@ trait ActorRefFactory {
    *
    * For maximum performance use a collection with efficient head & tail operations.
    */
-  @deprecated("use actorSelection instead of actorFor", "2.2")
-  def actorFor(path: Iterable[String]): ActorRef = provider.actorFor(lookupRoot, path)
+/**
+ * @note IMPLEMENT IN SCALA.JS
+ *
+   @deprecated("use actorSelection instead of actorFor", "2.2")
+   def actorFor(path: Iterable[String]): ActorRef = provider.actorFor(lookupRoot, path)
+ */
 
   /**
    * Java API: Look-up an actor by applying the given path elements, starting from the
@@ -317,8 +345,12 @@ trait ActorRefFactory {
    *
    * For maximum performance use a collection with efficient head & tail operations.
    */
-  @deprecated("use actorSelection instead of actorFor", "2.2")
-  def actorFor(path: java.lang.Iterable[String]): ActorRef = provider.actorFor(lookupRoot, immutableSeq(path))
+/**
+ * @note IMPLEMENT IN SCALA.JS
+ *
+   @deprecated("use actorSelection instead of actorFor", "2.2")
+   def actorFor(path: java.lang.Iterable[String]): ActorRef = provider.actorFor(lookupRoot, immutableSeq(path))
+ */
 
   /**
    * Construct an [[akka.actor.ActorSelection]] from the given path, which is
@@ -388,7 +420,7 @@ private[akka] object LocalActorRefProvider {
    * Root and user guardian
    */
   private class Guardian(override val supervisorStrategy: SupervisorStrategy) extends Actor
-  with RequiresMessageQueue[UnboundedMessageQueueSemantics] {
+  /** @note IMPLEMENT IN SCALA.JS with RequiresMessageQueue[UnboundedMessageQueueSemantics] */ {
 
     def receive = {
       case Terminated(_)    ⇒ context.stop(self)
@@ -404,7 +436,7 @@ private[akka] object LocalActorRefProvider {
    * System guardian
    */
   private class SystemGuardian(override val supervisorStrategy: SupervisorStrategy, val guardian: ActorRef)
-    extends Actor with RequiresMessageQueue[UnboundedMessageQueueSemantics] {
+    extends Actor /** @note IMPLEMENT IN SCALA.JS with RequiresMessageQueue[UnboundedMessageQueueSemantics] */ {
     import SystemGuardian._
 
     var terminationHooks = Set.empty[ActorRef]
@@ -466,8 +498,12 @@ private[akka] class LocalActorRefProvider private[akka] (
                                                           _systemName: String,
                                                           override val settings: ActorSystem.Settings,
                                                           val eventStream: EventStream,
-                                                          val dynamicAccess: DynamicAccess,
-                                                          override val deployer: Deployer,
+                                                          /**
+                                                           * @note IMPLEMENT IN SCALA.JS
+                                                           *
+                                                           val dynamicAccess: DynamicAccess,
+                                                           override val deployer: Deployer,
+                                                           */
                                                           _deadLetters: Option[ActorPath ⇒ InternalActorRef])
   extends ActorRefProvider {
 
@@ -495,6 +531,12 @@ private[akka] class LocalActorRefProvider private[akka] (
    *
    * private[akka] val log: LoggingAdapter = Logging(eventStream, "LocalActorRefProvider(" + rootPath.address + ")")
    */
+  protected object log { // OH GOD, WHY
+    def error(msg: String): Unit = Console.err.println(msg)
+    def error(ex: Throwable, msg: String): Unit = error(s"$ex -- $msg")
+    def debug(msg: String): Unit = Console.err.println(msg)
+    def debug(ex: Throwable, msg: String): Unit = debug(s"$ex -- $msg")
+  }
 
   override val deadLetters: InternalActorRef =
     _deadLetters.getOrElse((p: ActorPath) ⇒ new DeadLetterActorRef(this, p, eventStream)).apply(rootPath / "deadLetters")
@@ -515,7 +557,12 @@ private[akka] class LocalActorRefProvider private[akka] (
    * receive only Supervise/ChildTerminated system messages or Failure message.
    */
   private[akka] val theOneWhoWalksTheBubblesOfSpaceTime: InternalActorRef = new MinimalActorRef {
-    val stopped = new Switch(false)
+    /**
+     * @note IMPLEMENT IN SCALA.JS
+     *
+     val stopped = new Switch(false)
+     */
+    private[this] var stopped: Boolean = false
 
     @volatile
     var causeOfTermination: Option[Throwable] = None
@@ -524,23 +571,54 @@ private[akka] class LocalActorRefProvider private[akka] (
 
     def provider: ActorRefProvider = LocalActorRefProvider.this
 
-    override def stop(): Unit = stopped switchOn { terminationPromise.complete(causeOfTermination.map(Failure(_)).getOrElse(Success(()))) }
-    @deprecated("Use context.watch(actor) and receive Terminated(actor)", "2.2") override def isTerminated: Boolean = stopped.isOn
+    /**
+     * @note IMPLEMENT IN SCALA.JS
+     *
+         override def stop(): Unit = stopped switchOn {
+     */
+    override def stop(): Unit = if(!stopped) {
+      stopped = true
+      terminationPromise.complete(causeOfTermination.map(Failure(_)).getOrElse(Success(())))
+    }
+    @deprecated("Use context.watch(actor) and receive Terminated(actor)", "2.2") override def isTerminated: Boolean =
+      /**
+       * @note IMPLEMENT IN SCALA.JS
+       *
+       stopped.isOn
+       */
+      stopped
 
-    override def !(message: Any)(implicit sender: ActorRef = Actor.noSender): Unit = stopped.ifOff(message match {
-      case null ⇒ throw new InvalidMessageException("Message is null")
-      case _    ⇒ log.error(s"$this received unexpected message [$message]")
-    })
+    /**
+     * @note IMPLEMENT IN SCALA.JS
+     *
+     * override def !(message: Any)(implicit sender: ActorRef = Actor.noSender): Unit =
+         stopped.ifOff(message match {
+     */
+    override def !(message: Any)(implicit sender: ActorRef = Actor.noSender): Unit = {
+      if(!stopped) {
+        message match {
+          case null ⇒ throw new InvalidMessageException("Message is null")
+          case _ ⇒ log.error(s"$this received unexpected message [$message]")
+        }
+      }
+    }
 
-    override def sendSystemMessage(message: SystemMessage): Unit = stopped ifOff {
-      message match {
-        case Failed(child, ex, _) ⇒
-          log.error(ex, s"guardian $child failed, shutting down!")
-          causeOfTermination = Some(ex)
-          child.asInstanceOf[InternalActorRef].stop()
-        case Supervise(_, _)           ⇒ // TODO register child in some map to keep track of it and enable shutdown after all dead
-        case _: DeathWatchNotification ⇒ stop()
-        case _                         ⇒ log.error(s"$this received unexpected system message [$message]")
+    /**
+     * @note IMPLEMENT IN SCALA.JS
+     *
+     override def sendSystemMessage(message: SystemMessage): Unit = stopped ifOff {
+     */
+    override def sendSystemMessage(message: SystemMessage): Unit = {
+      if(!stopped) {
+        message match {
+          case Failed(child, ex, _) ⇒
+            log.error(ex, s"guardian $child failed, shutting down!")
+            causeOfTermination = Some(ex)
+            child.asInstanceOf[InternalActorRef].stop()
+          case Supervise(_, _)           ⇒ // TODO register child in some map to keep track of it and enable shutdown after all dead
+          case _: DeathWatchNotification ⇒ stop()
+          case _                         ⇒ log.error(s"$this received unexpected system message [$message]")
+        }
       }
     }
   }
@@ -570,8 +648,12 @@ private[akka] class LocalActorRefProvider private[akka] (
    */
   def registerExtraNames(_extras: Map[String, InternalActorRef]): Unit = extraNames ++= _extras
 
-  private def guardianSupervisorStrategyConfigurator =
-    dynamicAccess.createInstanceFor[SupervisorStrategyConfigurator](settings.SupervisorStrategyClass, EmptyImmutableSeq).get
+/**
+ * @note IMPLEMENT IN SCALA.JS
+ *
+   private def guardianSupervisorStrategyConfigurator =
+     dynamicAccess.createInstanceFor[SupervisorStrategyConfigurator](settings.SupervisorStrategyClass, EmptyImmutableSeq).get
+ */
 
   /**
    * Overridable supervision strategy to be used by the “/user” guardian.
@@ -585,7 +667,12 @@ private[akka] class LocalActorRefProvider private[akka] (
   /**
    * Overridable supervision strategy to be used by the “/user” guardian.
    */
-  protected def guardianStrategy: SupervisorStrategy = guardianSupervisorStrategyConfigurator.create()
+  /**
+   * @note IMPLEMENT IN SCALA.JS
+   *
+   protected def guardianStrategy: SupervisorStrategy = guardianSupervisorStrategyConfigurator.create()
+   */
+  protected def guardianStrategy: SupervisorStrategy = SupervisorStrategy.defaultStrategy
 
   /**
    * Overridable supervision strategy to be used by the “/user” guardian.
@@ -599,13 +686,24 @@ private[akka] class LocalActorRefProvider private[akka] (
   *
   * private lazy val defaultMailbox = system.mailboxes.lookup(Mailboxes.DefaultMailboxId)
   */
+  val mailboxes: Mailboxes = new Mailboxes(deadLetters)
+  private lazy val defaultDispatcher: MessageDispatcher = new MessageDispatcher(mailboxes)
 
   override lazy val rootGuardian: LocalActorRef =
     new LocalActorRef(
       system,
-      Props(classOf[LocalActorRefProvider.Guardian], rootGuardianStrategy),
+    /**
+     * @note IMPLEMENT IN SCALA.JS
+     *
+           Props(classOf[LocalActorRefProvider.Guardian], rootGuardianStrategy),
+     */
+      Props(new LocalActorRefProvider.Guardian(rootGuardianStrategy)),
       defaultDispatcher,
-      defaultMailbox,
+      /**
+       * @note IMPLEMENT IN SCALA.JS
+       *
+       defaultMailbox,
+       */
       theOneWhoWalksTheBubblesOfSpaceTime,
       rootPath) {
       override def getParent: InternalActorRef = this
@@ -623,8 +721,14 @@ private[akka] class LocalActorRefProvider private[akka] (
   override lazy val guardian: LocalActorRef = {
     val cell = rootGuardian.underlying
     cell.reserveChild("user")
-    val ref = new LocalActorRef(system, Props(classOf[LocalActorRefProvider.Guardian], guardianStrategy),
-      defaultDispatcher, defaultMailbox, rootGuardian, rootPath / "user")
+    /**
+     * @note IMPLEMENT IN SCALA.JS
+     *
+         val ref = new LocalActorRef(system, Props(classOf[LocalActorRefProvider.Guardian], guardianStrategy),
+           defaultDispatcher, defaultMailbox, rootGuardian, rootPath / "user")
+     */
+    val ref = new LocalActorRef(system, Props(new LocalActorRefProvider.Guardian(guardianStrategy)),
+      defaultDispatcher, rootGuardian, rootPath / "user")
     cell.initChild(ref)
     ref.start()
     ref
@@ -633,15 +737,27 @@ private[akka] class LocalActorRefProvider private[akka] (
   override lazy val systemGuardian: LocalActorRef = {
     val cell = rootGuardian.underlying
     cell.reserveChild("system")
+    /**
+     * @note IMPLEMENT IN SCALA.JS
+     *
+         val ref = new LocalActorRef(
+           system, Props(classOf[LocalActorRefProvider.SystemGuardian], systemGuardianStrategy, guardian),
+           defaultDispatcher, defaultMailbox, rootGuardian, rootPath / "system")
+     */
     val ref = new LocalActorRef(
-      system, Props(classOf[LocalActorRefProvider.SystemGuardian], systemGuardianStrategy, guardian),
-      defaultDispatcher, defaultMailbox, rootGuardian, rootPath / "system")
+      system, Props( new LocalActorRefProvider.SystemGuardian(systemGuardianStrategy, guardian)),
+      defaultDispatcher, rootGuardian, rootPath / "system")
     cell.initChild(ref)
     ref.start()
     ref
   }
 
-  lazy val tempContainer = new VirtualPathContainer(system.provider, tempNode, rootGuardian, log)
+  /**
+   * @note IMPLEMENT IN SCALA.JS
+   *
+   lazy val tempContainer = new VirtualPathContainer(system.provider, tempNode, rootGuardian, log)
+   */
+  lazy val tempContainer = new VirtualPathContainer(system.provider, tempNode, rootGuardian)
 
   def registerTempActor(actorRef: InternalActorRef, path: ActorPath): Unit = {
     assert(path.parent eq tempNode, "cannot registerTempActor() with anything not obtained from tempPath()")
@@ -666,51 +782,60 @@ private[akka] class LocalActorRefProvider private[akka] (
     */
   }
 
-  @deprecated("use actorSelection instead of actorFor", "2.2")
-  override def actorFor(ref: InternalActorRef, path: String): InternalActorRef = path match {
-    case RelativeActorPath(elems) ⇒
-      if (elems.isEmpty) {
-        log.debug("look-up of empty path string [{}] fails (per definition)", path)
-        deadLetters
-      } else if (elems.head.isEmpty) actorFor(rootGuardian, elems.tail)
-      else actorFor(ref, elems)
-    case ActorPathExtractor(address, elems) if address == rootPath.address ⇒ actorFor(rootGuardian, elems)
-    case _ ⇒
-      log.debug("look-up of unknown path [{}] failed", path)
-      deadLetters
-  }
+/**
+ * @note IMPLEMENT IN SCALA.JS
+ *
+   @deprecated("use actorSelection instead of actorFor", "2.2")
+   override def actorFor(ref: InternalActorRef, path: String): InternalActorRef = path match {
+     case RelativeActorPath(elems) ⇒
+       if (elems.isEmpty) {
+         log.debug("look-up of empty path string [{}] fails (per definition)", path)
+         deadLetters
+       } else if (elems.head.isEmpty) actorFor(rootGuardian, elems.tail)
+       else actorFor(ref, elems)
+     case ActorPathExtractor(address, elems) if address == rootPath.address ⇒ actorFor(rootGuardian, elems)
+     case _ ⇒
+       log.debug("look-up of unknown path [{}] failed", path)
+       deadLetters
+   }
 
-  @deprecated("use actorSelection instead of actorFor", "2.2")
-  override def actorFor(path: ActorPath): InternalActorRef =
-    if (path.root == rootPath) actorFor(rootGuardian, path.elements)
-    else {
-      log.debug("look-up of foreign ActorPath [{}] failed", path)
-      deadLetters
-    }
+   @deprecated("use actorSelection instead of actorFor", "2.2")
+   override def actorFor(path: ActorPath): InternalActorRef =
+     if (path.root == rootPath) actorFor(rootGuardian, path.elements)
+     else {
+       log.debug("look-up of foreign ActorPath [{}] failed", path)
+       deadLetters
+     }
 
-  @deprecated("use actorSelection instead of actorFor", "2.2")
-  override def actorFor(ref: InternalActorRef, path: Iterable[String]): InternalActorRef =
-    if (path.isEmpty) {
-      log.debug("look-up of empty path sequence fails (per definition)")
-      deadLetters
-    } else ref.getChild(path.iterator) match {
-      case Nobody ⇒
-        log.debug("look-up of path sequence [/{}] failed", path.mkString("/"))
-        new EmptyLocalActorRef(system.provider, ref.path / path, eventStream)
-      case x ⇒ x
-    }
+   @deprecated("use actorSelection instead of actorFor", "2.2")
+   override def actorFor(ref: InternalActorRef, path: Iterable[String]): InternalActorRef =
+     if (path.isEmpty) {
+       log.debug("look-up of empty path sequence fails (per definition)")
+       deadLetters
+     } else ref.getChild(path.iterator) match {
+       case Nobody ⇒
+         log.debug("look-up of path sequence [/{}] failed", path.mkString("/"))
+         new EmptyLocalActorRef(system.provider, ref.path / path, eventStream)
+       case x ⇒ x
+     }
 
-  def resolveActorRef(path: String): ActorRef = path match {
-    case ActorPathExtractor(address, elems) if address == rootPath.address ⇒ resolveActorRef(rootGuardian, elems)
-    case _ ⇒
-      log.debug("resolve of unknown path [{}] failed", path)
-      deadLetters
-  }
+   def resolveActorRef(path: String): ActorRef = path match {
+     case ActorPathExtractor(address, elems) if address == rootPath.address ⇒ resolveActorRef(rootGuardian, elems)
+     case _ ⇒
+       log.debug("resolve of unknown path [{}] failed", path)
+       deadLetters
+   }
+ */
 
   def resolveActorRef(path: ActorPath): ActorRef = {
     if (path.root == rootPath) resolveActorRef(rootGuardian, path.elements)
     else {
-      log.debug("resolve of foreign ActorPath [{}] failed", path)
+      /**
+       * @note IMPLEMENT IN SCALA.JS
+       *
+       log.debug("resolve of foreign ActorPath [{}] failed", path)
+       */
+      log.debug(s"resolve of foreign ActorPath [$path] failed")
       deadLetters
     }
   }
@@ -724,21 +849,31 @@ private[akka] class LocalActorRefProvider private[akka] (
       deadLetters
     } else ref.getChild(pathElements.iterator) match {
       case Nobody ⇒
-        log.debug("resolve of path sequence [/{}] failed", pathElements.mkString("/"))
+        /**
+         * @note IMPLEMENT IN SCALA.JS
+         *
+         log.debug("resolve of path sequence [/{}] failed", pathElements.mkString("/"))
+         */
+        log.debug(s"resolve of path sequence [/${pathElements.mkString("/")}] failed")
         new EmptyLocalActorRef(system.provider, ref.path / pathElements, eventStream)
       case x ⇒ x
     }
 
   def actorOf(system: ActorSystemImpl, /** @note IMPLEMENT IN SCALA.JS props */ props2: Props, supervisor: InternalActorRef, path: ActorPath,
-              systemService: Boolean, deploy: Option[Deploy], lookupDeploy: Boolean, async: Boolean): InternalActorRef = {
-    try {
-      val dispatcher = system.dispatchers.lookup(props2.dispatcher)
-      val mailboxType = system.mailboxes.getMailboxType(props2, dispatcher.configurator.config)
+              systemService: Boolean, /** @note IMPLEMENT IN SCALA.JS deploy: Option[Deploy], lookupDeploy: Boolean, */ async: Boolean): InternalActorRef = {
+    /**
+     * @note IMPLEMENT IN SCALA.JS
+     *
+         try {
+           val dispatcher = system.dispatchers.lookup(props2.dispatcher)
+           val mailboxType = system.mailboxes.getMailboxType(props2, dispatcher.configurator.config)
 
-      new LocalActorRef(system, props2, dispatcher, mailboxType, supervisor, path)
-    } catch {
-      case NonFatal(e) ⇒ throw new ConfigurationException(s"configuration problem while creating [$path] with dispatcher [${props2.dispatcher}] and mailbox [${props2.mailbox}]", e)
-    }
+           new LocalActorRef(system, props2, dispatcher, mailboxType, supervisor, path)
+         } catch {
+           case NonFatal(e) ⇒ throw new ConfigurationException(s"configuration problem while creating [$path] with dispatcher [${props2.dispatcher}] and mailbox [${props2.mailbox}]", e)
+         }
+     */
+    new LocalActorRef(system, props2, system.dispatcher, supervisor, path)
   }
 
  /**

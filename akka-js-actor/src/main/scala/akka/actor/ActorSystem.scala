@@ -499,7 +499,11 @@ abstract class ActorSystem extends ActorRefFactory {
    * This method has putIfAbsent-semantics, this method can potentially block, waiting for the initialization
    * of the payload, if is in the process of registration from another Thread of execution
    */
-  def registerExtension[T <: Extension](ext: ExtensionId[T]): T
+  /**
+   * @note IMPLEMENT IN SCALA.JS
+   *
+   def registerExtension[T <: Extension](ext: ExtensionId[T]): T
+   */
 
   /**
    * Returns the payload that is associated with the provided extension
@@ -507,13 +511,21 @@ abstract class ActorSystem extends ActorRefFactory {
    * This method can potentially block, waiting for the initialization
    * of the payload, if is in the process of registration from another Thread of execution
    */
-  def extension[T <: Extension](ext: ExtensionId[T]): T
+  /**
+   * @note IMPLEMENT IN SCALA.JS
+   *
+   def extension[T <: Extension](ext: ExtensionId[T]): T
+   */
 
   /**
    * Returns whether the specified extension is already registered, this method can potentially block, waiting for the initialization
    * of the payload, if is in the process of registration from another Thread of execution
    */
-  def hasExtension(ext: ExtensionId[_ <: Extension]): Boolean
+  /**
+   * @note IMPLEMENT IN SCALA.JS
+   *
+   def hasExtension(ext: ExtensionId[_ <: Extension]): Boolean
+   */
 }
 
 /**
@@ -586,6 +598,20 @@ private[akka] class ActorSystemImpl(val name: String, applicationConfig: ActorSy
         "], must contain only word characters (i.e. [a-zA-Z0-9] plus non-leading '-' or '_')")
 
   import ActorSystem._
+
+  /** FIX **/
+  // Members declared in akka.actor.ActorSystem
+  def awaitTermination(): Unit = ???
+  def awaitTermination(timeout: scala.concurrent.duration.Duration): Unit = ???
+  def isTerminated: Boolean = ???
+  def logConfiguration(): Unit = ???
+  def registerOnTermination(code: Runnable): Unit = ???
+  def registerOnTermination[T](code: => T): Unit = ???
+
+  // Members declared in akka.actor.ExtendedActorSystem
+  private[akka] def printTree: String = ???
+
+
 
   @volatile private var logDeadLetterListener: Option[ActorRef] = None
   /**
@@ -667,10 +693,15 @@ private[akka] class ActorSystemImpl(val name: String, applicationConfig: ActorSy
   import settings._
 
   // this provides basic logging (to stdout) until .start() is called below
-  val eventStream: EventStream = new EventStream(DebugEventStream)
-  eventStream.startStdoutLogger(settings)
+  /**
+   * @note IMPLEMENT IN SCALA.JS
+   *
+   val eventStream: EventStream = new EventStream(DebugEventStream)
+   eventStream.startStdoutLogger(settings)
 
-  val log: LoggingAdapter = new BusLogging(eventStream, "ActorSystem(" + name + ")", this.getClass)
+   val log: LoggingAdapter = new BusLogging(eventStream, "ActorSystem(" + name + ")", this.getClass)
+   */
+  val eventStream: EventStream = new EventStream
 
  /**
   * @note IMPLEMENT IN SCALA.JS
@@ -759,17 +790,21 @@ private[akka] class ActorSystemImpl(val name: String, applicationConfig: ActorSy
 
   def start(): this.type = _start
 
-  private lazy val terminationCallbacks = {
-    implicit val d = dispatcher
-    val callbacks = new TerminationCallbacks
-    terminationFuture onComplete (_ ⇒ callbacks.run)
-    callbacks
-  }
-  def registerOnTermination[T](code: ⇒ T) { registerOnTermination(new Runnable { def run = code }) }
-  def registerOnTermination(code: Runnable) { terminationCallbacks.add(code) }
-  def awaitTermination(timeout: Duration) { Await.ready(terminationCallbacks, timeout) }
-  def awaitTermination() = awaitTermination(Duration.Inf)
-  def isTerminated = terminationCallbacks.isTerminated
+/**
+ * @note IMPLEMENT IN SCALA.JS
+ *
+   private lazy val terminationCallbacks = {
+     implicit val d = dispatcher
+     val callbacks = new TerminationCallbacks
+     terminationFuture onComplete (_ ⇒ callbacks.run)
+     callbacks
+   }
+   def registerOnTermination[T](code: ⇒ T) { registerOnTermination(new Runnable { def run = code }) }
+   def registerOnTermination(code: Runnable) { terminationCallbacks.add(code) }
+   def awaitTermination(timeout: Duration) { Await.ready(terminationCallbacks, timeout) }
+   def awaitTermination() = awaitTermination(Duration.Inf)
+   def isTerminated = terminationCallbacks.isTerminated
+ */
 
   def shutdown(): Unit = {
     if (!settings.LogDeadLettersDuringShutdown) logDeadLetterListener foreach stop
@@ -923,44 +958,48 @@ private[akka] class ActorSystemImpl(val name: String, applicationConfig: ActorSy
    }
  */
 
-  final class TerminationCallbacks extends Runnable with Awaitable[Unit] {
-    private val lock = new ReentrantGuard
-    private var callbacks: List[Runnable] = _ //non-volatile since guarded by the lock
-    lock withGuard { callbacks = Nil }
+ /**
+  * @note IMPLEMENT IN SCALA.JS
+  *
+   final class TerminationCallbacks extends Runnable with Awaitable[Unit] {
+     private val lock = new ReentrantGuard
+     private var callbacks: List[Runnable] = _ //non-volatile since guarded by the lock
+     lock withGuard { callbacks = Nil }
 
-    private val latch = new CountDownLatch(1)
+     private val latch = new CountDownLatch(1)
 
-    final def add(callback: Runnable): Unit = {
-      latch.getCount match {
-        case 0 ⇒ throw new RejectedExecutionException("Must be called prior to system shutdown.")
-        case _ ⇒ lock withGuard {
-          if (latch.getCount == 0) throw new RejectedExecutionException("Must be called prior to system shutdown.")
-          else callbacks ::= callback
-        }
-      }
-    }
+     final def add(callback: Runnable): Unit = {
+       latch.getCount match {
+         case 0 ⇒ throw new RejectedExecutionException("Must be called prior to system shutdown.")
+         case _ ⇒ lock withGuard {
+           if (latch.getCount == 0) throw new RejectedExecutionException("Must be called prior to system shutdown.")
+           else callbacks ::= callback
+         }
+       }
+     }
 
-    final def run(): Unit = lock withGuard {
-      @tailrec def runNext(c: List[Runnable]): List[Runnable] = c match {
-        case Nil ⇒ Nil
-        case callback :: rest ⇒
-          try callback.run() catch { case NonFatal(e) ⇒ log.error(e, "Failed to run termination callback, due to [{}]", e.getMessage) }
-          runNext(rest)
-      }
-      try { callbacks = runNext(callbacks) } finally latch.countDown()
-    }
+     final def run(): Unit = lock withGuard {
+       @tailrec def runNext(c: List[Runnable]): List[Runnable] = c match {
+         case Nil ⇒ Nil
+         case callback :: rest ⇒
+           try callback.run() catch { case NonFatal(e) ⇒ log.error(e, "Failed to run termination callback, due to [{}]", e.getMessage) }
+           runNext(rest)
+       }
+       try { callbacks = runNext(callbacks) } finally latch.countDown()
+     }
 
-    final def ready(atMost: Duration)(implicit permit: CanAwait): this.type = {
-      if (atMost.isFinite()) {
-        if (!latch.await(atMost.length, atMost.unit))
-          throw new TimeoutException("Await termination timed out after [%s]" format (atMost.toString))
-      } else latch.await()
+     final def ready(atMost: Duration)(implicit permit: CanAwait): this.type = {
+       if (atMost.isFinite()) {
+         if (!latch.await(atMost.length, atMost.unit))
+           throw new TimeoutException("Await termination timed out after [%s]" format (atMost.toString))
+       } else latch.await()
 
-      this
-    }
+       this
+     }
 
-    final def result(atMost: Duration)(implicit permit: CanAwait): Unit = ready(atMost)
+     final def result(atMost: Duration)(implicit permit: CanAwait): Unit = ready(atMost)
 
-    final def isTerminated: Boolean = latch.getCount == 0
-  }
+     final def isTerminated: Boolean = latch.getCount == 0
+   }
+  */
 }

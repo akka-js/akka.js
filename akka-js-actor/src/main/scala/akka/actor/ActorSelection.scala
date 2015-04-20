@@ -65,20 +65,24 @@ abstract class ActorSelection extends Serializable {
    * Under the hood it talks to the actor to verify its existence and acquire its
    * [[ActorRef]].
    */
-  def resolveOne()(implicit timeout: Timeout): Future[ActorRef] = {
-    /**
-     * @note IMPLEMENT IN SCALA.JS
-     *
-     implicit val ec = ExecutionContexts.sameThreadExecutionContext
-     */
-    implicit val ec = scala.scalajs.concurrent.JSExecutionContext
-    val p = Promise[ActorRef]()
-    this.ask(Identify(None)) onComplete {
-      case Success(ActorIdentity(_, Some(ref))) ⇒ p.success(ref)
-      case _                                    ⇒ p.failure(ActorNotFound(this))
-    }
-    p.future
-  }
+/**
+ * @note IMPLEMENT IN SCALA.JS
+ *
+   def resolveOne()(implicit timeout: Timeout): Future[ActorRef] = {
+     /**
+      * @note IMPLEMENT IN SCALA.JS
+      *
+      implicit val ec = ExecutionContexts.sameThreadExecutionContext
+      */
+     implicit val ec = scala.scalajs.concurrent.JSExecutionContext
+     val p = Promise[ActorRef]()
+     this.ask(Identify(None)) onComplete {
+       case Success(ActorIdentity(_, Some(ref))) ⇒ p.success(ref)
+       case _                                    ⇒ p.failure(ActorNotFound(this))
+     }
+     p.future
+   }
+ */
 
   /**
    * Resolve the [[ActorRef]] matching this selection.
@@ -90,7 +94,11 @@ abstract class ActorSelection extends Serializable {
    * Under the hood it talks to the actor to verify its existence and acquire its
    * [[ActorRef]].
    */
-  def resolveOne(timeout: FiniteDuration): Future[ActorRef] = resolveOne()(timeout)
+  /**
+   * @note IMPLEMENT IN SCALA.JS
+   *
+   def resolveOne(timeout: FiniteDuration): Future[ActorRef] = resolveOne()(timeout)
+   */
 
   override def toString: String = {
     val builder = new java.lang.StringBuilder()

@@ -130,7 +130,11 @@ trait ActorContext extends ActorRefFactory {
    * Returns the dispatcher (MessageDispatcher) that is used for this Actor.
    * Importing this member will place an implicit ExecutionContext in scope.
    */
-  implicit def dispatcher: ExecutionContextExecutor
+  /**
+   * @note IMPLEMENT IN SCALA.JS
+   *
+   implicit def dispatcher: ExecutionContextExecutor
+   */
 
   /**
    * The system that the actor belongs to.
@@ -435,16 +439,36 @@ private[akka] class ActorCell(
   protected def actor_=(a: Actor): Unit = _actor = a
   var currentMessage: Envelope = _
   private var behaviorStack: List[Actor.Receive] = emptyBehaviorStack
-  private[this] var sysmsgStash: LatestFirstSystemMessageList = SystemMessageList.LNil
+  /**
+   * @note IMPLEMENT IN SCALA.JS
+   *
+   private[this] var sysmsgStash: LatestFirstSystemMessageList = SystemMessageList.LNil
+   */
+
+  private[this] var sysmsgStashLatestFirst: List[SystemMessage] = Nil
+
 
   protected def stash(msg: SystemMessage): Unit = {
-    assert(msg.unlinked)
-    sysmsgStash ::= msg
+    /**
+     * @note IMPLEMENT IN SCALA.JS
+     *
+      assert(msg.unlinked)
+      sysmsgStash ::= msg
+     */
+    sysmsgStashLatestFirst ::= msg
   }
 
-  private def unstashAll(): LatestFirstSystemMessageList = {
-    val unstashed = sysmsgStash
-    sysmsgStash = SystemMessageList.LNil
+  private def unstashAllLatestFirst(): List[SystemMessage] = {
+    /**
+     * @note IMPLEMENT IN SCALA.JS
+     *
+     *   private def unstashAll(): LatestFirstSystemMessageList = {
+             val unstashed = sysmsgStash
+     sysmsgStash = SystemMessageList.LNil
+     unstashed
+     */
+    val unstashed = sysmsgStashLatestFirst
+    sysmsgStashLatestFirst = Nil
     unstashed
   }
 
@@ -468,7 +492,12 @@ private[akka] class ActorCell(
       else if (mailbox.isSuspended) SuspendedState
       else DefaultState
 
+    /**
+     * @note IMPLEMENT IN SCALA.JS
+     *
     @tailrec def sendAllToDeadLetters(messages: EarliestFirstSystemMessageList): Unit =
+     */
+    @tailrec def sendAllToDeadLetters(messages: List[SystemMessage]): Unit =
       if (messages.nonEmpty) {
         val tail = messages.tail
         val msg = messages.head
@@ -485,7 +514,12 @@ private[akka] class ActorCell(
       }
 
     @tailrec
-    def invokeAll(messages: EarliestFirstSystemMessageList, currentState: Int): Unit = {
+/**
+ * @note IMPLEMENT IN SCALA.JS
+ *
+     def invokeAll(messages: EarliestFirstSystemMessageList, currentState: Int): Unit = {
+ */
+    def invokeAll(messages: List[SystemMessage], currentState: Int): Unit = {
       val rest = messages.tail
       val message = messages.head
       message.unlink()
@@ -510,13 +544,25 @@ private[akka] class ActorCell(
       val newState = calculateState
       // As each state accepts a strict subset of another state, it is enough to unstash if we "walk up" the state
       // chain
-      val todo = if (newState < currentState) unstashAll() reverse_::: rest else rest
+      /**
+       * @note IMPLEMENT IN SCALA.JS
+       *
+         val todo = if (newState < currentState) unstashAll() reverse_::: rest else rest
+       */
+      val todo =
+        if (newState < currentState) { unstashAllLatestFirst() reverse_::: rest }
+        else rest
 
       if (isTerminated) sendAllToDeadLetters(todo)
       else if (todo.nonEmpty) invokeAll(todo, newState)
     }
 
-    invokeAll(new EarliestFirstSystemMessageList(message), calculateState)
+/**
+ * @note IMPLEMENT IN SCALA.JS
+ *
+     invokeAll(new EarliestFirstSystemMessageList(message), calculateState)
+ */
+    invokeAll(List(message), calculateState)
   }
 
   //Memory consistency is handled by the Mailbox (reading mailbox status then processing messages, then writing mailbox status
@@ -699,7 +745,7 @@ private[akka] class ActorCell(
   }
 
   final protected def clearActorCellFields(cell: ActorCell): Unit = {
-    cell.unstashAll()
+    cell.unstashAllLatestFirst()
     if (!lookupAndSetField(classOf[ActorCell], cell, "props", ActorCell.terminatedProps))
       throw new IllegalArgumentException("ActorCell has no props field")
   }

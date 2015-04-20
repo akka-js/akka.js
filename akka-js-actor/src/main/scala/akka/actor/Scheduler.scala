@@ -1,5 +1,7 @@
 package akka.actor
 
+import akka.util.{JSTimeoutTask, JSTimeoutThenIntervalTask}
+
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.FiniteDuration
 import scala.util.control.NoStackTrace
@@ -151,14 +153,14 @@ trait Cancellable {
 
 class EventLoopScheduler extends Scheduler {
 
-  def schedule(
+  override def schedule(
       initialDelay: FiniteDuration,
       interval: FiniteDuration)(f: => Unit)(
       implicit executor: ExecutionContext): Cancellable = {
     JSTimeoutThenIntervalTask(initialDelay, interval)(f)
   }
 
-  def scheduleOnce(delay: FiniteDuration)(f: => Unit)(
+  override def scheduleOnce(delay: FiniteDuration)(f: => Unit)(
       implicit executor: ExecutionContext): Cancellable = {
     JSTimeoutTask(delay)(f)
   }

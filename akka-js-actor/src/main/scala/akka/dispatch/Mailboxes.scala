@@ -4,17 +4,30 @@
 
 package akka.dispatch
 
-import com.typesafe.config.{ ConfigFactory, Config }
-import akka.actor.{ Actor, DynamicAccess, ActorSystem }
+/**
+ * @note IMPLEMENT IN SCALA.JS
+ *
+ import com.typesafe.config.{ ConfigFactory, Config }
+ import akka.actor.{ Actor, DynamicAccess, ActorSystem }
+ */
+import akka.actor.{ Actor, ActorSystem }
 import akka.event.EventStream
 import java.util.concurrent.ConcurrentHashMap
 import akka.event.Logging.Warning
 import akka.ConfigurationException
 import scala.annotation.tailrec
 import java.lang.reflect.ParameterizedType
-import akka.util.Reflect
+/**
+ * @note IMPLEMENT IN SCALA.JS
+ *
+ import akka.util.Reflect
+ */
 import akka.actor.Props
-import akka.actor.Deploy
+/**
+ * @note IMPLEMENT IN SCALA.JS
+ *
+ import akka.actor.Deploy
+ */
 import scala.util.Try
 import scala.util.Failure
 import scala.util.control.NonFatal
@@ -53,10 +66,10 @@ private[akka] class Mailboxes(
     def cleanUp(owner: ActorRef, deadLetters: MessageQueue): Unit = ()
   }) {
     becomeClosed()
-    def systemEnqueue(receiver: ActorRef, handle: SystemMessage): Unit =
+    override def systemEnqueue(receiver: ActorRef, handle: SystemMessage): Unit =
       deadLetters ! DeadLetter(handle, receiver, receiver)
     def systemDrain(newContents: LatestFirstSystemMessageList): EarliestFirstSystemMessageList = SystemMessageList.ENil
-    def hasSystemMessages = false
+    override def hasSystemMessages = false
   }
 
 /**

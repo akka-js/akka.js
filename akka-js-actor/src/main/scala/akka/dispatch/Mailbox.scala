@@ -8,15 +8,28 @@ import java.util.concurrent._
 import akka.AkkaException
 import akka.dispatch.sysmsg._
 import akka.actor.{ ActorCell, ActorRef, Cell, ActorSystem, InternalActorRef, DeadLetter }
-import akka.util.{JSQueue, Unsafe, BoundedBlockingQueue}
-import akka.util.Helpers.ConfigOps
+/**
+ * @note IMPLEMENT IN SCALA.JS
+ *
+ import akka.util.{JSQueue, Unsafe, BoundedBlockingQueue}
+ */
+import akka.util.JSQueue
+/**
+ * @note IMPLEMENT IN SCALA.JS
+ *
+ import akka.util.Helpers.ConfigOps
+ */
 import akka.event.Logging.Error
 import scala.concurrent.duration.Duration
 import scala.concurrent.duration.FiniteDuration
 import scala.annotation.tailrec
 import scala.concurrent.forkjoin.ForkJoinTask
 import scala.util.control.NonFatal
-import com.typesafe.config.Config
+/**
+ * @note IMPLEMENT IN SCALA.JS
+ *
+ import com.typesafe.config.Config
+ */
 /**
  * INTERNAL API
  */
@@ -50,7 +63,7 @@ private[akka] object Mailbox {
  *
  * INTERNAL API
  */
-private[akka] abstract class Mailbox(val messageQueue: MessageQueue)
+private[akka] /** @note IMPLEMENT IN SCALA.JS abstract */ class Mailbox(val messageQueue: MessageQueue)
   extends /** @note IMPLEMENT IN SCALA.JS ForkJoinTask[Unit] with SystemMessageQueue with */ Runnable {
 
   import Mailbox._
@@ -116,7 +129,7 @@ private[akka] abstract class Mailbox(val messageQueue: MessageQueue)
    *
    private[this] val systemMessageQueue: SystemMessage = null
    */
-  private[this] val systemMessageQueue = new JSQueue[SystemMessage]
+  private[this] var systemMessageQueue = new JSQueue[SystemMessage]
   def systemEnqueue(receiver: ActorRef, msg: SystemMessage): Unit =
     systemMessageQueue.enqueue(msg)
   /**
@@ -254,6 +267,8 @@ private[akka] abstract class Mailbox(val messageQueue: MessageQueue)
     true
   }
 
+  def hasSystemMessages: Boolean = systemMessageQueue.nonEmpty
+
   final def canBeScheduledForExecution(hasMessageHint: Boolean, hasSystemMessageHint: Boolean): Boolean = currentStatus match {
     case Open | Scheduled ⇒ hasMessageHint || hasSystemMessageHint || hasSystemMessages || hasMessages
     case Closed           ⇒ false
@@ -320,32 +335,49 @@ private[akka] abstract class Mailbox(val messageQueue: MessageQueue)
    */
   final def processAllSystemMessages() {
     var interruption: Throwable = null
-    var messageList = systemDrain(SystemMessageList.LNil)
-    while ((messageList.nonEmpty) && !isClosed) {
-      val msg = messageList.head
-      messageList = messageList.tail
-      msg.unlink()
-      if (debug) println(actor.self + " processing system message " + msg + " with " + actor.childrenRefs)
-      // we know here that systemInvoke ensures that only "fatal" exceptions get rethrown
+    /**
+     * @note IMPLEMENT IN SCALA.JS
+     *
+         var messageList = systemDrain(SystemMessageList.LNil)
+         while ((messageList.nonEmpty) && !isClosed) {
+           val msg = messageList.head
+           messageList = messageList.tail
+           msg.unlink()
+           if (debug) println(actor.self + " processing system message " + msg + " with " + actor.childrenRefs)
+           // we know here that systemInvoke ensures that only "fatal" exceptions get rethrown
+           actor systemInvoke msg
+          /**
+           * @note IMPLEMENT IN SCALA.JS
+           *
+           * if (Thread.interrupted())
+           *   interruption = new InterruptedException("Interrupted while processing system messages")
+           */
+           // don’t ever execute normal message when system message present!
+           if ((messageList.isEmpty) && !isClosed) messageList = systemDrain(SystemMessageList.LNil)
+         }
+     */
+    while (systemMessageQueue.nonEmpty && !isClosed) {
+      val msg = systemMessageQueue.dequeue()
       actor systemInvoke msg
-     /**
-      * @note IMPLEMENT IN SCALA.JS
-      *
-      * if (Thread.interrupted())
-      *   interruption = new InterruptedException("Interrupted while processing system messages")
-      */
-      // don’t ever execute normal message when system message present!
-      if ((messageList.isEmpty) && !isClosed) messageList = systemDrain(SystemMessageList.LNil)
     }
     /*
      * if we closed the mailbox, we must dump the remaining system messages
      * to deadLetters (this is essential for DeathWatch)
      */
+
+    /**
+     * @note IMPLEMENT IN SCALA.JS
+         val dlm = actor.dispatcher.mailboxes.deadLetterMailbox
+         while (messageList.nonEmpty) {
+           val msg = messageList.head
+           messageList = messageList.tail
+           msg.unlink()
+           try dlm.systemEnqueue(actor.self, msg)
+     */
+
     val dlm = actor.dispatcher.mailboxes.deadLetterMailbox
-    while (messageList.nonEmpty) {
-      val msg = messageList.head
-      messageList = messageList.tail
-      msg.unlink()
+    while (systemMessageQueue.nonEmpty) {
+      val msg = systemMessageQueue.dequeue()
       try dlm.systemEnqueue(actor.self, msg)
       catch {
         /** @note IMPLEMENT IN SCALA.JS case e: InterruptedException ⇒ interruption = e */
@@ -377,12 +409,20 @@ private[akka] abstract class Mailbox(val messageQueue: MessageQueue)
   protected[dispatch] def cleanUp(): Unit =
     if (actor ne null) { // actor is null for the deadLetterMailbox
     val dlm = actor.dispatcher.mailboxes.deadLetterMailbox
-      var messageList = systemDrain(new LatestFirstSystemMessageList(NoMessage))
-      while (messageList.nonEmpty) {
-        // message must be “virgin” before being able to systemEnqueue again
-        val msg = messageList.head
-        messageList = messageList.tail
-        msg.unlink()
+    /**
+     * @note IMPLEMENT IN SCALA.JS
+     *
+           var messageList = systemDrain(new LatestFirstSystemMessageList(NoMessage))
+           while (messageList.nonEmpty) {
+             // message must be “virgin” before being able to systemEnqueue again
+             val msg = messageList.head
+             messageList = messageList.tail
+             msg.unlink()
+             dlm.systemEnqueue(actor.self, msg)
+           }
+     */
+      while (systemMessageQueue.nonEmpty) {
+        val msg = systemMessageQueue.dequeue()
         dlm.systemEnqueue(actor.self, msg)
       }
 
@@ -432,28 +472,50 @@ trait MessageQueue {
   def cleanUp(owner: ActorRef, deadLetters: MessageQueue): Unit
 }
 
+
 /**
  * @note IMPLEMENT IN SCALA.JS
  *
  class NodeMessageQueue extends AbstractNodeQueue[Envelope] with MessageQueue with UnboundedMessageQueueSemantics {
-
-   final def enqueue(receiver: ActorRef, handle: Envelope): Unit = add(handle)
-
-   final def dequeue(): Envelope = poll()
-
-   final def numberOfMessages: Int = count()
-
-   final def hasMessages: Boolean = !isEmpty()
-
-   @tailrec final def cleanUp(owner: ActorRef, deadLetters: MessageQueue): Unit = {
-     val envelope = dequeue()
-     if (envelope ne null) {
-       deadLetters.enqueue(owner, envelope)
-       cleanUp(owner, deadLetters)
-     }
-   }
- }
  */
+class NodeMessageQueue extends JSQueue[Envelope] with MessageQueue {
+
+  /**
+   * @note IMPLEMENT IN SCALA.JS
+   *
+           final def enqueue(receiver: ActorRef, handle: Envelope): Unit = add(handle)
+   */
+  final def enqueue(receiver: ActorRef, handle: Envelope): Unit = enqueue(handle)
+
+  /**
+   * @note IMPLEMENT IN SCALA.JS
+   *
+   final def dequeue(): Envelope = poll()
+   */
+  override def dequeue(): Envelope = if (isEmpty) null else super.dequeue()
+
+  /**
+   * @note IMPLEMENT IN SCALA.JS
+   *
+   final def numberOfMessages: Int = count()
+   */
+  final def numberOfMessages: Int = size
+
+  /**
+   * @note IMPLEMENT IN SCALA.JS
+   *
+   final def hasMessages: Boolean = !isEmpty()
+   */
+  final def hasMessages: Boolean = nonEmpty
+
+  @tailrec final def cleanUp(owner: ActorRef, deadLetters: MessageQueue): Unit = {
+    val envelope = dequeue()
+    if (envelope ne null) {
+      deadLetters.enqueue(owner, envelope)
+      cleanUp(owner, deadLetters)
+    }
+  }
+}
 
 trait MailboxType {
   def create(owner: Option[ActorRef], system: Option[ActorSystem]): MessageQueue

@@ -3,6 +3,8 @@
  */
 package akka.dispatch.sysmsg
 
+import akka.util.JSQueue
+
 import scala.annotation.tailrec
 import akka.actor.{ ActorInitializationException, InternalActorRef, ActorRef, PossiblyHarmful }
 
@@ -44,7 +46,12 @@ private[akka] object SystemMessageList {
  * latest appended element.
  *
  */
-private[akka] class LatestFirstSystemMessageList(val head: SystemMessage) extends AnyVal {
+/**
+ * @note IMPLEMENT IN SCALA.JS
+ *
+ private[akka] class LatestFirstSystemMessageList(val head: SystemMessage) extends AnyVal {
+ */
+private[akka] class LatestFirstSystemMessageList(val head: JSQueue[SystemMessage]) extends AnyVal {
   import SystemMessageList._
 
   /**
@@ -60,7 +67,11 @@ private[akka] class LatestFirstSystemMessageList(val head: SystemMessage) extend
   /**
    * Indicates if the list is empty or not. This operation has constant cost.
    */
-  final def size: Int = sizeInner(head, 0)
+  /**
+   * @note IMPLEMENT IN SCALA.JS
+   *
+   final def size: Int = sizeInner(head, 0)
+   */
 
   /**
    * Gives back the list containing all the elements except the first. This operation has constant cost.
@@ -69,7 +80,11 @@ private[akka] class LatestFirstSystemMessageList(val head: SystemMessage) extend
    * should be taken when passing the tail to other methods. [[akka.dispatch.sysmsg.SystemMessage#unlink]] should be
    * called on the head if one wants to detach the tail permanently.
    */
-  final def tail: LatestFirstSystemMessageList = new LatestFirstSystemMessageList(head.next)
+  /**
+   * @note IMPLEMENT IN SCALA.JS
+   *
+   final def tail: LatestFirstSystemMessageList = new LatestFirstSystemMessageList(head.next)
+   */
 
   /**
    * Reverses the list. This operation mutates the underlying list. The cost of the call to reverse is linear in the
@@ -77,16 +92,24 @@ private[akka] class LatestFirstSystemMessageList(val head: SystemMessage) extend
    *
    * The type of the returned list is of the opposite order: [[akka.dispatch.sysmsg.EarliestFirstSystemMessageList]]
    */
-  final def reverse: EarliestFirstSystemMessageList = new EarliestFirstSystemMessageList(reverseInner(head, null))
+/**
+ * @note IMPLEMENT IN SCALA.JS
+ *
+   final def reverse: EarliestFirstSystemMessageList = new EarliestFirstSystemMessageList(reverseInner(head, null))
+ */
 
   /**
    * Attaches a message to the current head of the list. This operation has constant cost.
    */
-  final def ::(msg: SystemMessage): LatestFirstSystemMessageList = {
-    assert(msg ne null)
-    msg.next = head
-    new LatestFirstSystemMessageList(msg)
-  }
+/**
+ * @note IMPLEMENT IN SCALA.JS
+ *
+   final def ::(msg: SystemMessage): LatestFirstSystemMessageList = {
+     assert(msg ne null)
+     msg.next = head
+     new LatestFirstSystemMessageList(msg)
+   }
+ */
 
 }
 
@@ -138,7 +161,11 @@ private[akka] class EarliestFirstSystemMessageList(val head: SystemMessage) exte
    *
    * The type of the returned list is of the opposite order: [[akka.dispatch.sysmsg.LatestFirstSystemMessageList]]
    */
-  final def reverse: LatestFirstSystemMessageList = new LatestFirstSystemMessageList(reverseInner(head, null))
+/**
+ * @note IMPLEMENT IN SCALA.JS
+ *
+   final def reverse: LatestFirstSystemMessageList = new LatestFirstSystemMessageList(reverseInner(head, null))
+ */
 
   /**
    * Attaches a message to the current head of the list. This operation has constant cost.
@@ -156,16 +183,20 @@ private[akka] class EarliestFirstSystemMessageList(val head: SystemMessage) exte
    *
    * The cost of this operation is linear in the size of the list that is to be prepended.
    */
-  final def reverse_:::(other: LatestFirstSystemMessageList): EarliestFirstSystemMessageList = {
-    var remaining = other
-    var result = this
-    while (remaining.nonEmpty) {
-      val msg = remaining.head
-      remaining = remaining.tail
-      result ::= msg
-    }
-    result
-  }
+/**
+ * @note IMPLEMENT IN SCALA.JS
+ *
+   final def reverse_:::(other: LatestFirstSystemMessageList): EarliestFirstSystemMessageList = {
+     var remaining = other
+     var result = this
+     while (remaining.nonEmpty) {
+       val msg = remaining.head
+       remaining = remaining.tail
+       result ::= msg
+     }
+     result
+   }
+ */
 
 }
 

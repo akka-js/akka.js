@@ -4,7 +4,11 @@
 package akka.actor
 import scala.annotation.tailrec
 import scala.collection.immutable
-import akka.japi.Util.immutableSeq
+/**
+ * @note IMPLEMENT IN SCALA.JS
+ *
+ import akka.japi.Util.immutableSeq
+ */
 import java.net.MalformedURLException
 import java.lang.{ StringBuilder ⇒ JStringBuilder }
 
@@ -354,17 +358,21 @@ final class ChildActorPath private[akka] (val parent: ActorPath, val name: Strin
   }
 
   // TODO RK investigate Phil’s hash from scala.collection.mutable.HashTable.improve
-  override def hashCode: Int = {
-    import akka.routing.MurmurHash._
+/**
+ * @note IMPLEMENT IN SCALA.JS
+ *
+   override def hashCode: Int = {
+     import akka.routing.MurmurHash._
 
-    @tailrec
-    def rec(p: ActorPath, h: Int, c: Int, k: Int): Int = p match {
-      case r: RootActorPath ⇒ extendHash(h, r.##, c, k)
-      case _                ⇒ rec(p.parent, extendHash(h, stringHash(name), c, k), nextMagicA(c), nextMagicB(k))
-    }
+     @tailrec
+     def rec(p: ActorPath, h: Int, c: Int, k: Int): Int = p match {
+       case r: RootActorPath ⇒ extendHash(h, r.##, c, k)
+       case _                ⇒ rec(p.parent, extendHash(h, stringHash(name), c, k), nextMagicA(c), nextMagicB(k))
+     }
 
-    finalizeHash(rec(this, startHash(42), startMagicA, startMagicB))
-  }
+     finalizeHash(rec(this, startHash(42), startMagicA, startMagicB))
+   }
+ */
 
   override def compareTo(other: ActorPath): Int = {
     @tailrec

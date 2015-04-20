@@ -9,7 +9,11 @@ import akka.dispatch.sysmsg.{ DeathWatchNotification, Watch, Unwatch }
 import akka.event.Logging.{ Warning, Error, Debug }
 import scala.util.control.NonFatal
 import akka.actor.MinimalActorRef
-import akka.event.AddressTerminatedTopic
+/**
+ * @note IMPLEMENT IN SCALA.JS
+ *
+ import akka.event.AddressTerminatedTopic
+ */
 
 private[akka] trait DeathWatch { this: ActorCell ⇒
 

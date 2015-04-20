@@ -6,7 +6,11 @@ package akka.actor
 import language.implicitConversions
 import java.lang.{ Iterable ⇒ JIterable }
 import java.util.concurrent.TimeUnit
-import akka.japi.Util.immutableSeq
+/**
+ * @note IMPLEMENT IN SCALA.JS
+ *
+ import akka.japi.Util.immutableSeq
+ */
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.immutable
 import scala.concurrent.duration.Duration
@@ -185,7 +189,11 @@ object SupervisorStrategy extends SupervisorStrategyLowPriorityImplicits {
   implicit def seqThrowable2Decider(trapExit: immutable.Seq[Class[_ <: Throwable]]): Decider = makeDecider(trapExit)
 
   type Decider = PartialFunction[Throwable, Directive]
-  type JDecider = akka.japi.Function[Throwable, Directive]
+/**
+ * @note IMPLEMENT IN SCALA.JS
+ *
+   type JDecider = akka.japi.Function[Throwable, Directive]
+ */
   type CauseDirective = (Class[_ <: Throwable], Directive)
 
   /**
@@ -200,7 +208,11 @@ object SupervisorStrategy extends SupervisorStrategyLowPriorityImplicits {
    * Decider builder which just checks whether one of
    * the given Throwables matches the cause and restarts, otherwise escalates.
    */
-  def makeDecider(trapExit: JIterable[Class[_ <: Throwable]]): Decider = makeDecider(immutableSeq(trapExit))
+/**
+ * @note IMPLEMENT IN SCALA.JS
+ *
+   def makeDecider(trapExit: JIterable[Class[_ <: Throwable]]): Decider = makeDecider(immutableSeq(trapExit))
+ */
 
   /**
    * Decider builder for Iterables of cause-directive pairs, e.g. a map obtained
@@ -214,10 +226,14 @@ object SupervisorStrategy extends SupervisorStrategyLowPriorityImplicits {
     { case x ⇒ directives collectFirst { case (c, d) if c isInstance x ⇒ d } getOrElse Escalate }
   }
 
-  /**
-   * Converts a Java Decider into a Scala Decider
-   */
-  def makeDecider(func: JDecider): Decider = { case x ⇒ func(x) }
+/**
+ * @note IMPLEMENT IN SCALA.JS
+ *
+   /**
+    * Converts a Java Decider into a Scala Decider
+    */
+   def makeDecider(func: JDecider): Decider = { case x ⇒ func(x) }
+ */
 
   /**
    * Sort so that subtypes always precede their supertypes, but without
@@ -387,24 +403,32 @@ case class AllForOneStrategy(
 
   import SupervisorStrategy._
 
-  /**
-   * Java API
-   */
-  def this(maxNrOfRetries: Int, withinTimeRange: Duration, decider: SupervisorStrategy.JDecider, loggingEnabled: Boolean) =
-    this(maxNrOfRetries, withinTimeRange, loggingEnabled)(SupervisorStrategy.makeDecider(decider))
+/**
+ * @note IMPLEMENT IN SCALA.JS
+ *
+   /**
+    * Java API
+    */
+   def this(maxNrOfRetries: Int, withinTimeRange: Duration, decider: SupervisorStrategy.JDecider, loggingEnabled: Boolean) =
+     this(maxNrOfRetries, withinTimeRange, loggingEnabled)(SupervisorStrategy.makeDecider(decider))
+
+   /**
+    * Java API
+    */
+   def this(maxNrOfRetries: Int, withinTimeRange: Duration, decider: SupervisorStrategy.JDecider) =
+     this(maxNrOfRetries, withinTimeRange)(SupervisorStrategy.makeDecider(decider))
+ */
 
   /**
    * Java API
    */
-  def this(maxNrOfRetries: Int, withinTimeRange: Duration, decider: SupervisorStrategy.JDecider) =
-    this(maxNrOfRetries, withinTimeRange)(SupervisorStrategy.makeDecider(decider))
+/**
+ * @note IMPLEMENT IN SCALA.JS
+ *
+   def this(maxNrOfRetries: Int, withinTimeRange: Duration, trapExit: JIterable[Class[_ <: Throwable]]) =
+     this(maxNrOfRetries, withinTimeRange)(SupervisorStrategy.makeDecider(trapExit))
 
-  /**
-   * Java API
-   */
-  def this(maxNrOfRetries: Int, withinTimeRange: Duration, trapExit: JIterable[Class[_ <: Throwable]]) =
-    this(maxNrOfRetries, withinTimeRange)(SupervisorStrategy.makeDecider(trapExit))
-
+ */
   /**
    * Java API: compatible with lambda expressions
    * This is an EXPERIMENTAL feature and is subject to change until it has received more real world testing.
@@ -463,23 +487,31 @@ case class OneForOneStrategy(
                               override val loggingEnabled: Boolean = true)(val decider: SupervisorStrategy.Decider)
   extends SupervisorStrategy {
 
-  /**
-   * Java API
-   */
-  def this(maxNrOfRetries: Int, withinTimeRange: Duration, decider: SupervisorStrategy.JDecider, loggingEnabled: Boolean) =
-    this(maxNrOfRetries, withinTimeRange, loggingEnabled)(SupervisorStrategy.makeDecider(decider))
+/**
+ * @note IMPLEMENT IN SCALA.JS
+ *
+   /**
+    * Java API
+    */
+   def this(maxNrOfRetries: Int, withinTimeRange: Duration, decider: SupervisorStrategy.JDecider, loggingEnabled: Boolean) =
+     this(maxNrOfRetries, withinTimeRange, loggingEnabled)(SupervisorStrategy.makeDecider(decider))
+
+   /**
+    * Java API
+    */
+   def this(maxNrOfRetries: Int, withinTimeRange: Duration, decider: SupervisorStrategy.JDecider) =
+     this(maxNrOfRetries, withinTimeRange)(SupervisorStrategy.makeDecider(decider))
+ */
 
   /**
    * Java API
    */
-  def this(maxNrOfRetries: Int, withinTimeRange: Duration, decider: SupervisorStrategy.JDecider) =
-    this(maxNrOfRetries, withinTimeRange)(SupervisorStrategy.makeDecider(decider))
-
-  /**
-   * Java API
-   */
-  def this(maxNrOfRetries: Int, withinTimeRange: Duration, trapExit: JIterable[Class[_ <: Throwable]]) =
-    this(maxNrOfRetries, withinTimeRange)(SupervisorStrategy.makeDecider(trapExit))
+/**
+ * @note IMPLEMENT IN SCALA.JS
+ *
+   def this(maxNrOfRetries: Int, withinTimeRange: Duration, trapExit: JIterable[Class[_ <: Throwable]]) =
+     this(maxNrOfRetries, withinTimeRange)(SupervisorStrategy.makeDecider(trapExit))
+ */
 
   /**
    * Java API: compatible with lambda expressions

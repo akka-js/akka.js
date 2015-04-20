@@ -24,7 +24,7 @@ private[akka] object WebWorkersActorSystem {
 
     register[RootActorPath]
     register[ChildActorPath]
-    register[Address]
+    //register[Address]
 
     register[SendMessage]
   }
@@ -84,9 +84,9 @@ private[akka] trait WebWorkersActorSystem extends ActorSystem { this: ActorSyste
           val globalPath = registry.unpickle(reader.readObjectField(
               pickle, "ref")).asInstanceOf[ActorPath]
           if (globalPath.address == workerAddress)
-            resolveLocalActorPath(globalPath).getOrElse(deadLetters)
+            ()//resolveLocalActorPath(globalPath).getOrElse(deadLetters)
           else
-            new WorkerActorRef(WebWorkersActorSystem.this, globalPath)
+            ()//new WorkerActorRef(WebWorkersActorSystem.this, globalPath)
 
         case _ =>
           PicklerRegistry.unpickle(pickle)

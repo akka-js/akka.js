@@ -5,12 +5,16 @@
 package akka.dispatch
 
 import java.util.concurrent._
-import akka.event.Logging.{ Debug, Error, LogEventException }
+import akka.event.Logging.{ Debug, Error /** @note IMPLEMENT IN SCALA.JS LogEventException */ }
 import akka.actor._
 import akka.dispatch.sysmsg._
-import akka.event.{ BusLogging, EventStream }
-import com.typesafe.config.{ ConfigFactory, Config }
-import akka.util.{ Unsafe, Index }
+/**
+ * @note IMPLEMENT IN SCALA.JS
+ *
+ import akka.event.{ BusLogging, EventStream }
+ import com.typesafe.config.{ ConfigFactory, Config }
+ import akka.util.{ Unsafe, Index }
+ */
 import scala.annotation.tailrec
 import scala.concurrent.forkjoin.{ ForkJoinTask, ForkJoinPool, ForkJoinWorkerThread }
 import scala.concurrent.duration.Duration
@@ -62,34 +66,38 @@ object Envelope {
 /**
  * INTERNAL API
  */
-private[akka] object MessageDispatcher {
-  val UNSCHEDULED = 0 //WARNING DO NOT CHANGE THE VALUE OF THIS: It relies on the faster init of 0 in AbstractMessageDispatcher
-  val SCHEDULED = 1
-  val RESCHEDULED = 2
+/**
+ * @note IMPLEMENT IN SCALA.JS
+ *
+ private[akka] object MessageDispatcher {
+   val UNSCHEDULED = 0 //WARNING DO NOT CHANGE THE VALUE OF THIS: It relies on the faster init of 0 in AbstractMessageDispatcher
+   val SCHEDULED = 1
+   val RESCHEDULED = 2
 
-  // dispatcher debugging helper using println (see below)
-  // since this is a compile-time constant, scalac will elide code behind if (MessageDispatcher.debug) (RK checked with 2.9.1)
-  final val debug = false // Deliberately without type ascription to make it a compile-time constant
-  lazy val actors = new Index[MessageDispatcher, ActorRef](16, _ compareTo _)
-  def printActors(): Unit =
-    if (debug) {
-      for {
-        d ← actors.keys
-        a ← { println(d + " inhabitants: " + d.inhabitants); actors.valueIterator(d) }
-      } {
-        val status = if (a.isTerminated) " (terminated)" else " (alive)"
-        val messages = a match {
-          case r: ActorRefWithCell ⇒ " " + r.underlying.numberOfMessages + " messages"
-          case _                   ⇒ " " + a.getClass
-        }
-        val parent = a match {
-          case i: InternalActorRef ⇒ ", parent: " + i.getParent
-          case _                   ⇒ ""
-        }
-        println(" -> " + a + status + messages + parent)
-      }
-    }
-}
+   // dispatcher debugging helper using println (see below)
+   // since this is a compile-time constant, scalac will elide code behind if (MessageDispatcher.debug) (RK checked with 2.9.1)
+   final val debug = false // Deliberately without type ascription to make it a compile-time constant
+   lazy val actors = new Index[MessageDispatcher, ActorRef](16, _ compareTo _)
+   def printActors(): Unit =
+     if (debug) {
+       for {
+         d ← actors.keys
+         a ← { println(d + " inhabitants: " + d.inhabitants); actors.valueIterator(d) }
+       } {
+         val status = if (a.isTerminated) " (terminated)" else " (alive)"
+         val messages = a match {
+           case r: ActorRefWithCell ⇒ " " + r.underlying.numberOfMessages + " messages"
+           case _                   ⇒ " " + a.getClass
+         }
+         val parent = a match {
+           case i: InternalActorRef ⇒ ", parent: " + i.getParent
+           case _                   ⇒ ""
+         }
+         println(" -> " + a + status + messages + parent)
+       }
+     }
+ }
+ */
 
 
 class MessageDispatcher(

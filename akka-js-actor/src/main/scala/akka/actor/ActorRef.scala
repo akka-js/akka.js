@@ -8,11 +8,19 @@ import scala.collection.immutable
 import akka.dispatch._
 import akka.dispatch.sysmsg._
 import java.lang.{ UnsupportedOperationException, IllegalStateException }
-import akka.serialization.{ Serialization, JavaSerializer }
+/**
+ * @note IMPLEMENT IN SCALA.JS
+ *
+ import akka.serialization.{ Serialization, JavaSerializer }
+ */
 import akka.event.EventStream
 import scala.annotation.tailrec
-import java.util.concurrent.ConcurrentHashMap
-import akka.event.LoggingAdapter
+/**
+ * @note IMPLEMENT IN SCALA.JS
+ *
+ import java.util.concurrent.ConcurrentHashMap
+ import akka.event.LoggingAdapter
+ */
 
 object ActorRef {
 
@@ -285,7 +293,7 @@ private[akka] class LocalActorRef private[akka] (
                                                   _system: ActorSystemImpl,
                                                   _props: Props,
                                                   _dispatcher: MessageDispatcher,
-                                                  _mailboxType: MailboxType,
+                                                  /** @note IMPLEMENT IN SCALA.JS _mailboxType: MailboxType, */
                                                   _supervisor: InternalActorRef,
                                                   override val path: ActorPath)
   extends ActorRefWithCell with LocalRef {
@@ -301,7 +309,12 @@ private[akka] class LocalActorRef private[akka] (
    * object from another thread as soon as we run init.
    */
   private val actorCell: ActorCell = newActorCell(_system, this, _props, _dispatcher, _supervisor)
-  actorCell.init(sendSupervise = true, _mailboxType)
+  /**
+   * @note IMPLEMENT IN SCALA.JS
+   *
+   actorCell.init(sendSupervise = true, _mailboxType)
+   */
+  actorCell.init(sendSupervise = true)
 
   protected def newActorCell(system: ActorSystemImpl, ref: InternalActorRef, props: Props, dispatcher: MessageDispatcher, supervisor: InternalActorRef): ActorCell =
     new ActorCell(system, ref, props, dispatcher, supervisor)
@@ -388,7 +401,7 @@ private[akka] class LocalActorRef private[akka] (
  /**
   * @note IMPLEMENT IN SCALA.JS
   *
-  * @throws(classOf[java.io.ObjectStreamException])
+  * //@throws(classOf[java.io.ObjectStreamException])
   * protected def writeReplace(): AnyRef = SerializedActorRef(this)
   */
 }
@@ -400,7 +413,7 @@ private[akka] class LocalActorRef private[akka] (
 /**
  * @note IMPLEMENT IN SCALA.JS
  *
- * @SerialVersionUID(1L)
+ * //@SerialVersionUID(1L)
  * private[akka] case class SerializedActorRef private (path: String) {
  *   import akka.serialization.JavaSerializer.currentSystem
  *
@@ -408,7 +421,7 @@ private[akka] class LocalActorRef private[akka] (
  *     this(Serialization.serializedActorPath(actorRef))
  *   }
  *
- *   @throws(classOf[java.io.ObjectStreamException])
+ *   //@throws(classOf[java.io.ObjectStreamException])
  *   def readResolve(): AnyRef = currentSystem.value match {
  *     case null ⇒
  *       throw new IllegalStateException(
@@ -458,7 +471,7 @@ private[akka] trait MinimalActorRef extends InternalActorRef with LocalRef {
   * @note IMPLEMENT IN SCALA.JS
   * Cannot serialize
   *
-  * @throws(classOf[java.io.ObjectStreamException])
+  * //@throws(classOf[java.io.ObjectStreamException])
   * protected def writeReplace(): AnyRef = SerializedActorRef(this)
   */
 }
@@ -504,7 +517,7 @@ private[akka] object DeadLetterActorRef {
   /**
    * @note IMPLEMENT IN SCALA.JS
    *
-   * @throws(classOf[java.io.ObjectStreamException])
+   * //@throws(classOf[java.io.ObjectStreamException])
    * private def readResolve(): AnyRef = JavaSerializer.currentSystem.value.deadLetters
    */
   }
@@ -603,71 +616,93 @@ private[akka] class DeadLetterActorRef(_provider: ActorRefProvider,
  *
  * INTERNAL API
  */
+ private[akka] class VirtualPathContainer(
+                                           override val provider: ActorRefProvider,
+                                           override val path: ActorPath,
+                                           override val getParent: InternalActorRef
+                                           /**
+                                            * @note IMPLEMENT IN SCALA.JS
+                                            *
+                                                    , val log: LoggingAdapter
+                                            */) extends MinimalActorRef {
 
-private[akka] class VirtualPathContainer(
-                                          override val provider: ActorRefProvider,
-                                          override val path: ActorPath,
-                                          override val getParent: InternalActorRef,
-                                          val log: LoggingAdapter) extends MinimalActorRef {
+   private val children = akka.util.JSMap.empty[InternalActorRef]
 
-  private val children = JSMap.empty[InternalActorRef]
+   def addChild(name: String, ref: InternalActorRef): Unit = {
+     children.put(name, ref) match {
+       case null ⇒ // okay
+       case old ⇒
+         // this can happen from RemoteSystemDaemon if a new child is created
+         // before the old is removed from RemoteSystemDaemon children
+         /**
+          * @note IMPLEMENT IN SCALA.JS
+          *
+          * log.debug("{} replacing child {} ({} -> {})", path, name, old, ref)
+          * old.stop()
+          */
 
-  def addChild(name: String, ref: InternalActorRef): Unit = {
-    children.put(name, ref) match {
-      case null ⇒ // okay
-      case old ⇒
-        // this can happen from RemoteSystemDaemon if a new child is created
-        // before the old is removed from RemoteSystemDaemon children
+     }
+   }
+
+   def removeChild(name: String): Unit =
+     if (children.remove(name) eq null)
+     /**
+      * @note IMPLEMENT IN SCALA.JS
+      *
+      log.warning("{} trying to remove non-child {}", path, name)
+      */
+       ()
+
+   /**
+    * Remove a named child if it matches the ref.
+    */
+   protected def removeChild(name: String, ref: ActorRef): Unit = {
+     val current = getChild(name)
+     if (current eq null)
+       () /** @note IMPLEMENT IN SCALA.JS log.warning("{} trying to remove non-child {}", path, name) */
+     else if (current == ref)
+      /**
+       * @note IMPLEMENT IN SCALA.JS
+       *
+        children.remove(name, current) // remove when same value
+       */
+       children.remove(name)
+
+   }
+
+   /**
+    * @note IMPLEMENT IN SCALA.JS
+    *
+      def getChild(name: String): InternalActorRef = children.get(name)
+    */
+   def getChild(name: String): InternalActorRef = children(name)
+
+   override def getChild(name: Iterator[String]): InternalActorRef = {
+     if (name.isEmpty) this
+     else {
+       val n = name.next()
+       if (n.isEmpty) this
+       else children.get(n) match {
         /**
          * @note IMPLEMENT IN SCALA.JS
          *
-         * log.debug("{} replacing child {} ({} -> {})", path, name, old, ref)
+                  case null ⇒ Nobody
+                  case some ⇒
+                    if (name.isEmpty) some
+                    else some.getChild(name)
          */
-        old.stop()
-    }
-  }
+         case None ⇒ Nobody
+         case Some(some) ⇒
+           if (name.isEmpty) some
+           else some.getChild(name)
+       }
+     }
+   }
 
-  def removeChild(name: String): Unit =
-    if (children.remove(name) eq null)
-    /**
-     * @note IMPLEMENT IN SCALA.JS
-     *
-     log.warning("{} trying to remove non-child {}", path, name)
-     */
-      ()
+   def hasChildren: Boolean = !children.isEmpty
 
-  /**
-   * Remove a named child if it matches the ref.
-   */
-  protected def removeChild(name: String, ref: ActorRef): Unit = {
-    val current = getChild(name)
-    if (current eq null)
-      () /** @note IMPLEMENT IN SCALA.JS log.warning("{} trying to remove non-child {}", path, name) */
-    else if (current == ref)
-      children.remove(name, current) // remove when same value
-
-  }
-
-  def getChild(name: String): InternalActorRef = children.get(name)
-
-  override def getChild(name: Iterator[String]): InternalActorRef = {
-    if (name.isEmpty) this
-    else {
-      val n = name.next()
-      if (n.isEmpty) this
-      else children.get(n) match {
-        case null ⇒ Nobody
-        case some ⇒
-          if (name.isEmpty) some
-          else some.getChild(name)
-      }
-    }
-  }
-
-  def hasChildren: Boolean = !children.isEmpty
-
-  def foreachChild(f: ActorRef ⇒ Unit): Unit = {
-    val iter = children.values.iterator
-    while (iter.hasNext) f(iter.next)
-  }
-}
+   def foreachChild(f: ActorRef ⇒ Unit): Unit = {
+     val iter = children.values.iterator
+     while (iter.hasNext) f(iter.next)
+   }
+ }

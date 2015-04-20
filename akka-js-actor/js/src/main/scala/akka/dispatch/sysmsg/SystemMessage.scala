@@ -254,11 +254,11 @@ private[akka] case object NoMessage extends SystemMessage // switched into the m
  */
 @SerialVersionUID(1L)
 private[akka] case class Failed(child: ActorRef, cause: Throwable, uid: Int) extends SystemMessage
-  with StashWhenFailed
-  with StashWhenWaitingForChildren
+with StashWhenFailed
+with StashWhenWaitingForChildren
 
 @SerialVersionUID(1L)
 private[akka] case class DeathWatchNotification(
-  actor: ActorRef,
-  existenceConfirmed: Boolean,
-  addressTerminated: Boolean) extends SystemMessage
+                                                 actor: ActorRef,
+                                                 existenceConfirmed: Boolean,
+                                                 addressTerminated: Boolean) extends SystemMessage

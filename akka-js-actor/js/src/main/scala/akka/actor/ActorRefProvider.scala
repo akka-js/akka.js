@@ -74,7 +74,12 @@ trait ActorRefProvider {
   /**
    * The Deployer associated with this ActorRefProvider
    */
-  def deployer: Deployer
+ /**
+  * @note IMPLEMENT IN SCALA.JS
+  * Deployer is NOT implemented
+  *
+  * def deployer: Deployer
+  */
 
   /**
    * Generates and returns a unique actor path below “/temp”.
@@ -111,8 +116,13 @@ trait ActorRefProvider {
                supervisor: InternalActorRef,
                path: ActorPath,
                systemService: Boolean,
-               deploy: Option[Deploy],
-               lookupDeploy: Boolean,
+               /**
+                * @note IMPLEMENT IN SCALA.JS
+                * Deployer is NOT implemented
+                *
+                * deploy: Option[Deploy],
+                * lookupDeploy: Boolean,
+                */
                async: Boolean): InternalActorRef
 
   /**
@@ -309,16 +319,21 @@ trait ActorRefFactory {
    * the supplied path, it is recommended to send a message and gather the
    * replies in order to resolve the matching set of actors.
    */
-  def actorSelection(path: String): ActorSelection = path match {
-    case RelativeActorPath(elems) ⇒
-      if (elems.isEmpty) ActorSelection(provider.deadLetters, "")
-      else if (elems.head.isEmpty) ActorSelection(provider.rootGuardian, elems.tail)
-      else ActorSelection(lookupRoot, elems)
-    case ActorPathExtractor(address, elems) ⇒
-      ActorSelection(provider.rootGuardianAt(address), elems)
-    case _ ⇒
-      ActorSelection(provider.deadLetters, "")
-  }
+ /**
+  * @note IMPLEMENT IN SCALA.JS
+  * Why?
+  *
+  * def actorSelection(path: String): ActorSelection = path match {
+  *   case RelativeActorPath(elems) ⇒
+  *     if (elems.isEmpty) ActorSelection(provider.deadLetters, "")
+  *     else if (elems.head.isEmpty) ActorSelection(provider.rootGuardian, elems.tail)
+  *     else ActorSelection(lookupRoot, elems)
+  *   case ActorPathExtractor(address, elems) ⇒
+  *     ActorSelection(provider.rootGuardianAt(address), elems)
+  *   case _ ⇒
+  *     ActorSelection(provider.deadLetters, "")
+  * }
+  */
 
   /**
    * Construct an [[akka.actor.ActorSelection]] from the given path, which is
@@ -418,7 +433,11 @@ private[akka] object LocalActorRefProvider {
 
     def stopWhenAllTerminationHooksDone(): Unit =
       if (terminationHooks.isEmpty) {
-        context.system.eventStream.stopDefaultLoggers(context.system)
+        /**
+         * @note IMPLEMENT IN SCALA.JS
+         * Logging!
+         * context.system.eventStream.stopDefaultLoggers(context.system)
+         */
         context.stop(self)
       }
 
@@ -448,17 +467,26 @@ private[akka] class LocalActorRefProvider private[akka] (
   def this(_systemName: String,
            settings: ActorSystem.Settings,
            eventStream: EventStream,
-           dynamicAccess: DynamicAccess) =
+           /** @note IMPLEMENT IN SCALA.JS dynamicAccess: DynamicAccess */) =
     this(_systemName,
       settings,
       eventStream,
-      dynamicAccess,
-      new Deployer(settings, dynamicAccess),
+    /**
+     * @note IMPLEMENT IN SCALA.JS
+     * Deployer not implemented
+     * dynamicAccess,
+     *  new Deployer(settings, dynamicAccess),
+     */
       None)
 
   override val rootPath: ActorPath = RootActorPath(Address("akka", _systemName))
 
-  private[akka] val log: LoggingAdapter = Logging(eventStream, "LocalActorRefProvider(" + rootPath.address + ")")
+  /**
+   * @note IMPLEMENT IN SCALA.JS
+   * Logging!
+   *
+   * private[akka] val log: LoggingAdapter = Logging(eventStream, "LocalActorRefProvider(" + rootPath.address + ")")
+   */
 
   override val deadLetters: InternalActorRef =
     _deadLetters.getOrElse((p: ActorPath) ⇒ new DeadLetterActorRef(this, p, eventStream)).apply(rootPath / "deadLetters")
@@ -556,9 +584,13 @@ private[akka] class LocalActorRefProvider private[akka] (
    */
   protected def systemGuardianStrategy: SupervisorStrategy = SupervisorStrategy.defaultStrategy
 
-  private lazy val defaultDispatcher = system.dispatchers.defaultGlobalDispatcher
-
-  private lazy val defaultMailbox = system.mailboxes.lookup(Mailboxes.DefaultMailboxId)
+ /**
+  * @note IMPLEMENT IN SCALA.JS
+  *
+  * private lazy val defaultDispatcher = system.dispatchers.defaultGlobalDispatcher
+  *
+  * private lazy val defaultMailbox = system.mailboxes.lookup(Mailboxes.DefaultMailboxId)
+  */
 
   override lazy val rootGuardian: LocalActorRef =
     new LocalActorRef(
@@ -619,7 +651,11 @@ private[akka] class LocalActorRefProvider private[akka] (
     // chain death watchers so that killing guardian stops the application
     systemGuardian.sendSystemMessage(Watch(guardian, systemGuardian))
     rootGuardian.sendSystemMessage(Watch(systemGuardian, rootGuardian))
-    eventStream.startDefaultLoggers(_system)
+   /**
+    * @note IMPLEMENT IN SCALA.JS
+    *
+    * eventStream.startDefaultLoggers(_system)
+    */
   }
 
   @deprecated("use actorSelection instead of actorFor", "2.2")
@@ -685,76 +721,92 @@ private[akka] class LocalActorRefProvider private[akka] (
       case x ⇒ x
     }
 
-  def actorOf(system: ActorSystemImpl, props: Props, supervisor: InternalActorRef, path: ActorPath,
+  def actorOf(system: ActorSystemImpl, /** @note IMPLEMENT IN SCALA.JS props */ props2: Props, supervisor: InternalActorRef, path: ActorPath,
               systemService: Boolean, deploy: Option[Deploy], lookupDeploy: Boolean, async: Boolean): InternalActorRef = {
-    props.deploy.routerConfig match {
-      case NoRouter ⇒
-        if (settings.DebugRouterMisconfiguration) {
-          deployer.lookup(path) foreach { d ⇒
-            if (d.routerConfig != NoRouter)
-              log.warning("Configuration says that [{}] should be a router, but code disagrees. Remove the config or add a routerConfig to its Props.", path)
-          }
-        }
+    try {
+      val dispatcher = system.dispatchers.lookup(props2.dispatcher)
+      val mailboxType = system.mailboxes.getMailboxType(props2, dispatcher.configurator.config)
 
-        val props2 =
-        // mailbox and dispatcher defined in deploy should override props
-          (if (lookupDeploy) deployer.lookup(path) else deploy) match {
-            case Some(d) ⇒
-              (d.dispatcher, d.mailbox) match {
-                case (Deploy.NoDispatcherGiven, Deploy.NoMailboxGiven) ⇒ props
-                case (dsp, Deploy.NoMailboxGiven)                      ⇒ props.withDispatcher(dsp)
-                case (Deploy.NoMailboxGiven, mbx)                      ⇒ props.withMailbox(mbx)
-                case (dsp, mbx)                                        ⇒ props.withDispatcher(dsp).withMailbox(mbx)
-              }
-            case _ ⇒ props // no deployment config found
-          }
-
-        if (!system.dispatchers.hasDispatcher(props2.dispatcher))
-          throw new ConfigurationException(s"Dispatcher [${props2.dispatcher}] not configured for path $path")
-
-        try {
-          val dispatcher = system.dispatchers.lookup(props2.dispatcher)
-          val mailboxType = system.mailboxes.getMailboxType(props2, dispatcher.configurator.config)
-
-          if (async) new RepointableActorRef(system, props2, dispatcher, mailboxType, supervisor, path).initialize(async)
-          else new LocalActorRef(system, props2, dispatcher, mailboxType, supervisor, path)
-        } catch {
-          case NonFatal(e) ⇒ throw new ConfigurationException(
-            s"configuration problem while creating [$path] with dispatcher [${props2.dispatcher}] and mailbox [${props2.mailbox}]", e)
-        }
-
-      case router ⇒
-        val lookup = if (lookupDeploy) deployer.lookup(path) else None
-        val fromProps = Iterator(props.deploy.copy(routerConfig = props.deploy.routerConfig withFallback router))
-        val d = fromProps ++ deploy.iterator ++ lookup.iterator reduce ((a, b) ⇒ b withFallback a)
-        val p = props.withRouter(d.routerConfig)
-
-        if (!system.dispatchers.hasDispatcher(p.dispatcher))
-          throw new ConfigurationException(s"Dispatcher [${p.dispatcher}] not configured for routees of $path")
-        if (!system.dispatchers.hasDispatcher(d.routerConfig.routerDispatcher))
-          throw new ConfigurationException(s"Dispatcher [${p.dispatcher}] not configured for router of $path")
-
-        val routerProps = Props(p.deploy.copy(dispatcher = p.routerConfig.routerDispatcher),
-          classOf[RoutedActorCell.RouterActorCreator], Vector(p.routerConfig))
-        val routeeProps = p.withRouter(NoRouter)
-
-        try {
-          val routerDispatcher = system.dispatchers.lookup(p.routerConfig.routerDispatcher)
-          val routerMailbox = system.mailboxes.getMailboxType(routerProps, routerDispatcher.configurator.config)
-
-          // routers use context.actorOf() to create the routees, which does not allow us to pass
-          // these through, but obtain them here for early verification
-          val routeeDispatcher = system.dispatchers.lookup(p.dispatcher)
-          val routeeMailbox = system.mailboxes.getMailboxType(routeeProps, routeeDispatcher.configurator.config)
-
-          new RoutedActorRef(system, routerProps, routerDispatcher, routerMailbox, routeeProps, supervisor, path).initialize(async)
-        } catch {
-          case NonFatal(e) ⇒ throw new ConfigurationException(
-            s"configuration problem while creating [$path] with router dispatcher [${routerProps.dispatcher}] and mailbox [${routerProps.mailbox}] " +
-              s"and routee dispatcher [${routeeProps.dispatcher}] and mailbox [${routeeProps.mailbox}]", e)
-        }
+      new LocalActorRef(system, props2, dispatcher, mailboxType, supervisor, path)
+    } catch {
+      case NonFatal(e) ⇒ throw new ConfigurationException(s"configuration problem while creating [$path] with dispatcher [${props2.dispatcher}] and mailbox [${props2.mailbox}]", e)
     }
   }
+
+ /**
+  * @note IMPLEMENT IN SCALA.JS
+  *
+  *  def actorOf(system: ActorSystemImpl, props: Props, supervisor: InternalActorRef, path: ActorPath,
+  *              systemService: Boolean, deploy: Option[Deploy], lookupDeploy: Boolean, async: Boolean): InternalActorRef = {
+  *    props.deploy.routerConfig match {
+  *      case NoRouter ⇒
+  *        if (settings.DebugRouterMisconfiguration) {
+  *          deployer.lookup(path) foreach { d ⇒
+  *            if (d.routerConfig != NoRouter)
+  *              log.warning("Configuration says that [{}] should be a router, but code disagrees. Remove the config or add a routerConfig to its Props.", path)
+  *          }
+  *        }
+  *
+  *        val props2 =
+  *        // mailbox and dispatcher defined in deploy should override props
+  *          (if (lookupDeploy) deployer.lookup(path) else deploy) match {
+  *            case Some(d) ⇒
+  *              (d.dispatcher, d.mailbox) match {
+  *                case (Deploy.NoDispatcherGiven, Deploy.NoMailboxGiven) ⇒ props
+  *                case (dsp, Deploy.NoMailboxGiven)                      ⇒ props.withDispatcher(dsp)
+  *                case (Deploy.NoMailboxGiven, mbx)                      ⇒ props.withMailbox(mbx)
+  *                case (dsp, mbx)                                        ⇒ props.withDispatcher(dsp).withMailbox(mbx)
+  *              }
+  *            case _ ⇒ props // no deployment config found
+  *          }
+  *
+  *        if (!system.dispatchers.hasDispatcher(props2.dispatcher))
+  *          throw new ConfigurationException(s"Dispatcher [${props2.dispatcher}] not configured for path $path")
+  *
+  *        try {
+  *          val dispatcher = system.dispatchers.lookup(props2.dispatcher)
+  *          val mailboxType = system.mailboxes.getMailboxType(props2, dispatcher.configurator.config)
+  *
+  *          if (async) new RepointableActorRef(system, props2, dispatcher, mailboxType, supervisor, path).initialize(async)
+  *          else new LocalActorRef(system, props2, dispatcher, mailboxType, supervisor, path)
+  *        } catch {
+  *          case NonFatal(e) ⇒ throw new ConfigurationException(
+  *            s"configuration problem while creating [$path] with dispatcher [${props2.dispatcher}] and mailbox [${props2.mailbox}]", e)
+  *        }
+  *
+  *      case router ⇒
+  *        val lookup = if (lookupDeploy) deployer.lookup(path) else None
+  *        val fromProps = Iterator(props.deploy.copy(routerConfig = props.deploy.routerConfig withFallback router))
+  *        val d = fromProps ++ deploy.iterator ++ lookup.iterator reduce ((a, b) ⇒ b withFallback a)
+  *        val p = props.withRouter(d.routerConfig)
+  *
+  *        if (!system.dispatchers.hasDispatcher(p.dispatcher))
+  *          throw new ConfigurationException(s"Dispatcher [${p.dispatcher}] not configured for routees of $path")
+  *        if (!system.dispatchers.hasDispatcher(d.routerConfig.routerDispatcher))
+  *          throw new ConfigurationException(s"Dispatcher [${p.dispatcher}] not configured for router of $path")
+  *
+  *        val routerProps = Props(p.deploy.copy(dispatcher = p.routerConfig.routerDispatcher),
+  *          classOf[RoutedActorCell.RouterActorCreator], Vector(p.routerConfig))
+  *        val routeeProps = p.withRouter(NoRouter)
+  *
+  *        try {
+  *          val routerDispatcher = system.dispatchers.lookup(p.routerConfig.routerDispatcher)
+  *          val routerMailbox = system.mailboxes.getMailboxType(routerProps, routerDispatcher.configurator.config)
+  *
+  *          // routers use context.actorOf() to create the routees, which does not allow us to pass
+  *          // these through, but obtain them here for early verification
+  *          val routeeDispatcher = system.dispatchers.lookup(p.dispatcher)
+  *          val routeeMailbox = system.mailboxes.getMailboxType(routeeProps, routeeDispatcher.configurator.config)
+  *
+  *          new RoutedActorRef(system, routerProps, routerDispatcher, routerMailbox, routeeProps, supervisor, path).initialize(async)
+  *        } catch {
+  *          case NonFatal(e) ⇒ throw new ConfigurationException(
+  *            s"configuration problem while creating [$path] with router dispatcher [${routerProps.dispatcher}] and mailbox [${routerProps.mailbox}] " +
+  *              s"and routee dispatcher [${routeeProps.dispatcher}] and mailbox [${routeeProps.mailbox}]", e)
+  *        }
+  *    }
+  *  }
+  */
 
   def getExternalAddressFor(addr: Address): Option[Address] = if (addr == rootPath.address) Some(addr) else None
 

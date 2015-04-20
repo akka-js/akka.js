@@ -1,22 +1,15 @@
-/**
- *  Copyright (C) 2009-2013 Typesafe Inc. <http://www.typesafe.com>
- */
-
-package akka.actor
-
-import scala.scalajs.js
-
 import scala.concurrent.ExecutionContext
-import scala.concurrent.duration._
-
-import akka.util._
+import scala.concurrent.duration.FiniteDuration
+import scala.util.control.NoStackTrace
 
 /**
  * This exception is thrown by Scheduler.schedule* when scheduling is not
  * possible, e.g. after shutting down the Scheduler.
  */
-private case class SchedulerException(msg: String) extends ActorsException(msg)
+private case class SchedulerException(msg: String) extends akka.AkkaException(msg) with NoStackTrace
 
+// The Scheduler trait is included in the documentation. KEEP THE LINES SHORT!!!
+//#scheduler
 /**
  * An Akka scheduler service. This one needs one special behavior: if
  * Closeable, it MUST execute all outstanding tasks upon .close() in order
@@ -42,16 +35,18 @@ trait Scheduler {
    * Java & Scala API
    */
   final def schedule(
-    initialDelay: FiniteDuration,
-    interval: FiniteDuration,
-    receiver: ActorRef,
-    message: Any)(implicit executor: ExecutionContext,
-                  sender: ActorRef = Actor.noSender): Cancellable =
-    schedule(initialDelay, interval) {
-      receiver ! message
-      //if (receiver.isTerminated)
-      //  throw new SchedulerException("timer active for terminated actor")
-    }
+                      initialDelay: FiniteDuration,
+                      interval: FiniteDuration,
+                      receiver: ActorRef,
+                      message: Any)(implicit executor: ExecutionContext,
+                                    sender: ActorRef = Actor.noSender): Cancellable =
+    schedule(initialDelay, interval, new Runnable {
+      def run = {
+        receiver ! message
+        if (receiver.isTerminated)
+          throw new SchedulerException("timer active for terminated actor")
+      }
+    })
 
   /**
    * Schedules a function to be run repeatedly with an initial delay and a
@@ -61,10 +56,24 @@ trait Scheduler {
    *
    * Scala API
    */
+  final def schedule(
+                      initialDelay: FiniteDuration,
+                      interval: FiniteDuration)(f: ⇒ Unit)(
+                      implicit executor: ExecutionContext): Cancellable =
+    schedule(initialDelay, interval, new Runnable { override def run = f })
+
+  /**
+   * Schedules a function to be run repeatedly with an initial delay and
+   * a frequency. E.g. if you would like the function to be run after 2
+   * seconds and thereafter every 100ms you would set delay = Duration(2,
+   * TimeUnit.SECONDS) and interval = Duration(100, TimeUnit.MILLISECONDS)
+   *
+   * Java API
+   */
   def schedule(
-      initialDelay: FiniteDuration,
-      interval: FiniteDuration)(f: => Unit)(
-      implicit executor: ExecutionContext): Cancellable
+                initialDelay: FiniteDuration,
+                interval: FiniteDuration,
+                runnable: Runnable)(implicit executor: ExecutionContext): Cancellable
 
   /**
    * Schedules a message to be sent once with a delay, i.e. a time period that has
@@ -72,13 +81,14 @@ trait Scheduler {
    *
    * Java & Scala API
    */
-  final def scheduleOnce(delay: FiniteDuration, receiver: ActorRef,
-      message: Any)(implicit executor: ExecutionContext,
-      sender: ActorRef = Actor.noSender): Cancellable = {
-    scheduleOnce(delay) {
-      receiver ! message
-    }
-  }
+  final def scheduleOnce(
+                          delay: FiniteDuration,
+                          receiver: ActorRef,
+                          message: Any)(implicit executor: ExecutionContext,
+                                        sender: ActorRef = Actor.noSender): Cancellable =
+    scheduleOnce(delay, new Runnable {
+      override def run = receiver ! message
+    })
 
   /**
    * Schedules a function to be run once with a delay, i.e. a time period that has
@@ -86,8 +96,9 @@ trait Scheduler {
    *
    * Scala API
    */
-  def scheduleOnce(delay: FiniteDuration)(f: => Unit)(
-      implicit executor: ExecutionContext): Cancellable
+  final def scheduleOnce(delay: FiniteDuration)(f: ⇒ Unit)(
+    implicit executor: ExecutionContext): Cancellable =
+    scheduleOnce(delay, new Runnable { override def run = f })
 
   /**
    * Schedules a Runnable to be run once with a delay, i.e. a time period that
@@ -95,10 +106,9 @@ trait Scheduler {
    *
    * Java & Scala API
    */
-  final def scheduleOnce(delay: FiniteDuration, runnable: Runnable)(
-      implicit executor: ExecutionContext): Cancellable = {
-    scheduleOnce(delay)(runnable.run())
-  }
+  def scheduleOnce(
+                    delay: FiniteDuration,
+                    runnable: Runnable)(implicit executor: ExecutionContext): Cancellable
 
   /**
    * The maximum supported task frequency of this scheduler, i.e. the inverse
@@ -107,6 +117,35 @@ trait Scheduler {
   def maxFrequency: Double
 
 }
+//#scheduler
+
+// this one is just here so we can present a nice AbstractScheduler for Java
+abstract class AbstractSchedulerBase extends Scheduler
+
+//#cancellable
+/**
+ * Signifies something that can be cancelled
+ * There is no strict guarantee that the implementation is thread-safe,
+ * but it should be good practice to make it so.
+ */
+trait Cancellable {
+  /**
+   * Cancels this Cancellable and returns true if that was successful.
+   * If this cancellable was (concurrently) cancelled already, then this method
+   * will return false although isCancelled will return true.
+   *
+   * Java & Scala API
+   */
+  def cancel(): Boolean
+
+  /**
+   * Returns true if and only if this Cancellable has been successfully cancelled
+   *
+   * Java & Scala API
+   */
+  def isCancelled: Boolean
+}
+//#cancellable
 
 class EventLoopScheduler extends Scheduler {
 

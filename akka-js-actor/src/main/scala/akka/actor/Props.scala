@@ -8,8 +8,9 @@ package akka.actor
  * @note IMPLEMENT IN SCALA.JS
  *
  import akka.dispatch._
- import akka.japi.Creator
+ * 
  */
+import akka.japi.Creator
 import scala.reflect.ClassTag
 /**
  * @note IMPLEMENT IN SCALA.JS
@@ -18,11 +19,7 @@ import scala.reflect.ClassTag
  import akka.util.Reflect
  */
 import scala.annotation.varargs
-/**
- * @note IMPLEMENT IN SCALA.JS
- *
- import Deploy.{ NoDispatcherGiven, NoMailboxGiven }
- */
+import Deploy.{ NoDispatcherGiven, NoMailboxGiven }
 import scala.collection.immutable
 import scala.language.existentials
 /**
@@ -39,23 +36,6 @@ import scala.annotation.tailrec
  import java.lang.reflect.TypeVariable
  */
 
-final class Props(clazz: Class[_ <: Actor], creator: () => Actor) {
-  private[akka] def newActor(): Actor =
-    creator()
-}
-
-object Props {
-  def apply[A <: Actor : ClassTag](creator: => A): Props =
-    apply(implicitly[ClassTag[A]].runtimeClass.asInstanceOf[Class[_ <: Actor]],
-      () => creator)
-
-  def apply(clazz: Class[_ <: Actor], creator: () => Actor): Props =
-    new Props(clazz, creator)
-}
-
-/**
- * @note IMPLEMENT IN SCALA.JS
- *
  /**
   * Factory for Props instances.
   *
@@ -71,9 +51,13 @@ object Props {
    final val defaultCreator: () ⇒ Actor = () ⇒ throw new UnsupportedOperationException("No actor creator specified!")
 
    /**
+    * @note IMPLEMENT IN SCALA.JS
+    *
+   /**
     * The defaultRoutedProps is NoRouter which is used when creating a Props
     */
    final val defaultRoutedProps: RouterConfig = NoRouter
+    */
 
    /**
     * The default Deploy instance which is used when creating a Props
@@ -83,7 +67,14 @@ object Props {
    /**
     * A Props instance whose creator will create an actor that doesn't respond to any message
     */
-   final val empty = Props[EmptyActor]
+   final val empty =
+   /**
+    * @note IMPLEMENT IN SCALA.JS
+    *
+     Props[EmptyActor]
+     * 
+     */
+     Props(new EmptyActor)
 
    /**
     * The default Props instance, uses the settings from the Props object starting with default*.
@@ -121,8 +112,9 @@ object Props {
    def apply[T <: Actor: ClassTag](creator: ⇒ T): Props =
      mkProps(implicitly[ClassTag[T]].runtimeClass, () ⇒ creator)
 
-   private def mkProps(classOfActor: Class[_], ctor: () ⇒ Actor): Props =
+   private def mkProps(classOfActor: Class[_], ctor: () ⇒ Actor): Props = {
      Props(classOf[TypedCreatorFunctionConsumer], classOfActor, ctor)
+   }
 
    /**
     * Scala API: create a Props given a class and its constructor arguments.
@@ -143,9 +135,13 @@ object Props {
     *
     * Use the Props.create(actorClass, creator) instead.
     */
+   /*
+    * @note IMPLEMENT IN SCALA.JS
+    * As per: http://developer.classpath.org/doc/java/lang/reflect/Modifier-source.html
+   final val Modifier_STATIC = 0x0008
    def create[T <: Actor](creator: Creator[T]): Props = {
-     val cc = creator.getClass
-     if ((cc.getEnclosingClass ne null) && (cc.getModifiers & Modifier.STATIC) == 0)
+     val cc = creator.getClass 
+     if ((cc.getEnclosingClass ne null) && (cc.getModifiers & Modifier_STATIC) == 0)
        throw new IllegalArgumentException("cannot use non-static local Creator to create actors; make it static (e.g. local to a static method) or top-level")
      val ac = classOf[Actor]
      val coc = classOf[Creator[_]]
@@ -162,6 +158,8 @@ object Props {
      }
      apply(defaultDeploy, classOf[CreatorConsumer], actorClass :: creator :: Nil)
    }
+   * 
+   */
 
    /**
     * Create new Props from the given [[akka.japi.Creator]] with the type set to the given actorClass.
@@ -196,9 +194,14 @@ object Props {
   */
  @SerialVersionUID(2L)
  final case class Props(deploy: Deploy, clazz: Class[_], args: immutable.Seq[Any]) {
-
+     
+    /**
+    * @note IMPLEMENT IN SCALA.JS
+    *
    if (Modifier.isAbstract(clazz.getModifiers))
      throw new IllegalArgumentException(s"Actor class [${clazz.getName}] must not be abstract")
+     * 
+     */
 
    // derived property, does not need to be serialized
    @transient
@@ -210,7 +213,9 @@ object Props {
 
    private[this] def producer: IndirectActorProducer = {
      if (_producer eq null)
-       _producer = IndirectActorProducer(clazz, args)
+       _producer = {
+       IndirectActorProducer(clazz, args)
+     }
 
      _producer
    }
@@ -225,6 +230,9 @@ object Props {
    // validate producer constructor signature; throws IllegalArgumentException if invalid
    producer
 
+   /**
+    * @note IMPLEMENT IN SCALA.JS
+    *
    /**
     * Convenience method for extracting the dispatcher information from the
     * contained [[Deploy]] instance.
@@ -268,7 +276,8 @@ object Props {
     * Returns a new Props with the specified deployment configuration.
     */
    def withDeploy(d: Deploy): Props = copy(deploy = d withFallback deploy)
-
+    */
+   
    /**
     * Obtain an upper-bound approximation of the actor class which is going to
     * be created by these Props. In other words, the actor factory method will
@@ -318,7 +327,12 @@ object Props {
  }
 
  private[akka] object IndirectActorProducer {
+   /**
+    * @note IMPLEMENT IN SCALA.JS
+    *
    val UntypedActorFactoryConsumerClass = classOf[UntypedActorFactoryConsumer]
+   * 
+   */
    val CreatorFunctionConsumerClass = classOf[CreatorFunctionConsumer]
    val CreatorConsumerClass = classOf[CreatorConsumer]
    val TypedCreatorFunctionConsumerClass = classOf[TypedCreatorFunctionConsumer]
@@ -332,22 +346,42 @@ object Props {
        clazz match {
          case TypedCreatorFunctionConsumerClass ⇒
            new TypedCreatorFunctionConsumer(get1stArg, get2ndArg)
+          /**
+          * @note IMPLEMENT IN SCALA.JS
+          *
          case UntypedActorFactoryConsumerClass ⇒
            new UntypedActorFactoryConsumer(get1stArg)
+           * 
+           */
          case CreatorFunctionConsumerClass ⇒
            new CreatorFunctionConsumer(get1stArg)
          case CreatorConsumerClass ⇒
            new CreatorConsumer(get1stArg, get2ndArg)
          case _ ⇒
+            /**
+             * @note IMPLEMENT IN SCALA.JS
+             *
            Reflect.instantiate(clazz, args).asInstanceOf[IndirectActorProducer]
+           * 
+           */
+           throw new Exception("TBD in AKKA.js with supported reflection")
        }
      } else if (classOf[Actor].isAssignableFrom(clazz)) {
+       /**
+       * @note IMPLEMENT IN SCALA.JS
+       *
        if (args.isEmpty) new NoArgsReflectConstructor(clazz.asInstanceOf[Class[_ <: Actor]])
        else new ArgsReflectConstructor(clazz.asInstanceOf[Class[_ <: Actor]], args)
+       *
+       */
+       throw new Exception("TBD in AKKA.js to support args")
      } else throw new IllegalArgumentException(s"unknown actor creator [$clazz]")
    }
  }
 
+/**
+ * @note IMPLEMENT IN SCALA.JS
+ *
  /**
   * INTERNAL API
   */
@@ -355,6 +389,8 @@ object Props {
    override def actorClass = classOf[Actor]
    override def produce() = factory.create()
  }
+ * 
+ */
 
  /**
   * INTERNAL API
@@ -381,6 +417,9 @@ object Props {
  }
 
  /**
+ * @note IMPLEMENT IN SCALA.JS
+ *
+ /**
   * INTERNAL API
   */
  private[akka] class ArgsReflectConstructor(clz: Class[_ <: Actor], args: immutable.Seq[Any]) extends IndirectActorProducer {
@@ -397,5 +436,12 @@ object Props {
    override def actorClass = clz
    override def produce() = Reflect.instantiate(clz)
  }
-
+ * 
  */
+ /**
+  * INTERNAL API
+  */
+ private[akka] class NoArgsNoReflectConstructor(clz: Class[_ <: Actor], creator: () ⇒ Actor) extends IndirectActorProducer {
+   override def actorClass = clz
+   override def produce() = creator()
+ }

@@ -2,6 +2,8 @@ enablePlugins(ScalaJSPlugin)
 
 name := "Scala.js actors"
 
+version := "0.2-SNAPSHOT"
+
 normalizedName := "akka-js-actor"
 
 organization := "akka.js"
@@ -14,8 +16,8 @@ libraryDependencies ++= Seq(
   "com.lihaoyi" %%% "utest" % "0.3.1"
 )
 
-preLinkJSEnv := PhantomJSEnv().value
+preLinkJSEnv := NodeJSEnv().value
 
-postLinkJSEnv := PhantomJSEnv().value
+postLinkJSEnv := NodeJSEnv().value
 
 testFrameworks += new TestFramework("utest.runner.Framework")

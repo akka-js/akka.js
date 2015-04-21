@@ -224,7 +224,12 @@ trait ActorRefFactory {
   /**
    * Returns the default MessageDispatcher associated with this ActorRefFactory
    */
-  implicit def dispatcher: ExecutionContextExecutor
+  /**
+   * @note IMPLEMENT IN SCALA.JS
+   *
+           implicit def dispatcher: ExecutionContextExecutor
+   */
+  implicit def dispatcher: MessageDispatcher
 
   /**
    * Father of all children created by this interface.

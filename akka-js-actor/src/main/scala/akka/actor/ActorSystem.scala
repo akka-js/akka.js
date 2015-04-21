@@ -38,17 +38,21 @@ object ActorSystem {
 
   val Version: String = "2.3.9"
 
-  val EnvHome: Option[String] = System.getenv("AKKA_HOME") match {
-    case null | "" | "." ⇒ None
-    case value           ⇒ Some(value)
-  }
+/**
+ * @note IMPLEMENT IN SCALA.JS
+ *
+   val EnvHome: Option[String] = System.getenv("AKKA_HOME") match {
+     case null | "" | "." ⇒ None
+     case value           ⇒ Some(value)
+   }
 
-  val SystemHome: Option[String] = System.getProperty("akka.home") match {
-    case null | "" ⇒ None
-    case value     ⇒ Some(value)
-  }
+   val SystemHome: Option[String] = System.getProperty("akka.home") match {
+     case null | "" ⇒ None
+     case value     ⇒ Some(value)
+   }
 
-  val GlobalHome: Option[String] = SystemHome orElse EnvHome
+   val GlobalHome: Option[String] = SystemHome orElse EnvHome
+ */
 
   /**
    * Creates a new ActorSystem with the name "default",
@@ -352,8 +356,12 @@ abstract class ActorSystem extends ActorRefFactory {
   /**
    * Log the configuration.
    */
-  def logConfiguration(): Unit
+/**
+ * @note IMPLEMENT IN SCALA.JS
+ *
+   def logConfiguration(): Unit
 
+ */
   /**
    * Construct a path below the application guardian to be used with [[ActorSystem.actorSelection]].
    */
@@ -431,7 +439,12 @@ abstract class ActorSystem extends ActorRefFactory {
    * explicitly.
    * Importing this member will place the default MessageDispatcher in scope.
    */
-  implicit def dispatcher: ExecutionContextExecutor
+  /**
+   * @note IMPLEMENT IN SCALA.JS
+   *
+   implicit def dispatcher: ExecutionContextExecutor
+   */
+  implicit def dispatcher: MessageDispatcher
 
   /**
    * Helper object for looking up configured mailbox types.
@@ -449,7 +462,11 @@ abstract class ActorSystem extends ActorRefFactory {
    *
    * Scala API
    */
-  def registerOnTermination[T](code: ⇒ T): Unit
+/**
+ * @note IMPLEMENT IN SCALA.JS
+ *
+   def registerOnTermination[T](code: ⇒ T): Unit
+ */
 
   /**
    * Java API: Register a block of code (callback) to run after ActorSystem.shutdown has been issued and
@@ -460,7 +477,11 @@ abstract class ActorSystem extends ActorRefFactory {
    *
    * @throws a RejectedExecutionException if the System has already shut down or if shutdown has been initiated.
    */
-  def registerOnTermination(code: Runnable): Unit
+/**
+ * @note IMPLEMENT IN SCALA.JS
+ *
+   def registerOnTermination(code: Runnable): Unit
+ */
 
   /**
    * Block current thread until the system has been shutdown, or the specified
@@ -469,13 +490,21 @@ abstract class ActorSystem extends ActorRefFactory {
    *
    * @throws TimeoutException in case of timeout
    */
-  def awaitTermination(timeout: Duration): Unit
+/**
+ * @note IMPLEMENT IN SCALA.JS
+ *
+   def awaitTermination(timeout: Duration): Unit
 
+ */
   /**
    * Block current thread until the system has been shutdown. This will
    * block until after all on termination callbacks have been run.
    */
-  def awaitTermination(): Unit
+/**
+ * @note IMPLEMENT IN SCALA.JS
+ *
+   def awaitTermination(): Unit
+ */
 
   /**
    * Stop this actor system. This will stop the guardian actor, which in turn
@@ -492,7 +521,11 @@ abstract class ActorSystem extends ActorRefFactory {
    * returns `false`, the status is actually unknown, since it might have
    * changed since you queried it.
    */
-  def isTerminated: Boolean
+/**
+ * @note IMPLEMENT IN SCALA.JS
+ *
+   def isTerminated: Boolean
+ */
 
   /**
    * Registers the provided extension and creates its payload, if this extension isn't already registered
@@ -587,7 +620,11 @@ abstract class ExtendedActorSystem extends ActorSystem {
    * Careful, this may OOM on large actor systems, and it is only meant for
    * helping debugging in case something already went terminally wrong.
    */
-  private[akka] def printTree: String
+/**
+ * @note IMPLEMENT IN SCALA.JS
+ *
+   private[akka] def printTree: String
+ */
 }
 
 private[akka] class ActorSystemImpl(val name: String, applicationConfig: ActorSystem.Settings /** @note IMPLEMENT IN SCALA.JS Config , classLoader: ClassLoader, defaultExecutionContext: Option[ExecutionContext] */) extends ExtendedActorSystem {
@@ -598,20 +635,6 @@ private[akka] class ActorSystemImpl(val name: String, applicationConfig: ActorSy
         "], must contain only word characters (i.e. [a-zA-Z0-9] plus non-leading '-' or '_')")
 
   import ActorSystem._
-
-  /** FIX **/
-  // Members declared in akka.actor.ActorSystem
-  def awaitTermination(): Unit = ???
-  def awaitTermination(timeout: scala.concurrent.duration.Duration): Unit = ???
-  def isTerminated: Boolean = ???
-  def logConfiguration(): Unit = ???
-  def registerOnTermination(code: Runnable): Unit = ???
-  def registerOnTermination[T](code: => T): Unit = ???
-
-  // Members declared in akka.actor.ExtendedActorSystem
-  private[akka] def printTree: String = ???
-
-
 
   @volatile private var logDeadLetterListener: Option[ActorRef] = None
   /**
@@ -768,7 +791,11 @@ private[akka] class ActorSystemImpl(val name: String, applicationConfig: ActorSy
   def /(path: Iterable[String]): ActorPath = guardian.path / path
 
   private lazy val _start: this.type = try {
-    registerOnTermination(stopScheduler())
+    /**
+     * @note IMPLEMENT IN SCALA.JS
+     *
+     registerOnTermination(stopScheduler())
+     */
     // the provider is expected to start default loggers, LocalActorRefProvider does this
     provider.init(this)
     /**

@@ -52,7 +52,8 @@ private[akka] trait Children { this: ActorCell ⇒
   @volatile private var _nextNameDoNotCallMeDirectly = 0L
   final protected def randomName(): String = {
     /** @note IMPLEMENT IN SCALA.JS @tailrec */ def inc(): Long = {
-      _nextNameDoNotCallMeDirectly + 1
+      _nextNameDoNotCallMeDirectly += 1
+      _nextNameDoNotCallMeDirectly
       /**
        * @note IMPLEMENT IN SCALA.JS
        *
@@ -240,7 +241,11 @@ private[akka] trait Children { this: ActorCell ⇒
         } catch {
           case e: InterruptedException ⇒
             unreserveChild(name)
-            Thread.interrupted() // clear interrupted flag before throwing according to java convention
+            /**
+             * @note IMPLEMENT IN SCALA.JS
+             *
+             Thread.interrupted() // clear interrupted flag before throwing according to java convention
+             */
             throw e
           case NonFatal(e) ⇒
             unreserveChild(name)

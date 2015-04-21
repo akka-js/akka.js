@@ -60,11 +60,17 @@ trait Scheduler {
    *
    * Scala API
    */
-  final def schedule(
-                      initialDelay: FiniteDuration,
-                      interval: FiniteDuration)(f: ⇒ Unit)(
-                      implicit executor: ExecutionContext): Cancellable =
-    schedule(initialDelay, interval, new Runnable { override def run = f })
+/**
+ * @note IMPLEMENT IN SCALA.JS
+ *
+   final def schedule(
+ */
+  def schedule(
+
+                       initialDelay: FiniteDuration,
+                       interval: FiniteDuration)(f: ⇒ Unit)(
+                       implicit executor: ExecutionContext): Cancellable =
+     schedule(initialDelay, interval, new Runnable { override def run = f })
 
   /**
    * Schedules a function to be run repeatedly with an initial delay and
@@ -100,7 +106,12 @@ trait Scheduler {
    *
    * Scala API
    */
-  final def scheduleOnce(delay: FiniteDuration)(f: ⇒ Unit)(
+/**
+ * @note IMPLEMENT IN SCALA.JS
+ *
+   final def scheduleOnce(delay: FiniteDuration)(f: ⇒ Unit)(
+ */
+def scheduleOnce(delay: FiniteDuration)(f: ⇒ Unit)(
     implicit executor: ExecutionContext): Cancellable =
     scheduleOnce(delay, new Runnable { override def run = f })
 
@@ -150,21 +161,3 @@ trait Cancellable {
   def isCancelled: Boolean
 }
 //#cancellable
-
-class EventLoopScheduler extends Scheduler {
-
-  override def schedule(
-      initialDelay: FiniteDuration,
-      interval: FiniteDuration)(f: => Unit)(
-      implicit executor: ExecutionContext): Cancellable = {
-    JSTimeoutThenIntervalTask(initialDelay, interval)(f)
-  }
-
-  override def scheduleOnce(delay: FiniteDuration)(f: => Unit)(
-      implicit executor: ExecutionContext): Cancellable = {
-    JSTimeoutTask(delay)(f)
-  }
-
-  def maxFrequency: Double = 1.0 / 0.0004 // as per HTML spec
-
-}

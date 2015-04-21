@@ -3,11 +3,8 @@
  */
 package akka.dispatch
 
-import java.util.{ Comparator, PriorityQueue, Queue, Deque }
-import java.util.concurrent._
-import akka.AkkaException
+import akka.actor.{ActorCell, ActorRef, ActorSystem}
 import akka.dispatch.sysmsg._
-import akka.actor.{ ActorCell, ActorRef, Cell, ActorSystem, InternalActorRef, DeadLetter }
 /**
  * @note IMPLEMENT IN SCALA.JS
  *
@@ -19,11 +16,7 @@ import akka.util.JSQueue
  *
  import akka.util.Helpers.ConfigOps
  */
-import akka.event.Logging.Error
-import scala.concurrent.duration.Duration
-import scala.concurrent.duration.FiniteDuration
 import scala.annotation.tailrec
-import scala.concurrent.forkjoin.ForkJoinTask
 import scala.util.control.NonFatal
 /**
  * @note IMPLEMENT IN SCALA.JS
@@ -318,8 +311,12 @@ private[akka] /** @note IMPLEMENT IN SCALA.JS abstract */ class Mailbox(val mess
       if (next ne null) {
         if (Mailbox.debug) println(actor.self + " processing message " + next)
         actor invoke next
-        if (Thread.interrupted())
-          throw new InterruptedException("Interrupted while processing actor messages")
+        /**
+         * @note IMPLEMENT IN SCALA.JS
+         *
+                 if (Thread.interrupted())
+           throw new InterruptedException("Interrupted while processing actor messages")
+         */
         processAllSystemMessages()
         if ((left > 1) && ((dispatcher.isThroughputDeadlineTimeDefined == false) || (System.nanoTime - deadlineNs) < 0))
           processMailbox(left - 1, deadlineNs)

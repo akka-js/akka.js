@@ -12,7 +12,11 @@ case class Greeting(who: String)
 
 class GreetingActor extends Actor {
   def receive = {
-    case Greeting(who) => sender ! ("Hello " + who)
+    case Greeting(who) => {
+      println("YO")
+      println(who)
+      sender ! ("Hello " + who)
+    }
   }
 }
 

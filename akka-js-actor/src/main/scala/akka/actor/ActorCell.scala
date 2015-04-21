@@ -135,6 +135,7 @@ trait ActorContext extends ActorRefFactory {
    *
    implicit def dispatcher: ExecutionContextExecutor
    */
+  implicit def dispatcher: MessageDispatcher
 
   /**
    * The system that the actor belongs to.
@@ -689,8 +690,12 @@ private[akka] class ActorCell(
     } catch {
       case e: InterruptedException ⇒
         clearOutActorIfNonNull()
-        Thread.currentThread().interrupt()
-        throw ActorInitializationException(self, "interruption during creation", e)
+      /**
+       * @note IMPLEMENT IN SCALA.JS
+       *
+               Thread.currentThread().interrupt()
+         throw ActorInitializationException(self, "interruption during creation", e)
+       */
       case NonFatal(e) ⇒
         clearOutActorIfNonNull()
         e match {
@@ -725,29 +730,37 @@ private[akka] class ActorCell(
     case _                               ⇒
   }
 
-  @tailrec private final def lookupAndSetField(clazz: Class[_], instance: AnyRef, name: String, value: Any): Boolean = {
-    @tailrec def clearFirst(fields: Array[java.lang.reflect.Field], idx: Int): Boolean =
-      if (idx < fields.length) {
-        val field = fields(idx)
-        if (field.getName == name) {
-          field.setAccessible(true)
-          field.set(instance, value)
-          true
-        } else clearFirst(fields, idx + 1)
-      } else false
+/**
+ * @note IMPLEMENT IN SCALA.JS
+ *
+   @tailrec private final def lookupAndSetField(clazz: Class[_], instance: AnyRef, name: String, value: Any): Boolean = {
+     @tailrec def clearFirst(fields: Array[java.lang.reflect.Field], idx: Int): Boolean =
+       if (idx < fields.length) {
+         val field = fields(idx)
+         if (field.getName == name) {
+           field.setAccessible(true)
+           field.set(instance, value)
+           true
+         } else clearFirst(fields, idx + 1)
+       } else false
 
-    clearFirst(clazz.getDeclaredFields, 0) || {
-      clazz.getSuperclass match {
-        case null ⇒ false // clazz == classOf[AnyRef]
-        case sc   ⇒ lookupAndSetField(sc, instance, name, value)
-      }
-    }
-  }
+     clearFirst(clazz.getDeclaredFields, 0) || {
+       clazz.getSuperclass match {
+         case null ⇒ false // clazz == classOf[AnyRef]
+         case sc   ⇒ lookupAndSetField(sc, instance, name, value)
+       }
+     }
+   }
+ */
 
   final protected def clearActorCellFields(cell: ActorCell): Unit = {
     cell.unstashAllLatestFirst()
-    if (!lookupAndSetField(classOf[ActorCell], cell, "props", ActorCell.terminatedProps))
-      throw new IllegalArgumentException("ActorCell has no props field")
+/**
+ * @note IMPLEMENT IN SCALA.JS
+ *
+     if (!lookupAndSetField(classOf[ActorCell], cell, "props", ActorCell.terminatedProps))
+       throw new IllegalArgumentException("ActorCell has no props field")
+ */
   }
 
   final protected def clearActorFields(actorInstance: Actor): Unit = {
@@ -757,11 +770,16 @@ private[akka] class ActorCell(
   }
 
   final protected def setActorFields(actorInstance: Actor, context: ActorContext, self: ActorRef): Unit =
-    if (actorInstance ne null) {
-      if (!lookupAndSetField(actorInstance.getClass, actorInstance, "context", context)
-        || !lookupAndSetField(actorInstance.getClass, actorInstance, "self", self))
-        throw new IllegalActorStateException(actorInstance.getClass + " is not an Actor since it have not mixed in the 'Actor' trait")
-    }
+    actorInstance.setActorFields(context = context, self = self)
+    /**
+     * @note IMPLEMENT IN SCALA.JS
+     *
+         if (actorInstance ne null) {
+           if (!lookupAndSetField(actorInstance.getClass, actorInstance, "context", context)
+             || !lookupAndSetField(actorInstance.getClass, actorInstance, "self", self))
+             throw new IllegalActorStateException(actorInstance.getClass + " is not an Actor since it have not mixed in the 'Actor' trait")
+         }
+     */
 
   // logging is not the main purpose, and if it fails there’s nothing we can do
   protected final def publish(e: LogEvent): Unit = try system.eventStream.publish(e) catch { case NonFatal(_) ⇒ }

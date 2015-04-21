@@ -125,7 +125,11 @@ private[akka] trait Dispatch { this: ActorCell ⇒
   private def handleException: Catcher[Unit] = {
     case e: InterruptedException ⇒
       system.eventStream.publish(Error(e, self.path.toString, clazz(actor), "interrupted during message send"))
-      Thread.currentThread.interrupt()
+      /**
+       * @note IMPLEMENT IN SCALA.JS
+       *
+       Thread.currentThread.interrupt()
+       */
     case NonFatal(e) ⇒
       system.eventStream.publish(Error(e, self.path.toString, clazz(actor), "swallowing exception during message send"))
   }

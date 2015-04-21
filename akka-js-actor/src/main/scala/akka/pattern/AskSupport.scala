@@ -244,7 +244,11 @@ private[akka] final class PromiseActorRef private (val provider: ActorRefProvide
   *     Unsafe.instance.compareAndSwapObject(this, watchedByOffset, oldWatchedBy, newWatchedBy)
   */
 
-  @tailrec // Returns false if the Promise is already completed
+/**
+ * @note IMPLEMENT IN SCALA.JS
+ *
+   @tailrec // Returns false if the Promise is already completed
+ */
   private[this] final def addWatcher(watcher: ActorRef): Boolean = watchedBy match {
     case null  ⇒ false
     case other ⇒
@@ -256,7 +260,11 @@ private[akka] final class PromiseActorRef private (val provider: ActorRefProvide
      watchedBy = other + watcher; true
   }
 
-  @tailrec
+/**
+ * @note IMPLEMENT IN SCALA.JS
+ *
+   @tailrec
+ */
   private[this] final def remWatcher(watcher: ActorRef): Unit = watchedBy match {
     case null  ⇒ ()
     case other ⇒
@@ -268,7 +276,11 @@ private[akka] final class PromiseActorRef private (val provider: ActorRefProvide
       watchedBy = other - watcher
   }
 
-  @tailrec
+/**
+ * @note IMPLEMENT IN SCALA.JS
+ *
+   @tailrec
+ */
   private[this] final def clearWatchers(): Set[ActorRef] = watchedBy match {
     case null  ⇒ ActorCell.emptyActorRefSet
     case other ⇒

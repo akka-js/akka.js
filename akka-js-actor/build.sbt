@@ -1,6 +1,6 @@
 enablePlugins(ScalaJSPlugin)
 
-name := "Scala.js actors"
+name := "Akka.js actors"
 
 version := "0.2-SNAPSHOT"
 

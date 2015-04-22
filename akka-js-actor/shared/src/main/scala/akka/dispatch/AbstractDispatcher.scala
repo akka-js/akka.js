@@ -102,226 +102,222 @@ private[akka] object MessageDispatcher {
   */
 }
 
- abstract class MessageDispatcher(val configurator: MessageDispatcherConfigurator) extends AbstractMessageDispatcher with BatchingExecutor with ExecutionContextExecutor {
+abstract class MessageDispatcher(val configurator: MessageDispatcherConfigurator) extends AbstractMessageDispatcher with BatchingExecutor with ExecutionContextExecutor {
 
-   import MessageDispatcher._
-   import AbstractMessageDispatcher.{ inhabitantsOffset, shutdownScheduleOffset }
-   import configurator.prerequisites
+	import MessageDispatcher._
+	import AbstractMessageDispatcher.{ inhabitantsOffset, shutdownScheduleOffset }
+	import configurator.prerequisites
 
-   val mailboxes = prerequisites.mailboxes
-   val eventStream = prerequisites.eventStream
+	val mailboxes = prerequisites.mailboxes
+	val eventStream = prerequisites.eventStream
 
-   @volatile private[this] var _inhabitantsDoNotCallMeDirectly: Long = _ // DO NOT TOUCH!
-   @volatile private[this] var _shutdownScheduleDoNotCallMeDirectly: Int = _ // DO NOT TOUCH!
+	@volatile private[this] var _inhabitantsDoNotCallMeDirectly: Long = _ // DO NOT TOUCH!
+	@volatile private[this] var _shutdownScheduleDoNotCallMeDirectly: Int = _ // DO NOT TOUCH!
 
-   @tailrec private final def addInhabitants(add: Long): Long = {
-     val c = inhabitants
-     val r = c + add
-     if (r < 0) {
-       // We haven't succeeded in decreasing the inhabitants yet but the simple fact that we're trying to
-       // go below zero means that there is an imbalance and we might as well throw the exception
-       val e = new IllegalStateException("ACTOR SYSTEM CORRUPTED!!! A dispatcher can't have less than 0 inhabitants!")
-       reportFailure(e)
-       throw e
-     }
-     if (Unsafe.instance.compareAndSwapLong(this, inhabitantsOffset, c, r)) r else addInhabitants(add)
-   }
+	@tailrec private final def addInhabitants(add: Long): Long = {
+			val c = inhabitants
+					val r = c + add
+					if (r < 0) {
+						// We haven't succeeded in decreasing the inhabitants yet but the simple fact that we're trying to
+						// go below zero means that there is an imbalance and we might as well throw the exception
+						val e = new IllegalStateException("ACTOR SYSTEM CORRUPTED!!! A dispatcher can't have less than 0 inhabitants!")
+						reportFailure(e)
+						throw e
+					}
+			if (Unsafe.instance.compareAndSwapLong(this, inhabitantsOffset, c, r)) r else addInhabitants(add)
+	}
 
-   final def inhabitants: Long = Unsafe.instance.getLongVolatile(this, inhabitantsOffset)
+	final def inhabitants: Long = Unsafe.instance.getLongVolatile(this, inhabitantsOffset)
 
-   private final def shutdownSchedule: Int = Unsafe.instance.getIntVolatile(this, shutdownScheduleOffset)
-   private final def updateShutdownSchedule(expect: Int, update: Int): Boolean = Unsafe.instance.compareAndSwapInt(this, shutdownScheduleOffset, expect, update)
+	private final def shutdownSchedule: Int = Unsafe.instance.getIntVolatile(this, shutdownScheduleOffset)
+	private final def updateShutdownSchedule(expect: Int, update: Int): Boolean = Unsafe.instance.compareAndSwapInt(this, shutdownScheduleOffset, expect, update)
 
-   /**
-    *  Creates and returns a mailbox for the given actor.
-    */
-   protected[akka] def createMailbox(actor: Cell, mailboxType: MailboxType): Mailbox
+	/**
+	 *  Creates and returns a mailbox for the given actor.
+	 */
+	protected[akka] def createMailbox(actor: Cell, mailboxType: MailboxType): Mailbox
 
-   /**
-    * Identifier of this dispatcher, corresponds to the full key
-    * of the dispatcher configuration.
-    */
-   def id: String
+	/**
+	 * Identifier of this dispatcher, corresponds to the full key
+	 * of the dispatcher configuration.
+	 */
+	def id: String
 
-   /**
-    * Attaches the specified actor instance to this dispatcher, which includes
-    * scheduling it to run for the first time (Create() is expected to have
-    * been enqueued by the ActorCell upon mailbox creation).
-    */
-   final def attach(actor: ActorCell): Unit = {
-     register(actor)
-     registerForExecution(actor.mailbox, false, true)
-   }
+	/**
+	 * Attaches the specified actor instance to this dispatcher, which includes
+	 * scheduling it to run for the first time (Create() is expected to have
+	 * been enqueued by the ActorCell upon mailbox creation).
+	 */
+	final def attach(actor: ActorCell): Unit = {
+		register(actor)
+		registerForExecution(actor.mailbox, false, true)
+	}
 
-   /**
-    * Detaches the specified actor instance from this dispatcher
-    */
-   final def detach(actor: ActorCell): Unit = try unregister(actor) finally ifSensibleToDoSoThenScheduleShutdown()
+	/**
+	 * Detaches the specified actor instance from this dispatcher
+	 */
+	final def detach(actor: ActorCell): Unit = try unregister(actor) finally ifSensibleToDoSoThenScheduleShutdown()
 
-   final override protected def unbatchedExecute(r: Runnable): Unit = {
-     val invocation = TaskInvocation(eventStream, r, taskCleanup)
-     addInhabitants(+1)
-     try {
-       executeTask(invocation)
-     } catch {
-       case t: Throwable ⇒
-         addInhabitants(-1)
-         throw t
-     }
-   }
+	final override protected def unbatchedExecute(r: Runnable): Unit = {
+	  val invocation = TaskInvocation(eventStream, r, taskCleanup)
+		addInhabitants(+1)
+		try {
+		  executeTask(invocation)
+		} catch {
+		  case t: Throwable ⇒
+		    addInhabitants(-1)
+				throw t
+		}
+	}
 
-   override def reportFailure(t: Throwable): Unit = t match {
-     case e: LogEventException ⇒ eventStream.publish(e.event)
-     case _                    ⇒ eventStream.publish(Error(t, getClass.getName, getClass, t.getMessage))
-   }
+	override def reportFailure(t: Throwable): Unit = t match {
+	case e: LogEventException ⇒ eventStream.publish(e.event)
+	case _                    ⇒ eventStream.publish(Error(t, getClass.getName, getClass, t.getMessage))
+	}
 
-   @tailrec
-   private final def ifSensibleToDoSoThenScheduleShutdown(): Unit = {
-     if (inhabitants <= 0) shutdownSchedule match {
-       case UNSCHEDULED ⇒
-         if (updateShutdownSchedule(UNSCHEDULED, SCHEDULED)) scheduleShutdownAction()
-         else ifSensibleToDoSoThenScheduleShutdown()
-       case SCHEDULED ⇒
-         if (updateShutdownSchedule(SCHEDULED, RESCHEDULED)) ()
-         else ifSensibleToDoSoThenScheduleShutdown()
-       case RESCHEDULED ⇒
-     }
-   }
+	@tailrec
+	private final def ifSensibleToDoSoThenScheduleShutdown(): Unit = {
+		if (inhabitants <= 0) shutdownSchedule match {
+		  case UNSCHEDULED ⇒
+		    if (updateShutdownSchedule(UNSCHEDULED, SCHEDULED)) scheduleShutdownAction()
+		    else ifSensibleToDoSoThenScheduleShutdown()
+		  case SCHEDULED ⇒
+		    if (updateShutdownSchedule(SCHEDULED, RESCHEDULED)) ()
+		    else ifSensibleToDoSoThenScheduleShutdown()
+		  case RESCHEDULED ⇒
+		}
+	}
 
-   private def scheduleShutdownAction(): Unit = {
-     // IllegalStateException is thrown if scheduler has been shutdown
-     try prerequisites.scheduler.scheduleOnce(shutdownTimeout, shutdownAction)(new ExecutionContext {
-       override def execute(runnable: Runnable): Unit = runnable.run()
-       override def reportFailure(t: Throwable): Unit = MessageDispatcher.this.reportFailure(t)
-     }) catch {
-       case _: IllegalStateException ⇒ shutdown()
-     }
-   }
+	private def scheduleShutdownAction(): Unit = {
+		// IllegalStateException is thrown if scheduler has been shutdown
+		try prerequisites.scheduler.scheduleOnce(shutdownTimeout, shutdownAction)(new ExecutionContext {
+			override def execute(runnable: Runnable): Unit = runnable.run()
+			override def reportFailure(t: Throwable): Unit = MessageDispatcher.this.reportFailure(t)
+		}) catch {
+		  case _: IllegalStateException ⇒ shutdown()
+		}
+	}
 
-   private final val taskCleanup: () ⇒ Unit = () ⇒ if (addInhabitants(-1) == 0) ifSensibleToDoSoThenScheduleShutdown()
+	private final val taskCleanup: () ⇒ Unit = () ⇒ if (addInhabitants(-1) == 0) ifSensibleToDoSoThenScheduleShutdown()
 
-   /**
-    * If you override it, you must call it. But only ever once. See "attach" for only invocation.
-    *
-    * INTERNAL API
-    */
-   protected[akka] def register(actor: ActorCell) {
-     if (debug) actors.put(this, actor.self)
-     addInhabitants(+1)
-   }
+	/**
+	 * If you override it, you must call it. But only ever once. See "attach" for only invocation.
+	 *
+	 * INTERNAL API
+	 */
+	protected[akka] def register(actor: ActorCell) {
+	  if (debug) actors.put(this, actor.self)
+	  addInhabitants(+1)
+  }
 
-   /**
-    * If you override it, you must call it. But only ever once. See "detach" for the only invocation
-    *
-    * INTERNAL API
-    */
-   protected[akka] def unregister(actor: ActorCell) {
-     if (debug) actors.remove(this, actor.self)
-     addInhabitants(-1)
-     val mailBox = actor.swapMailbox(mailboxes.deadLetterMailbox)
-     mailBox.becomeClosed()
-     mailBox.cleanUp()
-   }
+	/**
+	 * If you override it, you must call it. But only ever once. See "detach" for the only invocation
+	 *
+	 * INTERNAL API
+	 */
+	protected[akka] def unregister(actor: ActorCell) {
+		if (debug) actors.remove(this, actor.self)
+		addInhabitants(-1)
+		val mailBox = actor.swapMailbox(mailboxes.deadLetterMailbox)
+		mailBox.becomeClosed()
+		mailBox.cleanUp()
+	}
 
-   private val shutdownAction = new Runnable {
-     @tailrec
-     final def run() {
-       shutdownSchedule match {
-         case SCHEDULED ⇒
-           try {
-             if (inhabitants == 0) shutdown() //Warning, racy
-           } finally {
-             while (!updateShutdownSchedule(shutdownSchedule, UNSCHEDULED)) {}
-           }
-         case RESCHEDULED ⇒
-           if (updateShutdownSchedule(RESCHEDULED, SCHEDULED)) scheduleShutdownAction()
-           else run()
-         case UNSCHEDULED ⇒
-       }
-     }
-   }
+	private val shutdownAction = new Runnable {
+		@tailrec
+		final def run() {
+			shutdownSchedule match {
+			case SCHEDULED ⇒
+			  try {
+				  if (inhabitants == 0) shutdown() //Warning, racy
+			  } finally {
+				  while (!updateShutdownSchedule(shutdownSchedule, UNSCHEDULED)) {}
+			  }
+			case RESCHEDULED ⇒
+			  if (updateShutdownSchedule(RESCHEDULED, SCHEDULED)) scheduleShutdownAction()
+			  else run()
+			case UNSCHEDULED ⇒  
+      }
+		}
+	}
 
-   /**
-    * When the dispatcher no longer has any actors registered, how long will it wait until it shuts itself down,
-    * defaulting to your akka configs "akka.actor.default-dispatcher.shutdown-timeout" or default specified in
-    * reference.conf
-    *
-    * INTERNAL API
-    */
-   protected[akka] def shutdownTimeout: FiniteDuration
+	/**
+	 * When the dispatcher no longer has any actors registered, how long will it wait until it shuts itself down,
+	 * defaulting to your akka configs "akka.actor.default-dispatcher.shutdown-timeout" or default specified in
+	 * reference.conf
+	 *
+	 * INTERNAL API
+	 */
+	protected[akka] def shutdownTimeout: FiniteDuration
 
-   /**
-    * After the call to this method, the dispatcher mustn't begin any new message processing for the specified reference
-    */
-   protected[akka] def suspend(actor: ActorCell): Unit = {
-     val mbox = actor.mailbox
-     if ((mbox.actor eq actor) && (mbox.dispatcher eq this))
-       mbox.suspend()
-   }
+	/**
+	 * After the call to this method, the dispatcher mustn't begin any new message processing for the specified reference
+	 */
+	protected[akka] def suspend(actor: ActorCell): Unit = {
+		val mbox = actor.mailbox
+		if ((mbox.actor eq actor) && (mbox.dispatcher eq this))
+		mbox.suspend()
+	}
 
-   /*
-    * After the call to this method, the dispatcher must begin any new message processing for the specified reference
-    */
-   protected[akka] def resume(actor: ActorCell): Unit = {
-     val mbox = actor.mailbox
-     if ((mbox.actor eq actor) && (mbox.dispatcher eq this) && mbox.resume())
-       registerForExecution(mbox, false, false)
-   }
+	/*
+	 * After the call to this method, the dispatcher must begin any new message processing for the specified reference
+	 */
+	protected[akka] def resume(actor: ActorCell): Unit = {
+		val mbox = actor.mailbox
+		if ((mbox.actor eq actor) && (mbox.dispatcher eq this) && mbox.resume())
+		registerForExecution(mbox, false, false)
+	}
 
-   /**
-    * Will be called when the dispatcher is to queue an invocation for execution
-    *
-    * INTERNAL API
-    */
-   protected[akka] def systemDispatch(receiver: ActorCell, invocation: SystemMessage)
+	/**
+	 * Will be called when the dispatcher is to queue an invocation for execution
+	 *
+	 * INTERNAL API
+	 */
+	protected[akka] def systemDispatch(receiver: ActorCell, invocation: SystemMessage)
 
-   /**
-    * Will be called when the dispatcher is to queue an invocation for execution
-    *
-    * INTERNAL API
-    */
-   protected[akka] def dispatch(receiver: ActorCell, invocation: Envelope)
+	/**
+	 * Will be called when the dispatcher is to queue an invocation for execution
+	 *
+	 * INTERNAL API
+	 */
+	protected[akka] def dispatch(receiver: ActorCell, invocation: Envelope)
 
-   /**
-    * Suggest to register the provided mailbox for execution
-    *
-    * INTERNAL API
-    */
-   protected[akka] def registerForExecution(mbox: Mailbox, hasMessageHint: Boolean, hasSystemMessageHint: Boolean): Boolean
+	/**
+	 * Suggest to register the provided mailbox for execution
+	 *
+	 * INTERNAL API
+	 */
+	protected[akka] def registerForExecution(mbox: Mailbox, hasMessageHint: Boolean, hasSystemMessageHint: Boolean): Boolean
 
-   // TODO check whether this should not actually be a property of the mailbox
-   /**
-    * INTERNAL API
-    */
-   protected[akka] def throughput: Int
+	// TODO check whether this should not actually be a property of the mailbox
+	/**
+	 * INTERNAL API
+	 */
+	protected[akka] def throughput: Int
 
-   /**
-    * INTERNAL API
-    */
-   protected[akka] def throughputDeadlineTime: Duration
+	/**
+	 * INTERNAL API
+	 */
+	protected[akka] def throughputDeadlineTime: Duration
 
-   /**
-    * INTERNAL API
-    */
-   @inline protected[akka] final val isThroughputDeadlineTimeDefined = throughputDeadlineTime.toMillis > 0
+	/**
+	 * INTERNAL API
+	 */
+	@inline protected[akka] final val isThroughputDeadlineTimeDefined = throughputDeadlineTime.toMillis > 0
 
-   /**
-    * INTERNAL API
-    */
-   /**
-    * @note IMPLEMENT IN SCALA.JS
-    * 
-    * protected[akka] def executeTask(invocation: TaskInvocation)
-    */
+	/**
+	 * INTERNAL API
+	 */
+  protected[akka] def executeTask(invocation: TaskInvocation)
 
-   /**
-    * Called one time every time an actor is detached from this dispatcher and this dispatcher has no actors left attached
-    * Must be idempotent
-    *
-    * INTERNAL API
-    */
-   protected[akka] def shutdown(): Unit
- }
+	/**
+	 * Called one time every time an actor is detached from this dispatcher and this dispatcher has no actors left attached
+	 * Must be idempotent
+	 *
+	 * INTERNAL API
+	 */
+	protected[akka] def shutdown(): Unit
+}
 
  
 /**

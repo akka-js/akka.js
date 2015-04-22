@@ -415,7 +415,7 @@ import scala.annotation.tailrec
    import scala.scalajs.js
    private[akka] def instantiate[A](cls: Class[A])(args: Any*): A = {
      val ctor =
-       cls.getName.split("\\.").foldLeft(js.Dynamic.global){
+       cls.getName.split("\\.").foldLeft(scala.scalajs.runtime.environmentInfo.exportsNamespace){
          (prev, part) =>
             prev.selectDynamic(part)
          }

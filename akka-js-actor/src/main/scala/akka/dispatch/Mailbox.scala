@@ -57,7 +57,7 @@ private[akka] object Mailbox {
  * INTERNAL API
  */
 private[akka] /** @note IMPLEMENT IN SCALA.JS abstract */ class Mailbox(val messageQueue: MessageQueue)
-  extends /** @note IMPLEMENT IN SCALA.JS ForkJoinTask[Unit] with SystemMessageQueue with */ Runnable {
+  extends /** @note IMPLEMENT IN SCALA.JS ForkJoinTask[Unit] with SystemMessageQueue with*/ Runnable {
 
   import Mailbox._
 
@@ -117,11 +117,7 @@ private[akka] /** @note IMPLEMENT IN SCALA.JS abstract */ class Mailbox(val mess
 
   private[this] var status: Status = _
   // = initialize to 0 = Open
-  /**
-   * @note IMPLEMENT IN SCALA.JS
-   *
-   private[this] val systemMessageQueue: SystemMessage = null
-   */
+
   private[this] var systemMessageQueue = new JSQueue[SystemMessage]
   def systemEnqueue(receiver: ActorRef, msg: SystemMessage): Unit =
     systemMessageQueue.enqueue(msg)
@@ -469,41 +465,37 @@ trait MessageQueue {
   def cleanUp(owner: ActorRef, deadLetters: MessageQueue): Unit
 }
 
+/**
+ * INTERNAL API
+ */
+private[akka] trait SystemMessageQueue {
+  /**
+   * Enqueue a new system message, e.g. by prepending atomically as new head of a single-linked list.
+   */
+  def systemEnqueue(receiver: ActorRef, message: SystemMessage): Unit
+
+  /**
+   * Dequeue all messages from system queue and return them as single-linked list.
+   */
+  def systemDrain(newContents: LatestFirstSystemMessageList): EarliestFirstSystemMessageList
+
+  def hasSystemMessages: Boolean
+}
 
 /**
  * @note IMPLEMENT IN SCALA.JS
  *
  class NodeMessageQueue extends AbstractNodeQueue[Envelope] with MessageQueue with UnboundedMessageQueueSemantics {
  */
-class NodeMessageQueue extends JSQueue[Envelope] with MessageQueue {
+class NodeMessageQueue extends AbstractNodeQueue[Envelope] with MessageQueue {
 
-  /**
-   * @note IMPLEMENT IN SCALA.JS
-   *
-           final def enqueue(receiver: ActorRef, handle: Envelope): Unit = add(handle)
-   */
-  final def enqueue(receiver: ActorRef, handle: Envelope): Unit = enqueue(handle)
+  final def enqueue(receiver: ActorRef, handle: Envelope): Unit = add(handle)
 
-  /**
-   * @note IMPLEMENT IN SCALA.JS
-   *
-   final def dequeue(): Envelope = poll()
-   */
-  override def dequeue(): Envelope = if (isEmpty) null else super.dequeue()
+  override final def dequeue(): Envelope = poll()
 
-  /**
-   * @note IMPLEMENT IN SCALA.JS
-   *
-   final def numberOfMessages: Int = count()
-   */
-  final def numberOfMessages: Int = size
+  final def numberOfMessages: Int = count()
 
-  /**
-   * @note IMPLEMENT IN SCALA.JS
-   *
-   final def hasMessages: Boolean = !isEmpty()
-   */
-  final def hasMessages: Boolean = nonEmpty
+  final def hasMessages: Boolean = !isEmpty
 
   @tailrec final def cleanUp(owner: ActorRef, deadLetters: MessageQueue): Unit = {
     val envelope = dequeue()

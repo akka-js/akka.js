@@ -18,7 +18,12 @@ lazy val akkaActor = crossProject.in(file("akka-js-actor"))
     version := "0.2-SNAPSHOT",
     normalizedName := "akka-js-actor"
   )
-  .jvmSettings()
+  .jvmSettings(
+    testFrameworks += new TestFramework("utest.runner.Framework"),
+    libraryDependencies ++= Seq(
+      "com.lihaoyi" %%% "utest" % "0.3.1"
+    )
+  )
   .jsSettings(
     preLinkJSEnv := NodeJSEnv().value,
     postLinkJSEnv := NodeJSEnv().value,
@@ -52,6 +57,7 @@ lazy val akkaWebSocket = crossProject.in(file("akka-js-websocket")).
   )
 
 lazy val akkaActorJS = akkaActor.js
+lazy val akkaActorJVM = akkaActor.jvm
 
 lazy val akkaWebSocketJVM = akkaWebSocket.jvm
 lazy val akkaWebSocketJS = akkaWebSocket.js.dependsOn(akkaActorJS)

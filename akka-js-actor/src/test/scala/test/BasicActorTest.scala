@@ -20,6 +20,16 @@ class GreetingActor extends Actor {
   }
 }
 
+class Greeting2Actor(prefix: String) extends Actor {
+  def receive = {
+    case Greeting(who) => {
+      println(s"my prefix is $prefix")
+      println(who)
+      sender ! ("Hello " + who+ " I'm "+ prefix)
+    }
+  }
+}
+
 object BasicActorTest extends TestSuite {
   implicit val ec = utest.ExecutionContext.RunNow
 
@@ -43,6 +53,27 @@ object BasicActorTest extends TestSuite {
 
       p.future
     }
+    
+    "spawn an actor with parameters" - {
+      val system = ActorSystem("greeting2-system")
+      println("Class is "+classOf[Greeting2Actor])
+      val actor = system.actorOf(Props(new Greeting2Actor("Rob")), name = "greeter2")
+
+      val p = Promise[Int]
+
+      val other = system.actorOf(Props(new Actor {
+        def receive = {
+          case "go" => actor ! Greeting("Bob")
+          case "Hello Bob I'm Rob" => p.success(1)
+          case _ => p.failure(new Exception("Doesn't match"))
+        }
+      }))
+
+      other ! "go"
+
+      p.future
+    }
+    
   }
 }
 

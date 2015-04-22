@@ -408,6 +408,12 @@ object Actor {
  * direct access to `actorOf`, `stop` etc. This is not default in order to keep
  * the name-space clean.
  */
+import scala.scalajs.js
+@js.annotation.JSExportDescendentClasses
+trait ExportableActor extends Actor {
+  
+}
+
 trait Actor {
 
   import Actor._

@@ -43,6 +43,7 @@ import scala.annotation.tailrec
   *
   * Used when creating new actors through <code>ActorSystem.actorOf</code> and <code>ActorContext.actorOf</code>.
   */
+
  object Props {
 
    /**
@@ -86,7 +87,7 @@ import scala.annotation.tailrec
     *
     * (Not because it is so immensely complicated, only because we might remove it if no longer needed internally)
     */
-   private[akka] class EmptyActor extends Actor {
+   private class EmptyActor extends Actor {
      def receive = Actor.emptyBehavior
    }
 
@@ -366,15 +367,9 @@ import scala.annotation.tailrec
            */
            throw new Exception("TBD in AKKA.js with supported reflection")
        }
-     } else if (classOf[Actor].isAssignableFrom(clazz)) {
-       /**
-       * @note IMPLEMENT IN SCALA.JS
-       *
+     } else if (classOf[ExportableActor].isAssignableFrom(clazz)) {
        if (args.isEmpty) new NoArgsReflectConstructor(clazz.asInstanceOf[Class[_ <: Actor]])
        else new ArgsReflectConstructor(clazz.asInstanceOf[Class[_ <: Actor]], args)
-       *
-       */
-       throw new Exception("TBD in AKKA.js to support args")
      } else throw new IllegalArgumentException(s"unknown actor creator [$clazz]")
    }
  }
@@ -416,32 +411,40 @@ import scala.annotation.tailrec
    override def produce() = creator()
  }
 
- /**
- * @note IMPLEMENT IN SCALA.JS
- *
+ trait JsReflectable {
+   import scala.scalajs.js
+   private[akka] def instantiate[A](cls: Class[A])(args: Any*): A = {
+     val ctor =
+       cls.getName.split("\\.").foldLeft(js.Dynamic.global){
+         (prev, part) =>
+            prev.selectDynamic(part)
+         }
+     try {
+       val res = js.Dynamic.newInstance(ctor)(args.map(_.asInstanceOf[js.Any]): _*).asInstanceOf[A]
+       res
+     } catch {
+       case err: Exception => err.printStackTrace()
+         throw err
+     }
+  }  
+ }
+ 
  /**
   * INTERNAL API
   */
- private[akka] class ArgsReflectConstructor(clz: Class[_ <: Actor], args: immutable.Seq[Any]) extends IndirectActorProducer {
-   private[this] val constructor: Constructor[_] = Reflect.findConstructor(clz, args)
+ private[akka] class ArgsReflectConstructor(clz: Class[_ <: Actor], args: immutable.Seq[Any]) extends IndirectActorProducer with JsReflectable {
+   //private[this] val constructor: Constructor[_] = Reflect.findConstructor(clz, args)
    override def actorClass = clz
-   override def produce() = Reflect.instantiate(constructor, args).asInstanceOf[Actor]
+   override def produce() = //Reflect.instantiate(constructor, args).asInstanceOf[Actor]
+     instantiate(clz)(args)
  }
 
  /**
   * INTERNAL API
   */
- private[akka] class NoArgsReflectConstructor(clz: Class[_ <: Actor]) extends IndirectActorProducer {
-   Reflect.findConstructor(clz, List.empty)
+ private[akka] class NoArgsReflectConstructor(clz: Class[_ <: Actor]) extends IndirectActorProducer with JsReflectable {
+   //Reflect.findConstructor(clz, List.empty)
    override def actorClass = clz
-   override def produce() = Reflect.instantiate(clz)
- }
- * 
- */
- /**
-  * INTERNAL API
-  */
- private[akka] class NoArgsNoReflectConstructor(clz: Class[_ <: Actor], creator: () ⇒ Actor) extends IndirectActorProducer {
-   override def actorClass = clz
-   override def produce() = creator()
+   override def produce() = //Reflect.instantiate(clz)
+     instantiate(clz)()
  }

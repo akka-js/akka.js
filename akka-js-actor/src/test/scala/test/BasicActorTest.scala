@@ -3,7 +3,9 @@ package test
 import akka.actor._
 import utest._
 
+import scala.language.postfixOps
 import scala.concurrent._
+import scala.concurrent.duration._
 import scala.collection.mutable.Queue
 import scala.scalajs.js.Dynamic.global
 import scala.scalajs.js
@@ -11,6 +13,9 @@ import scala.scalajs.js
 case class Greeting(who: String)
 
 class GreetingActor extends Actor {
+  
+  override def preStart() = println("Greeter started")
+  
   def receive = {
     case Greeting(who) => {
       println("YO")
@@ -20,7 +25,9 @@ class GreetingActor extends Actor {
   }
 }
 
-class Greeting2Actor(prefix: String) extends Actor {
+class Greeting2Actor(args: Seq[Any]) extends ExportableActor {
+  
+  val prefix = args(0).toString
   def receive = {
     case Greeting(who) => {
       println(s"my prefix is $prefix")
@@ -51,16 +58,17 @@ object BasicActorTest extends TestSuite {
 
       other ! "go"
 
+      system.scheduler.scheduleOnce(2 seconds)(p.tryFailure(new TimeoutException("too late")))
       p.future
     }
     
     "spawn an actor with parameters" - {
       val system = ActorSystem("greeting2-system")
       println("Class is "+classOf[Greeting2Actor])
-      val actor = system.actorOf(Props(new Greeting2Actor("Rob")), name = "greeter2")
+      val actor = system.actorOf(Props(classOf[Greeting2Actor], "Rob"), name = "greeter2")
 
       val p = Promise[Int]
-
+      
       val other = system.actorOf(Props(new Actor {
         def receive = {
           case "go" => actor ! Greeting("Bob")
@@ -71,6 +79,7 @@ object BasicActorTest extends TestSuite {
 
       other ! "go"
 
+      system.scheduler.scheduleOnce(2 seconds)(p.tryFailure(new TimeoutException("too late")))
       p.future
     }
     

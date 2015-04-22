@@ -15,6 +15,7 @@ import akka.dispatch.sysmsg._
  import com.typesafe.config.{ ConfigFactory, Config }
  import akka.util.{ Unsafe, Index }
  */
+import akka.event.EventStream
 import scala.annotation.tailrec
 import scala.concurrent.forkjoin.{ ForkJoinTask, ForkJoinPool, ForkJoinWorkerThread }
 import scala.concurrent.duration.Duration
@@ -35,22 +36,23 @@ object Envelope {
   }
 }
 
-/**
- * @note IMPLEMENT IN SCALA.JS
- *
- final case class TaskInvocation(eventStream: EventStream, runnable: Runnable, cleanup: () ⇒ Unit) extends Batchable {
-   final override def isBatchable: Boolean = runnable match {
-     case b: Batchable                           ⇒ b.isBatchable
-     case _: scala.concurrent.OnCompleteRunnable ⇒ true
-     case _                                      ⇒ false
-   }
+final case class TaskInvocation(eventStream: EventStream, runnable: Runnable, cleanup: () ⇒ Unit) /** @note IMPLEMENT IN SCALA.JS extends Batchable */ {
+	final override def isBatchable: Boolean = runnable match {
+	  /** @note IMPLEMENT IN SCALA.JS
+       case b: Batchable                           ⇒ b.isBatchable
+	     case _: scala.concurrent.OnCompleteRunnable ⇒ true
+	  */
+    case _                                      ⇒ false  
+    
+  }
 
-   def run(): Unit =
-     try runnable.run() catch {
-       case NonFatal(e) ⇒ eventStream.publish(Error(e, "TaskInvocation", this.getClass, e.getMessage))
-     } finally cleanup()
- }
- */
+  def run(): Unit =
+    try runnable.run() catch {
+      case NonFatal(e) ⇒ eventStream.publish(Error(e, "TaskInvocation", this.getClass, e.getMessage))
+    } finally cleanup()
+}
+
+
 
 /**
  * INTERNAL API
@@ -66,183 +68,40 @@ object Envelope {
 /**
  * INTERNAL API
  */
-/**
- * @note IMPLEMENT IN SCALA.JS
- *
- private[akka] object MessageDispatcher {
-   val UNSCHEDULED = 0 //WARNING DO NOT CHANGE THE VALUE OF THIS: It relies on the faster init of 0 in AbstractMessageDispatcher
-   val SCHEDULED = 1
-   val RESCHEDULED = 2
 
-   // dispatcher debugging helper using println (see below)
-   // since this is a compile-time constant, scalac will elide code behind if (MessageDispatcher.debug) (RK checked with 2.9.1)
-   final val debug = false // Deliberately without type ascription to make it a compile-time constant
-   lazy val actors = new Index[MessageDispatcher, ActorRef](16, _ compareTo _)
-   def printActors(): Unit =
-     if (debug) {
-       for {
-         d ← actors.keys
-         a ← { println(d + " inhabitants: " + d.inhabitants); actors.valueIterator(d) }
-       } {
-         val status = if (a.isTerminated) " (terminated)" else " (alive)"
-         val messages = a match {
-           case r: ActorRefWithCell ⇒ " " + r.underlying.numberOfMessages + " messages"
-           case _                   ⇒ " " + a.getClass
-         }
-         val parent = a match {
-           case i: InternalActorRef ⇒ ", parent: " + i.getParent
-           case _                   ⇒ ""
-         }
-         println(" -> " + a + status + messages + parent)
-       }
-     }
- }
- */
+private[akka] object MessageDispatcher {
+	val UNSCHEDULED = 0 //WARNING DO NOT CHANGE THE VALUE OF THIS: It relies on the faster init of 0 in AbstractMessageDispatcher
+  val SCHEDULED = 1
+	val RESCHEDULED = 2
 
-
-class MessageDispatcher(
-                         val mailboxes: Mailboxes) extends ExecutionContext {
-
-  /**
-   *  Creates and returns a mailbox for the given actor.
-   */
-  protected[akka] def createMailbox(actor: ActorCell): Mailbox =
-    new Mailbox(new NodeMessageQueue)
-
-  /**
-   * Attaches the specified actor instance to this dispatcher, which includes
-   * scheduling it to run for the first time (Create() is expected to have
-   * been enqueued by the ActorCell upon mailbox creation).
-   */
-  final def attach(actor: ActorCell): Unit = {
-    register(actor)
-    registerForExecution(actor.mailbox, false, true)
-  }
-
-  /**
-   * Detaches the specified actor instance from this dispatcher
-   */
-  final def detach(actor: ActorCell): Unit = {
-    unregister(actor)
-    /*try unregister(actor)
-    finally ifSensibleToDoSoThenScheduleShutdown()*/
-  }
-
-  /**
-   * If you override it, you must call it. But only ever once. See "attach"
-   * for the only invocation.
-   *
-   * INTERNAL API
-   */
-  protected[akka] def register(actor: ActorCell) {
-    //addInhabitants(+1)
-  }
-
-  /**
-   * If you override it, you must call it. But only ever once. See "detach"
-   * for the only invocation
-   *
-   * INTERNAL API
-   */
-  protected[akka] def unregister(actor: ActorCell) {
-    //addInhabitants(-1)
-    val mailBox = actor.swapMailbox(mailboxes.deadLetterMailbox)
-    mailBox.becomeClosed()
-    mailBox.cleanUp()
-  }
-
-  /**
-   * After the call to this method, the dispatcher mustn't begin any new message processing for the specified reference
-   */
-  protected[akka] def suspend(actor: ActorCell): Unit = {
-    val mbox = actor.mailbox
-    if ((mbox.actor eq actor) && (mbox.dispatcher eq this))
-      mbox.suspend()
-  }
-
-  /*
-   * After the call to this method, the dispatcher must begin any new message processing for the specified reference
-   */
-  protected[akka] def resume(actor: ActorCell): Unit = {
-    val mbox = actor.mailbox
-    if ((mbox.actor eq actor) && (mbox.dispatcher eq this) && mbox.resume())
-      registerForExecution(mbox, false, false)
-  }
-
-  /**
-   * Will be called when the dispatcher is to queue an invocation for execution
-   *
-   * INTERNAL API
-   */
-  protected[akka] def systemDispatch(receiver: ActorCell, invocation: SystemMessage) = {
-    val mbox = receiver.mailbox
-    mbox.systemEnqueue(receiver.self, invocation)
-    registerForExecution(mbox, false, true)
-  }
-
-  /**
-   * Will be called when the dispatcher is to queue an invocation for execution
-   *
-   * INTERNAL API
-   */
-  protected[akka] def dispatch(receiver: ActorCell, invocation: Envelope) = {
-    val mbox = receiver.mailbox
-    val s = receiver.self
-    mbox.enqueue(s, invocation)
-    registerForExecution(mbox, true, false)
-  }
-
-  /**
-   * Suggest to register the provided mailbox for execution
-   *
-   * INTERNAL API
-   */
-  protected[akka] def registerForExecution(mbox: Mailbox,
-                                           hasMessageHint: Boolean, hasSystemMessageHint: Boolean): Boolean = {
-    if (mbox.canBeScheduledForExecution(hasMessageHint, hasSystemMessageHint)) {
-      if (mbox.setAsScheduled()) {
-        execute(mbox)
-        true
-      } else false
-    } else false
-  }
-
-  // TODO make these configurable
-  /**
-   * INTERNAL API
-   */
-  protected[akka] def throughput: Int = 10
-
-  /**
-   * INTERNAL API
-   */
-  protected[akka] def throughputDeadlineTime: Duration =
-    Duration.fromNanos(1000)
-
-  /**
-   * INTERNAL API
-   */
-  @inline protected[akka] final val isThroughputDeadlineTimeDefined =
-    throughputDeadlineTime.toMillis > 0
-
-  // ExecutionContext API
-
-  override def execute(runnable: Runnable): Unit = {
-    setTimeout(0) {
-      runnable.run()
-    }
-  }
-
-  override def reportFailure(t: Throwable): Unit = {
-    // TODO publish to even stream
-    Console.err.println(s"dispatcher.reportFailure($t)")
-  }
-
+ /**
+   * @note IMPLEMENT IN SCALA.JS
+   
+			// dispatcher debugging helper using println (see below)
+			// since this is a compile-time constant, scalac will elide code behind if (MessageDispatcher.debug) (RK checked with 2.9.1)
+			final val debug = false // Deliberately without type ascription to make it a compile-time constant
+			lazy val actors = new Index[MessageDispatcher, ActorRef](16, _ compareTo _)
+			def printActors(): Unit =
+			if (debug) {
+				for {
+					d ← actors.keys
+					a ← { println(d + " inhabitants: " + d.inhabitants); actors.valueIterator(d) }
+				} {
+					val status = if (a.isTerminated) " (terminated)" else " (alive)"
+						val messages = a match {
+						case r: ActorRefWithCell ⇒ " " + r.underlying.numberOfMessages + " messages"
+						case _                   ⇒ " " + a.getClass
+					}
+					val parent = a match {
+					case i: InternalActorRef ⇒ ", parent: " + i.getParent
+					case _                   ⇒ ""
+					}
+					println(" -> " + a + status + messages + parent)
+				}
+			}
+  */
 }
 
-/**
- * @note IMPLEMENT IN SCALA.JS
- *
  abstract class MessageDispatcher(val configurator: MessageDispatcherConfigurator) extends AbstractMessageDispatcher with BatchingExecutor with ExecutionContextExecutor {
 
    import MessageDispatcher._
@@ -449,7 +308,11 @@ class MessageDispatcher(
    /**
     * INTERNAL API
     */
-   protected[akka] def executeTask(invocation: TaskInvocation)
+   /**
+    * @note IMPLEMENT IN SCALA.JS
+    * 
+    * protected[akka] def executeTask(invocation: TaskInvocation)
+    */
 
    /**
     * Called one time every time an actor is detached from this dispatcher and this dispatcher has no actors left attached
@@ -460,15 +323,12 @@ class MessageDispatcher(
    protected[akka] def shutdown(): Unit
  }
 
- */
+ 
 /**
  * An ExecutorServiceConfigurator is a class that given some prerequisites and a configuration can create instances of ExecutorService
- */
-/**
- * @note IMPLEMENT IN SCALA.JS
- *
- abstract class ExecutorServiceConfigurator(config: Config, prerequisites: DispatcherPrerequisites) extends ExecutorServiceFactoryProvider
- */
+ */ 
+abstract class ExecutorServiceConfigurator(config: Config, prerequisites: DispatcherPrerequisites) extends ExecutorServiceFactoryProvider
+
 
 /**
  * Base class to be used for hooking in new dispatchers into Dispatchers.
@@ -649,3 +509,144 @@ class MessageDispatcher(
      provider.createExecutorServiceFactory(id, threadFactory)
  }
  */
+
+
+//class MessageDispatcher(
+//                         val mailboxes: Mailboxes) extends ExecutionContext {
+//
+//  /**
+//   *  Creates and returns a mailbox for the given actor.
+//   */
+//  protected[akka] def createMailbox(actor: ActorCell): Mailbox =
+//    new Mailbox(new NodeMessageQueue)
+//
+//  /**
+//   * Attaches the specified actor instance to this dispatcher, which includes
+//   * scheduling it to run for the first time (Create() is expected to have
+//   * been enqueued by the ActorCell upon mailbox creation).
+//   */
+//  final def attach(actor: ActorCell): Unit = {
+//    register(actor)
+//    registerForExecution(actor.mailbox, false, true)
+//  }
+//
+//  /**
+//   * Detaches the specified actor instance from this dispatcher
+//   */
+//  final def detach(actor: ActorCell): Unit = {
+//    unregister(actor)
+//    /*try unregister(actor)
+//    finally ifSensibleToDoSoThenScheduleShutdown()*/
+//  }
+//
+//  /**
+//   * If you override it, you must call it. But only ever once. See "attach"
+//   * for the only invocation.
+//   *
+//   * INTERNAL API
+//   */
+//  protected[akka] def register(actor: ActorCell) {
+//    //addInhabitants(+1)
+//  }
+//
+//  /**
+//   * If you override it, you must call it. But only ever once. See "detach"
+//   * for the only invocation
+//   *
+//   * INTERNAL API
+//   */
+//  protected[akka] def unregister(actor: ActorCell) {
+//    //addInhabitants(-1)
+//    val mailBox = actor.swapMailbox(mailboxes.deadLetterMailbox)
+//    mailBox.becomeClosed()
+//    mailBox.cleanUp()
+//  }
+//
+//  /**
+//   * After the call to this method, the dispatcher mustn't begin any new message processing for the specified reference
+//   */
+//  protected[akka] def suspend(actor: ActorCell): Unit = {
+//    val mbox = actor.mailbox
+//    if ((mbox.actor eq actor) && (mbox.dispatcher eq this))
+//      mbox.suspend()
+//  }
+//
+//  /*
+//   * After the call to this method, the dispatcher must begin any new message processing for the specified reference
+//   */
+//  protected[akka] def resume(actor: ActorCell): Unit = {
+//    val mbox = actor.mailbox
+//    if ((mbox.actor eq actor) && (mbox.dispatcher eq this) && mbox.resume())
+//      registerForExecution(mbox, false, false)
+//  }
+//
+//  /**
+//   * Will be called when the dispatcher is to queue an invocation for execution
+//   *
+//   * INTERNAL API
+//   */
+//  protected[akka] def systemDispatch(receiver: ActorCell, invocation: SystemMessage) = {
+//    val mbox = receiver.mailbox
+//    mbox.systemEnqueue(receiver.self, invocation)
+//    registerForExecution(mbox, false, true)
+//  }
+//
+//  /**
+//   * Will be called when the dispatcher is to queue an invocation for execution
+//   *
+//   * INTERNAL API
+//   */
+//  protected[akka] def dispatch(receiver: ActorCell, invocation: Envelope) = {
+//    val mbox = receiver.mailbox
+//    val s = receiver.self
+//    mbox.enqueue(s, invocation)
+//    registerForExecution(mbox, true, false)
+//  }
+//
+//  /**
+//   * Suggest to register the provided mailbox for execution
+//   *
+//   * INTERNAL API
+//   */
+//  protected[akka] def registerForExecution(mbox: Mailbox,
+//                                           hasMessageHint: Boolean, hasSystemMessageHint: Boolean): Boolean = {
+//    if (mbox.canBeScheduledForExecution(hasMessageHint, hasSystemMessageHint)) {
+//      if (mbox.setAsScheduled()) {
+//        execute(mbox)
+//        true
+//      } else false
+//    } else false
+//  }
+//
+//  // TODO make these configurable
+//  /**
+//   * INTERNAL API
+//   */
+//  protected[akka] def throughput: Int = 10
+//
+//  /**
+//   * INTERNAL API
+//   */
+//  protected[akka] def throughputDeadlineTime: Duration =
+//    Duration.fromNanos(1000)
+//
+//  /**
+//   * INTERNAL API
+//   */
+//  @inline protected[akka] final val isThroughputDeadlineTimeDefined =
+//    throughputDeadlineTime.toMillis > 0
+//
+//  // ExecutionContext API
+//
+//  override def execute(runnable: Runnable): Unit = {
+//    setTimeout(0) {
+//      runnable.run()
+//    }
+//  }
+//
+//  override def reportFailure(t: Throwable): Unit = {
+//    // TODO publish to even stream
+//    Console.err.println(s"dispatcher.reportFailure($t)")
+//  }
+//
+//}

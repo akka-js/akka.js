@@ -4,7 +4,7 @@ import java.util.Collection
 import java.util.concurrent.{ TimeUnit, Callable, ExecutorService }
 import scalajs.js.timers.setTimeout
 
-trait ExecutorServiceDelegate extends ExecutorService {
+class EventLoopExecutor extends ExecutorServiceDelegate {
   private[this] var _isShutdown = false
   
   def execute(command: Runnable) = if (!_isShutdown) setTimeout(0) {
@@ -33,8 +33,5 @@ trait ExecutorServiceDelegate extends ExecutorService {
 
   def invokeAny[T](callables: Collection[_ <: Callable[T]]) = ???
 
-  def invokeAny[T](callables: Collection[_ <: Callable[T]], l: Long, timeUnit: TimeUnit) = ???
-
-  
-  
+  def invokeAny[T](callables: Collection[_ <: Callable[T]], l: Long, timeUnit: TimeUnit) = ??? 
 }

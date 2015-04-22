@@ -1,4 +1,5 @@
 val commonSettings = Seq(
+    EclipseKeys.useProjectId := true,
     scalaVersion := "2.11.6",
     organization := "akka.js",
     scalacOptions ++= Seq(
@@ -10,12 +11,15 @@ val commonSettings = Seq(
     resolvers += "Typesafe repository" at "http://repo.typesafe.com/typesafe/releases/"
 )
 
-lazy val akkaActor = project.in(file("akka-js-actor")).enablePlugins(ScalaJSPlugin)
+lazy val akkaActor = crossProject.in(file("akka-js-actor"))
   .settings(commonSettings: _*)
   .settings(
     name := "Akka.js actors",
     version := "0.2-SNAPSHOT",
-    normalizedName := "akka-js-actor",
+    normalizedName := "akka-js-actor"
+  )
+  .jvmSettings()
+  .jsSettings(
     preLinkJSEnv := NodeJSEnv().value,
     postLinkJSEnv := NodeJSEnv().value,
     testFrameworks += new TestFramework("utest.runner.Framework"),
@@ -47,8 +51,10 @@ lazy val akkaWebSocket = crossProject.in(file("akka-js-websocket")).
     )    
   )
 
+lazy val akkaActorJS = akkaActor.js
+
 lazy val akkaWebSocketJVM = akkaWebSocket.jvm
-lazy val akkaWebSocketJS = akkaWebSocket.js.dependsOn(akkaActor)
+lazy val akkaWebSocketJS = akkaWebSocket.js.dependsOn(akkaActorJS)
 
 lazy val root = project.in(file(".")).settings(commonSettings: _*)
-  .aggregate(akkaActor, akkaWebSocketJS, akkaWebSocketJVM)
+  .aggregate(akkaActorJS, akkaWebSocketJS, akkaWebSocketJVM)

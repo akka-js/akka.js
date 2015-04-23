@@ -757,19 +757,11 @@ private[akka] class ActorSystemImpl(val name: String, applicationConfig: ActorSy
 
   val mailboxes: Mailboxes = new Mailboxes(/** @note IMPLEMENT IN SCALA.JS settings, eventStream, dynamicAccess,*/ deadLetters)
 
- /**
-  * @note IMPLEMENT IN SCALA.JS
-  *
-  * val dispatchers: Dispatchers = new Dispatchers(settings, DefaultDispatcherPrerequisites(
-  *   threadFactory, eventStream, scheduler, dynamicAccess, settings, mailboxes, defaultExecutionContext))
-  */
 
-  /**
-   * @note IMPLEMENT IN SCALA.JS
-   *
-   * val dispatcher: ExecutionContextExecutor = dispatchers.defaultGlobalDispatcher
-   */
-  val dispatcher: MessageDispatcher = new MessageDispatcher(mailboxes)
+  val dispatchers: Dispatchers = new Dispatchers(settings, DefaultDispatcherPrerequisites(
+    /** @note IMPLEMENT IN SCALA.JS threadFactory,*/ eventStream, scheduler/** @note IMPLEMENT IN SCALA.JS, dynamicAccess*/, settings, mailboxes, /** @note IMPLEMENT IN SCALA.JS defaultExecutionContext */ Some(scala.scalajs.concurrent.JSExecutionContext.queue)))
+
+  val dispatcher: ExecutionContextExecutor = dispatchers.defaultGlobalDispatcher
 
   /**
    * @note IMPLEMENT IN SCALA.JS

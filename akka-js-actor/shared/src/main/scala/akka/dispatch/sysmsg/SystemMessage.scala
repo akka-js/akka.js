@@ -46,12 +46,7 @@ private[akka] object SystemMessageList {
  * latest appended element.
  *
  */
-/**
- * @note IMPLEMENT IN SCALA.JS
- *
- private[akka] class LatestFirstSystemMessageList(val head: SystemMessage) extends AnyVal {
- */
-private[akka] class LatestFirstSystemMessageList(val head: JSQueue[SystemMessage]) extends AnyVal {
+private[akka] class LatestFirstSystemMessageList(val head: SystemMessage) extends AnyVal {
   import SystemMessageList._
 
   /**
@@ -92,25 +87,16 @@ private[akka] class LatestFirstSystemMessageList(val head: JSQueue[SystemMessage
    *
    * The type of the returned list is of the opposite order: [[akka.dispatch.sysmsg.EarliestFirstSystemMessageList]]
    */
-/**
- * @note IMPLEMENT IN SCALA.JS
- *
-   final def reverse: EarliestFirstSystemMessageList = new EarliestFirstSystemMessageList(reverseInner(head, null))
- */
+  final def reverse: EarliestFirstSystemMessageList = new EarliestFirstSystemMessageList(reverseInner(head, null))
 
   /**
    * Attaches a message to the current head of the list. This operation has constant cost.
    */
-/**
- * @note IMPLEMENT IN SCALA.JS
- *
-   final def ::(msg: SystemMessage): LatestFirstSystemMessageList = {
-     assert(msg ne null)
-     msg.next = head
-     new LatestFirstSystemMessageList(msg)
-   }
- */
-
+  final def ::(msg: SystemMessage): LatestFirstSystemMessageList = {
+    assert(msg ne null)
+    msg.next = head
+    new LatestFirstSystemMessageList(msg)
+  }
 }
 
 /**

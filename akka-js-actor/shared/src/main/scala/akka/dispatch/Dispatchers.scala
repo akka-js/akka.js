@@ -5,21 +5,27 @@
 package akka.dispatch
 
 import java.util.concurrent.{ ConcurrentHashMap, TimeUnit, ThreadFactory }
+/** @note IMPLEMENT IN SCALA.JS
 import com.typesafe.config.{ ConfigFactory, Config }
 import akka.actor.{ Scheduler, DynamicAccess, ActorSystem }
+*/
+import com.typesafe.config.Config
+import akka.actor.{ Scheduler, ActorSystem }
 import akka.event.Logging.Warning
 import akka.event.EventStream
 import scala.concurrent.duration.Duration
 import akka.ConfigurationException
 import akka.actor.Deploy
+/** @note IMPLEMENT IN SCALA.JS
 import akka.util.Helpers.ConfigOps
+*/
 import scala.concurrent.ExecutionContext
 
 /**
  * DispatcherPrerequisites represents useful contextual pieces when constructing a MessageDispatcher
  */
 trait DispatcherPrerequisites {
-  def threadFactory: ThreadFactory
+  /** @note IMPLEMENT IN SCALA.JS def threadFactory: ThreadFactory */
   def eventStream: EventStream
   def scheduler: Scheduler
   /** @note IMPLEMENT IN SCALA.JS def dynamicAccess: DynamicAccess */
@@ -32,7 +38,7 @@ trait DispatcherPrerequisites {
  * INTERNAL API
  */
 private[akka] case class DefaultDispatcherPrerequisites(
-  val threadFactory: ThreadFactory,
+  /** @note IMPLEMENT IN SCALA.JS val threadFactory: ThreadFactory, */
   val eventStream: EventStream,
   val scheduler: Scheduler,
   /** @note IMPLEMENT IN SCALA.JS val dynamicAccess: DynamicAccess, */
@@ -60,10 +66,12 @@ class Dispatchers(val settings: ActorSystem.Settings, val prerequisites: Dispatc
 
   import Dispatchers._
 
+  /** @note IMPLEMENT IN SCALA.JS
   val cachingConfig = new CachingConfig(settings.config)
 
   val defaultDispatcherConfig: Config =
     idConfig(DefaultDispatcherId).withFallback(settings.config.getConfig(DefaultDispatcherId))
+  */
 
   /**
    * The one and only default dispatcher.
@@ -86,7 +94,7 @@ class Dispatchers(val settings: ActorSystem.Settings, val prerequisites: Dispatc
    * using this dispatcher, because the details can only be checked by trying
    * to instantiate it, which might be undesirable when just checking.
    */
-  def hasDispatcher(id: String): Boolean = dispatcherConfigurators.containsKey(id) || cachingConfig.hasPath(id)
+  def hasDispatcher(id: String): Boolean = dispatcherConfigurators.containsKey(id) /** @note IMPLEMENT IN SCALA.JS || cachingConfig.hasPath(id) */
 
   private def lookupConfigurator(id: String): MessageDispatcherConfigurator = {
     dispatcherConfigurators.get(id) match {

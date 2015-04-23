@@ -133,7 +133,10 @@ class Dispatcher(
     } else false
   }
 
+  /** @note IMPLEMENT IN SCALA.JS
   override val toString: String = Logging.simpleName(this) + "[" + id + "]"
+  */
+  override val toString: String = "Dispatcher [" + id + "]"
 }
 
 object PriorityGenerator {

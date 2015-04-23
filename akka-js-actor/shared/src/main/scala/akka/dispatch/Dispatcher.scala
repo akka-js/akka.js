@@ -46,7 +46,7 @@ class Dispatcher(
   }
 
   @volatile private var executorServiceDelegate: LazyExecutorServiceDelegate =
-    new LazyExecutorServiceDelegate(executorServiceFactoryProvider.createExecutorServiceFactory(id, threadFactory))
+    new LazyExecutorServiceDelegate(executorServiceFactoryProvider.createExecutorServiceFactory(id/** @note IMPLEMENT IN SCALA.JS, threadFactory*/))
 
   protected final def executorService: ExecutorServiceDelegate = executorServiceDelegate
 

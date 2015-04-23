@@ -23,6 +23,7 @@ import java.util.concurrent.{
 }
 import java.util.concurrent.atomic.{ AtomicReference, AtomicLong }
 
+/** @note IMPLEMENT IN SCALA.JS
 object ThreadPoolConfig {
   type QueueFactory = () ⇒ BlockingQueue[Runnable]
 
@@ -47,6 +48,7 @@ object ThreadPoolConfig {
 
   def reusableQueue(queueFactory: QueueFactory): QueueFactory = reusableQueue(queueFactory())
 }
+ */
 
 /**
  * Function0 without the fun stuff (mostly for the sake of the Java API side of things)
@@ -59,12 +61,13 @@ trait ExecutorServiceFactory {
  * Generic way to specify an ExecutorService to a Dispatcher, create it with the given name if desired
  */
 trait ExecutorServiceFactoryProvider {
-  def createExecutorServiceFactory(id: String, threadFactory: ThreadFactory): ExecutorServiceFactory
+  def createExecutorServiceFactory(id: String/** @note IMPLEMENT IN SCALA.JS , threadFactory: ThreadFactory*/): ExecutorServiceFactory
 }
 
 /**
  * A small configuration DSL to create ThreadPoolExecutors that can be provided as an ExecutorServiceFactoryProvider to Dispatcher
  */
+/** @note IMPLEMENT IN SCALA.JS
 case class ThreadPoolConfig(allowCorePoolTimeout: Boolean = ThreadPoolConfig.defaultAllowCoreThreadTimeout,
                             corePoolSize: Int = ThreadPoolConfig.defaultCorePoolSize,
                             maxPoolSize: Int = ThreadPoolConfig.defaultMaxPoolSize,
@@ -201,6 +204,9 @@ case class MonitorableThreadFactory(name: String,
     t
   }
 }
+}
+*/
+
 
 /**
  * As the name says

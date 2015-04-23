@@ -16,6 +16,7 @@ import akka.dispatch.sysmsg._
  import akka.util.{ Unsafe, Index }
  */
 import akka.event.EventStream
+import com.typesafe.config.Config
 import scala.annotation.tailrec
 import scala.concurrent.forkjoin.{ ForkJoinTask, ForkJoinPool, ForkJoinWorkerThread }
 import scala.concurrent.duration.Duration
@@ -36,7 +37,7 @@ object Envelope {
   }
 }
 
-final case class TaskInvocation(eventStream: EventStream, runnable: Runnable, cleanup: () ⇒ Unit) /** @note IMPLEMENT IN SCALA.JS extends Batchable */ {
+final case class TaskInvocation(eventStream: EventStream, runnable: Runnable, cleanup: () ⇒ Unit) extends Runnable /** @note IMPLEMENT IN SCALA.JS extends Batchable */ {
 	final override def isBatchable: Boolean = runnable match {
 	  /** @note IMPLEMENT IN SCALA.JS
        case b: Batchable                           ⇒ b.isBatchable
@@ -102,36 +103,53 @@ private[akka] object MessageDispatcher {
   */
 }
 
-abstract class MessageDispatcher(val configurator: MessageDispatcherConfigurator) extends AbstractMessageDispatcher with BatchingExecutor with ExecutionContextExecutor {
+abstract class MessageDispatcher(val configurator: MessageDispatcherConfigurator) extends /** @note IMPLEMENT IN SCALA.JS  AbstractMessageDispatcher with BatchingExecutor with */ ExecutionContextExecutor {
 
 	import MessageDispatcher._
-	import AbstractMessageDispatcher.{ inhabitantsOffset, shutdownScheduleOffset }
+	/** @note IMPLEMENT IN SCALA.JS
+  import AbstractMessageDispatcher.{ inhabitantsOffset, shutdownScheduleOffset }
+  */
 	import configurator.prerequisites
 
 	val mailboxes = prerequisites.mailboxes
 	val eventStream = prerequisites.eventStream
 
 	@volatile private[this] var _inhabitantsDoNotCallMeDirectly: Long = _ // DO NOT TOUCH!
-	@volatile private[this] var _shutdownScheduleDoNotCallMeDirectly: Int = _ // DO NOT TOUCH!
+	@volatile private[this] var _shutdownScheduleDoNotCallMeDirectly: Int = _ // DO NOT TOUCH! 
 
 	@tailrec private final def addInhabitants(add: Long): Long = {
-			val c = inhabitants
-					val r = c + add
-					if (r < 0) {
-						// We haven't succeeded in decreasing the inhabitants yet but the simple fact that we're trying to
-						// go below zero means that there is an imbalance and we might as well throw the exception
-						val e = new IllegalStateException("ACTOR SYSTEM CORRUPTED!!! A dispatcher can't have less than 0 inhabitants!")
-						reportFailure(e)
-						throw e
-					}
-			if (Unsafe.instance.compareAndSwapLong(this, inhabitantsOffset, c, r)) r else addInhabitants(add)
+		val c = inhabitants
+		val r = c + add
+    if (r < 0) {
+		  // We haven't succeeded in decreasing the inhabitants yet but the simple fact that we're trying to
+		  // go below zero means that there is an imbalance and we might as well throw the exception
+		  val e = new IllegalStateException("ACTOR SYSTEM CORRUPTED!!! A dispatcher can't have less than 0 inhabitants!")
+		  reportFailure(e)
+		  throw e
+		}
+    
+    /** @note IMPLEMENT IN SCALA.JS
+	  if (Unsafe.instance.compareAndSwapLong(this, inhabitantsOffset, c, r)) r else addInhabitants(add)
+    */
+    _inhabitantsDoNotCallMeDirectly = r
+    r
 	}
 
-	final def inhabitants: Long = Unsafe.instance.getLongVolatile(this, inhabitantsOffset)
-
+  /** @note IMPLEMENT IN SCALA.JS
+	final def inhabitants: Long = Unsafe.instance.getLongVolatile(this, inhabitantsOffset) 
+  */
+  final def inhabitants: Long = _inhabitantsDoNotCallMeDirectly
+  
+  /** @note IMPLEMENT IN SCALA.JS
 	private final def shutdownSchedule: Int = Unsafe.instance.getIntVolatile(this, shutdownScheduleOffset)
 	private final def updateShutdownSchedule(expect: Int, update: Int): Boolean = Unsafe.instance.compareAndSwapInt(this, shutdownScheduleOffset, expect, update)
-
+  */
+  private final def shutdownSchedule: Int = _shutdownScheduleDoNotCallMeDirectly
+  private final def updateShutdownSchedule(expect: Int, update: Int): Boolean = {
+    _shutdownScheduleDoNotCallMeDirectly = update
+    true
+  }
+  
 	/**
 	 *  Creates and returns a mailbox for the given actor.
 	 */
@@ -171,7 +189,7 @@ abstract class MessageDispatcher(val configurator: MessageDispatcherConfigurator
 	}
 
 	override def reportFailure(t: Throwable): Unit = t match {
-	case e: LogEventException ⇒ eventStream.publish(e.event)
+	/** @note IMPLEMENT IN SCALA.JS case e: LogEventException ⇒ eventStream.publish(e.event) */
 	case _                    ⇒ eventStream.publish(Error(t, getClass.getName, getClass, t.getMessage))
 	}
 
@@ -206,7 +224,7 @@ abstract class MessageDispatcher(val configurator: MessageDispatcherConfigurator
 	 * INTERNAL API
 	 */
 	protected[akka] def register(actor: ActorCell) {
-	  if (debug) actors.put(this, actor.self)
+	  /**@note IMPLEMENT IN SCALA.JS if (debug) actors.put(this, actor.self) */
 	  addInhabitants(+1)
   }
 
@@ -216,7 +234,7 @@ abstract class MessageDispatcher(val configurator: MessageDispatcherConfigurator
 	 * INTERNAL API
 	 */
 	protected[akka] def unregister(actor: ActorCell) {
-		if (debug) actors.remove(this, actor.self)
+		/**@note IMPLEMENT IN SCALA.JS if (debug) actors.remove(this, actor.self) */
 		addInhabitants(-1)
 		val mailBox = actor.swapMailbox(mailboxes.deadLetterMailbox)
 		mailBox.becomeClosed()
@@ -329,43 +347,50 @@ abstract class ExecutorServiceConfigurator(config: Config, prerequisites: Dispat
 /**
  * Base class to be used for hooking in new dispatchers into Dispatchers.
  */
-/**
- * @note IMPLEMENT IN SCALA.JS
- *
- abstract class MessageDispatcherConfigurator(_config: Config, val prerequisites: DispatcherPrerequisites) {
+abstract class MessageDispatcherConfigurator(_config: Config, val prerequisites: DispatcherPrerequisites) {
 
-   val config: Config = new CachingConfig(_config)
+  /** @note IMPLEMENT IN SCALA.JS
+   *  val config: Config = new CachingConfig(_config)
+   */
+  val config: Config = _config
 
-   /**
-    * Returns an instance of MessageDispatcher given the configuration.
-    * Depending on the needs the implementation may return a new instance for
-    * each invocation or return the same instance every time.
+  /**
+   * Returns an instance of MessageDispatcher given the configuration.
+   * Depending on the needs the implementation may return a new instance for
+   * each invocation or return the same instance every time.
+   */
+  def dispatcher(): MessageDispatcher
+
+  def configureExecutor(): ExecutorServiceConfigurator = {
+    def configurator(executor: String): ExecutorServiceConfigurator = executor match {
+      case "event-loop-executor" ⇒ new EventLoopExecutorConfigurator(new Config, prerequisites)
+      /** @note IMPLEMENT IN SCALA.JS
+      case null | "" | "fork-join-executor" ⇒ new ForkJoinExecutorConfigurator(config.getConfig("fork-join-executor"), prerequisites)
+      case "thread-pool-executor"           ⇒ new ThreadPoolExecutorConfigurator(config.getConfig("thread-pool-executor"), prerequisites)
+      case fqcn ⇒
+        val args = List(
+          classOf[Config] -> config,
+          classOf[DispatcherPrerequisites] -> prerequisites)
+        prerequisites.dynamicAccess.createInstanceFor[ExecutorServiceConfigurator](fqcn, args).recover({
+          case exception ⇒ throw new IllegalArgumentException(
+            ("""Cannot instantiate ExecutorServiceConfigurator ("executor = [%s]"), defined in [%s],
+                make sure it has an accessible constructor with a [%s,%s] signature""")
+              .format(fqcn, config.getString("id"), classOf[Config], classOf[DispatcherPrerequisites]), exception)
+        }).get
+        
+      */
+    }
+
+    /** @note IMPLEMENT IN SCALA.JS
+    config.getString("executor") match {
+      case "default-executor" ⇒ new DefaultExecutorServiceConfigurator(config.getConfig("default-executor"), prerequisites, configurator(config.getString("default-executor.fallback")))
+      case other              ⇒ configurator(other)
+    }
     */
-   def dispatcher(): MessageDispatcher
-
-   def configureExecutor(): ExecutorServiceConfigurator = {
-     def configurator(executor: String): ExecutorServiceConfigurator = executor match {
-       case null | "" | "fork-join-executor" ⇒ new ForkJoinExecutorConfigurator(config.getConfig("fork-join-executor"), prerequisites)
-       case "thread-pool-executor"           ⇒ new ThreadPoolExecutorConfigurator(config.getConfig("thread-pool-executor"), prerequisites)
-       case fqcn ⇒
-         val args = List(
-           classOf[Config] -> config,
-           classOf[DispatcherPrerequisites] -> prerequisites)
-         prerequisites.dynamicAccess.createInstanceFor[ExecutorServiceConfigurator](fqcn, args).recover({
-           case exception ⇒ throw new IllegalArgumentException(
-             ("""Cannot instantiate ExecutorServiceConfigurator ("executor = [%s]"), defined in [%s],
-                 make sure it has an accessible constructor with a [%s,%s] signature""")
-               .format(fqcn, config.getString("id"), classOf[Config], classOf[DispatcherPrerequisites]), exception)
-         }).get
-     }
-
-     config.getString("executor") match {
-       case "default-executor" ⇒ new DefaultExecutorServiceConfigurator(config.getConfig("default-executor"), prerequisites, configurator(config.getString("default-executor.fallback")))
-       case other              ⇒ configurator(other)
-     }
-   }
- }
- */
+    configurator("event-loop-executor")
+  }
+}
+ 
 
 /**
  * @note IMPLEMENT IN SCALA.JS

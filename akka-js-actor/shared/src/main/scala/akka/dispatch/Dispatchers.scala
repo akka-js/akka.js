@@ -22,7 +22,7 @@ trait DispatcherPrerequisites {
   def threadFactory: ThreadFactory
   def eventStream: EventStream
   def scheduler: Scheduler
-  def dynamicAccess: DynamicAccess
+  /** @note IMPLEMENT IN SCALA.JS def dynamicAccess: DynamicAccess */
   def settings: ActorSystem.Settings
   def mailboxes: Mailboxes
   def defaultExecutionContext: Option[ExecutionContext]
@@ -35,7 +35,7 @@ private[akka] case class DefaultDispatcherPrerequisites(
   val threadFactory: ThreadFactory,
   val eventStream: EventStream,
   val scheduler: Scheduler,
-  val dynamicAccess: DynamicAccess,
+  /** @note IMPLEMENT IN SCALA.JS val dynamicAccess: DynamicAccess, */
   val settings: ActorSystem.Settings,
   val mailboxes: Mailboxes,
   val defaultExecutionContext: Option[ExecutionContext]) extends DispatcherPrerequisites

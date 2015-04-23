@@ -90,9 +90,9 @@ class Dispatchers(val settings: ActorSystem.Settings, val prerequisites: Dispatc
    *
    * @throws ConfigurationException if the specified dispatcher cannot be found in the configuration
    */
+  
+  def lookup(id: String): MessageDispatcher = new DispatcherConfigurator(new Config, prerequisites).dispatcher() /** lookupConfigurator(id).dispatcher() */
   /**@note IMPLEMENT IN SCALA.JS
-  def lookup(id: String): MessageDispatcher = lookupConfigurator(id).dispatcher()
-
   /**
    * Checks that the configuration provides a section for the given dispatcher.
    * This does not guarantee that no ConfigurationException will be thrown when

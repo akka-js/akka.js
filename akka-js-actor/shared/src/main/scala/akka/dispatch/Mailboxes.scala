@@ -8,7 +8,7 @@ package akka.dispatch
  * @note IMPLEMENT IN SCALA.JS
  *
  import com.typesafe.config.{ ConfigFactory, Config }
- import akka.actor.{ Actor, DynamicAccess, ActorSystem }
+ import akka.actor.{ Actor, /** DynamicAccess, */ActorSystem }
  */
 import akka.actor.{ Actor, ActorSystem }
 import akka.event.EventStream

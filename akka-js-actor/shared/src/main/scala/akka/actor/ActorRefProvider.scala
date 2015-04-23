@@ -224,12 +224,7 @@ trait ActorRefFactory {
   /**
    * Returns the default MessageDispatcher associated with this ActorRefFactory
    */
-  /**
-   * @note IMPLEMENT IN SCALA.JS
-   *
-           implicit def dispatcher: ExecutionContextExecutor
-   */
-  implicit def dispatcher: MessageDispatcher
+  implicit def dispatcher: ExecutionContextExecutor
 
   /**
    * Father of all children created by this interface.
@@ -684,15 +679,12 @@ private[akka] class LocalActorRefProvider private[akka] (
    */
   protected def systemGuardianStrategy: SupervisorStrategy = SupervisorStrategy.defaultStrategy
 
- /**
-  * @note IMPLEMENT IN SCALA.JS
-  *
-  * private lazy val defaultDispatcher = system.dispatchers.defaultGlobalDispatcher
-  *
-  * private lazy val defaultMailbox = system.mailboxes.lookup(Mailboxes.DefaultMailboxId)
-  */
-  val mailboxes: Mailboxes = new Mailboxes(deadLetters)
-  private lazy val defaultDispatcher: MessageDispatcher = new MessageDispatcher(mailboxes)
+
+  
+  private lazy val defaultDispatcher = system.dispatchers.defaultGlobalDispatcher
+  private lazy val defaultMailbox = system.mailboxes.lookup(Mailboxes.DefaultMailboxId)
+  
+  //val mailboxes: Mailboxes = new Mailboxes(deadLetters)
 
   override lazy val rootGuardian: LocalActorRef =
     new LocalActorRef(
@@ -878,7 +870,7 @@ private[akka] class LocalActorRefProvider private[akka] (
            case NonFatal(e) ⇒ throw new ConfigurationException(s"configuration problem while creating [$path] with dispatcher [${props2.dispatcher}] and mailbox [${props2.mailbox}]", e)
          }
      */
-    new LocalActorRef(system, props2, system.dispatcher, supervisor, path)
+    new LocalActorRef(system, props2, system.dispatchers.lookup(akka.dispatch.Dispatchers.DefaultDispatcherId), supervisor, path)
   }
 
  /**

@@ -439,12 +439,7 @@ abstract class ActorSystem extends ActorRefFactory {
    * explicitly.
    * Importing this member will place the default MessageDispatcher in scope.
    */
-  /**
-   * @note IMPLEMENT IN SCALA.JS
-   *
-   implicit def dispatcher: ExecutionContextExecutor
-   */
-  implicit def dispatcher: MessageDispatcher
+  implicit def dispatcher: ExecutionContextExecutor
 
   /**
    * Helper object for looking up configured mailbox types.

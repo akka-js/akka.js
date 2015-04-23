@@ -4,8 +4,9 @@
 
 package akka.dispatch
 
-import java.util.concurrent.{ ConcurrentHashMap, TimeUnit, ThreadFactory }
+import java.util.concurrent.TimeUnit
 /** @note IMPLEMENT IN SCALA.JS
+import java.util.concurrent.{ ConcurrentHashMap, TimeUnit, ThreadFactory }
 import com.typesafe.config.{ ConfigFactory, Config }
 import akka.actor.{ Scheduler, DynamicAccess, ActorSystem }
 */
@@ -76,9 +77,12 @@ class Dispatchers(val settings: ActorSystem.Settings, val prerequisites: Dispatc
   /**
    * The one and only default dispatcher.
    */
+  /** @note IMPLEMENT IN SCALA.JS
   def defaultGlobalDispatcher: MessageDispatcher = lookup(DefaultDispatcherId)
+  */
+  def defaultGlobalDispatcher: MessageDispatcher = new DispatcherConfigurator(new Config, prerequisites).dispatcher()
 
-  private val dispatcherConfigurators = new ConcurrentHashMap[String, MessageDispatcherConfigurator]
+  /**@note IMPLEMENT IN SCALA.JS private val dispatcherConfigurators = new ConcurrentHashMap[String, MessageDispatcherConfigurator] */
 
   /**
    * Returns a dispatcher as specified in configuration. Please note that this
@@ -86,6 +90,7 @@ class Dispatchers(val settings: ActorSystem.Settings, val prerequisites: Dispatc
    *
    * @throws ConfigurationException if the specified dispatcher cannot be found in the configuration
    */
+  /**@note IMPLEMENT IN SCALA.JS
   def lookup(id: String): MessageDispatcher = lookupConfigurator(id).dispatcher()
 
   /**
@@ -94,10 +99,12 @@ class Dispatchers(val settings: ActorSystem.Settings, val prerequisites: Dispatc
    * using this dispatcher, because the details can only be checked by trying
    * to instantiate it, which might be undesirable when just checking.
    */
+  
   def hasDispatcher(id: String): Boolean = dispatcherConfigurators.containsKey(id) /** @note IMPLEMENT IN SCALA.JS || cachingConfig.hasPath(id) */
 
   private def lookupConfigurator(id: String): MessageDispatcherConfigurator = {
     dispatcherConfigurators.get(id) match {
+    /** @note IMPLEMENT IN SCALA.JS  
       case null ⇒
         // It doesn't matter if we create a dispatcher configurator that isn't used due to concurrent lookup.
         // That shouldn't happen often and in case it does the actual ExecutorService isn't
@@ -110,10 +117,12 @@ class Dispatchers(val settings: ActorSystem.Settings, val prerequisites: Dispatc
           case null     ⇒ newConfigurator
           case existing ⇒ existing
         }
-
+    */
       case existing ⇒ existing
     }
   }
+ 
+  
 
   /**
    * Register a [[MessageDispatcherConfigurator]] that will be
@@ -129,10 +138,11 @@ class Dispatchers(val settings: ActorSystem.Settings, val prerequisites: Dispatc
    */
   def registerConfigurator(id: String, configurator: MessageDispatcherConfigurator): Boolean =
     dispatcherConfigurators.putIfAbsent(id, configurator) == null
-
+  */
   /**
    * INTERNAL API
    */
+  /** @note IMPLEMENT IN SCALA.JS
   private[akka] def config(id: String): Config = {
     config(id, settings.config.getConfig(id))
   }
@@ -153,6 +163,7 @@ class Dispatchers(val settings: ActorSystem.Settings, val prerequisites: Dispatc
     import scala.collection.JavaConverters._
     ConfigFactory.parseMap(Map("id" -> id).asJava)
   }
+  */
 
   /**
    * INTERNAL API
@@ -179,6 +190,7 @@ class Dispatchers(val settings: ActorSystem.Settings, val prerequisites: Dispatc
    *         IllegalArgumentException if it cannot create the MessageDispatcherConfigurator
    */
   private def configuratorFrom(cfg: Config): MessageDispatcherConfigurator = {
+    /** IMPLEMENT IN SCALA.JS
     if (!cfg.hasPath("id")) throw new ConfigurationException("Missing dispatcher 'id' property in config: " + cfg.root.render)
 
     cfg.getString("type") match {
@@ -200,6 +212,9 @@ class Dispatchers(val settings: ActorSystem.Settings, val prerequisites: Dispatc
                 .format(fqn, cfg.getString("id")), exception)
         }).get
     }
+    */
+    // WE ONLY HAVE ONE DISPATCHER, I'M AFRAID
+    new DispatcherConfigurator(cfg, prerequisites)
   }
 }
 
@@ -213,11 +228,11 @@ class DispatcherConfigurator(config: Config, prerequisites: DispatcherPrerequisi
 
   private val instance = new Dispatcher(
     this,
-    config.getString("id"),
-    config.getInt("throughput"),
-    config.getNanosDuration("throughput-deadline-time"),
+    /** @note IMPLEMENT IN SCALA.JS config.getString("id"), */ scala.util.Random.nextString(4),
+    /** @note IMPLEMENT IN SCALA.JS config.getInt("throughput"), */ 10, // TODO: MAKE IT CONFIGURABLE
+    /** @note IMPLEMENT IN SCALA.JS config.getNanosDuration("throughput-deadline-time"), */ Duration.fromNanos(1000),
     configureExecutor(),
-    config.getMillisDuration("shutdown-timeout"))
+    /** @note IMPLEMENT IN SCALA.JS config.getMillisDuration("shutdown-timeout")) */ Duration.create(1, TimeUnit.SECONDS))
 
   /**
    * Returns the same dispatcher instance for each invocation
@@ -228,6 +243,7 @@ class DispatcherConfigurator(config: Config, prerequisites: DispatcherPrerequisi
 /**
  * INTERNAL API
  */
+/** @note IMPLEMENT IN SCALA.J
 private[akka] object BalancingDispatcherConfigurator {
   private val defaultRequirement =
     ConfigFactory.parseString("mailbox-requirement = akka.dispatch.MultipleConsumerSemantics")
@@ -307,3 +323,4 @@ class PinnedDispatcherConfigurator(config: Config, prerequisites: DispatcherPrer
       config.getMillisDuration("shutdown-timeout"), threadPoolConfig)
 
 }
+*/

@@ -4,7 +4,9 @@
 
 package akka.dispatch
 
+/** @note IMPLEMENT IN SCALA.JS
 import java.util.concurrent._
+*/
 import akka.event.Logging.{ Debug, Error /** @note IMPLEMENT IN SCALA.JS LogEventException */ }
 import akka.actor._
 import akka.dispatch.sysmsg._
@@ -18,7 +20,9 @@ import akka.dispatch.sysmsg._
 import akka.event.EventStream
 import com.typesafe.config.Config
 import scala.annotation.tailrec
+/** @note IMPLEMENT IN SCALA.JS
 import scala.concurrent.forkjoin.{ ForkJoinTask, ForkJoinPool, ForkJoinWorkerThread }
+*/
 import scala.concurrent.duration.Duration
 import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContextExecutor
@@ -38,7 +42,7 @@ object Envelope {
 }
 
 final case class TaskInvocation(eventStream: EventStream, runnable: Runnable, cleanup: () ⇒ Unit) extends Runnable /** @note IMPLEMENT IN SCALA.JS extends Batchable */ {
-	final override def isBatchable: Boolean = runnable match {
+	final /** @note IMPLEMENT IN SCALA.JS override */ def isBatchable: Boolean = runnable match {
 	  /** @note IMPLEMENT IN SCALA.JS
        case b: Batchable                           ⇒ b.isBatchable
 	     case _: scala.concurrent.OnCompleteRunnable ⇒ true
@@ -117,7 +121,7 @@ abstract class MessageDispatcher(val configurator: MessageDispatcherConfigurator
 	@volatile private[this] var _inhabitantsDoNotCallMeDirectly: Long = _ // DO NOT TOUCH!
 	@volatile private[this] var _shutdownScheduleDoNotCallMeDirectly: Int = _ // DO NOT TOUCH! 
 
-	@tailrec private final def addInhabitants(add: Long): Long = {
+	/** @note IMPLEMENT IN SCALA.JS @tailrec */ private final def addInhabitants(add: Long): Long = {
 		val c = inhabitants
 		val r = c + add
     if (r < 0) {
@@ -176,7 +180,11 @@ abstract class MessageDispatcher(val configurator: MessageDispatcherConfigurator
 	 */
 	final def detach(actor: ActorCell): Unit = try unregister(actor) finally ifSensibleToDoSoThenScheduleShutdown()
 
-	final override protected def unbatchedExecute(r: Runnable): Unit = {
+  /** THIS COMES FROM BatchingExecutor */ 
+  override def execute(runnable: Runnable): Unit = unbatchedExecute(runnable) 
+  /** END */
+  
+	final /** @note IMPLEMENT IN SCALA.JS override */ protected def unbatchedExecute(r: Runnable): Unit = {
 	  val invocation = TaskInvocation(eventStream, r, taskCleanup)
 		addInhabitants(+1)
 		try {

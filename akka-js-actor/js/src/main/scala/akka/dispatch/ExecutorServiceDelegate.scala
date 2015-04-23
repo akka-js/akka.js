@@ -5,33 +5,35 @@ import java.util.concurrent.{ TimeUnit, Callable, ExecutorService }
 import scalajs.js.timers.setTimeout
 
 class EventLoopExecutor extends ExecutorServiceDelegate {
+  def executor: ExecutorService = this
+  
   private[this] var _isShutdown = false
   
-  def execute(command: Runnable) = if (!_isShutdown) setTimeout(0) {
+  override def execute(command: Runnable) = if (!_isShutdown) setTimeout(0) {
     command.run()
   } 
   
-  def shutdown() = _isShutdown = true
+  override def shutdown() = _isShutdown = true
   
-  def shutdownNow() = ???
+  override def shutdownNow() = ???
   
-  def isShutdown() = _isShutdown
+  override def isShutdown() = _isShutdown
 
-  def isTerminated = ???
+  override def isTerminated = ???
 
-  def awaitTermination(l: Long, timeUnit: TimeUnit) = ???
+  override def awaitTermination(l: Long, timeUnit: TimeUnit) = ???
 
-  def submit[T](callable: Callable[T]) = ???
+  override def submit[T](callable: Callable[T]) = ???
 
-  def submit[T](runnable: Runnable, t: T) = ???
+  override def submit[T](runnable: Runnable, t: T) = ???
 
-  def submit(runnable: Runnable) = ???
+  override def submit(runnable: Runnable) = ???
 
-  def invokeAll[T](callables: Collection[_ <: Callable[T]]) = ???
+  override def invokeAll[T](callables: Collection[_ <: Callable[T]]) = ???
 
-  def invokeAll[T](callables: Collection[_ <: Callable[T]], l: Long, timeUnit: TimeUnit) = ???
+  override def invokeAll[T](callables: Collection[_ <: Callable[T]], l: Long, timeUnit: TimeUnit) = ???
 
-  def invokeAny[T](callables: Collection[_ <: Callable[T]]) = ???
+  override def invokeAny[T](callables: Collection[_ <: Callable[T]]) = ???
 
-  def invokeAny[T](callables: Collection[_ <: Callable[T]], l: Long, timeUnit: TimeUnit) = ??? 
+  override def invokeAny[T](callables: Collection[_ <: Callable[T]], l: Long, timeUnit: TimeUnit) = ??? 
 }

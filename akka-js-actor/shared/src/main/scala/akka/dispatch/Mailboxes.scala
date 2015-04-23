@@ -12,14 +12,16 @@ package akka.dispatch
  */
 import akka.actor.{ Actor, ActorSystem }
 import akka.event.EventStream
+/** @note IMPLEMENT IN SCALA.JS
 import java.util.concurrent.ConcurrentHashMap
+*/
 import akka.event.Logging.Warning
 import akka.ConfigurationException
 import scala.annotation.tailrec
-import java.lang.reflect.ParameterizedType
 /**
  * @note IMPLEMENT IN SCALA.JS
  *
+ import java.lang.reflect.ParameterizedType
  import akka.util.Reflect
  */
 import akka.actor.Props
@@ -91,12 +93,12 @@ private[akka] class Mailboxes(
          }.get
      }
    }
-
+*/
    /**
     * Returns a mailbox type as specified in configuration, based on the id, or if not defined None.
     */
-   def lookup(id: String): MailboxType = lookupConfigurator(id)
-
+   def lookup(id: String): MailboxType = UnboundedMailbox() /** @note IMPLEMENT IN SCALA.JS lookupConfigurator(id) */
+/** @note IMPLEMENT IN SCALA.JS
    /**
     * Returns a mailbox type as specified in configuration, based on the type, or if not defined None.
     */

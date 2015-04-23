@@ -4,7 +4,9 @@
 package akka.dispatch
 
 import java.util.{ Comparator, PriorityQueue, Queue, Deque }
+/** @note IMPLEMENT IN SCALA.JS
 import java.util.concurrent._
+*/
 import akka.AkkaException
 import akka.dispatch.sysmsg._
 import akka.actor.{ ActorCell, ActorRef, Cell, ActorSystem, InternalActorRef, DeadLetter }
@@ -396,7 +398,7 @@ class NodeMessageQueue extends AbstractNodeQueue[Envelope] with MessageQueue wit
 
   final def enqueue(receiver: ActorRef, handle: Envelope): Unit = add(handle)
 
-  final def dequeue(): Envelope = poll()
+  override final def dequeue(): Envelope = poll()
 
   final def numberOfMessages: Int = count()
 
@@ -505,7 +507,7 @@ trait UnboundedQueueBasedMessageQueue extends QueueBasedMessageQueue with Unboun
 trait BoundedMessageQueueSemantics {
   def pushTimeOut: Duration
 }
-
+/** @note IMPLEMENT IN SCALA.JS
 trait BoundedQueueBasedMessageQueue extends QueueBasedMessageQueue with BoundedMessageQueueSemantics {
   override def queue: BlockingQueue[Envelope]
 
@@ -518,7 +520,7 @@ trait BoundedQueueBasedMessageQueue extends QueueBasedMessageQueue with BoundedM
 
   def dequeue(): Envelope = queue.poll()
 }
-
+*/
 /**
  * DequeBasedMessageQueue refines QueueBasedMessageQueue to be backed by a java.util.Deque.
  */
@@ -548,6 +550,7 @@ trait UnboundedDequeBasedMessageQueue extends DequeBasedMessageQueue with Unboun
  * BoundedMessageQueueSemantics adds bounded semantics to a DequeBasedMessageQueue,
  * i.e. blocking enqueue with timeout.
  */
+/** @note IMPLEMENT IN SCALA.JS
 trait BoundedDequeBasedMessageQueue extends DequeBasedMessageQueue with BoundedDequeBasedMessageQueueSemantics {
   def pushTimeOut: Duration
   override def queue: BlockingDeque[Envelope]
@@ -568,7 +571,7 @@ trait BoundedDequeBasedMessageQueue extends DequeBasedMessageQueue with BoundedD
 
   def dequeue(): Envelope = queue.poll()
 }
-
+*/
 /**
  * MailboxType is a factory to create MessageQueues for an optionally
  * provided ActorContext.

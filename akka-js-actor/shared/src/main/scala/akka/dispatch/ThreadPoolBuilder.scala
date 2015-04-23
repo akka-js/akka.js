@@ -5,6 +5,7 @@
 package akka.dispatch
 
 import java.util.Collection
+/** @note IMPLEMENT IN SCALA.JS
 import scala.concurrent.{ Awaitable, BlockContext, CanAwait }
 import scala.concurrent.duration.Duration
 import scala.concurrent.forkjoin._
@@ -22,6 +23,8 @@ import java.util.concurrent.{
   ThreadPoolExecutor
 }
 import java.util.concurrent.atomic.{ AtomicReference, AtomicLong }
+*/
+import java.util.concurrent.{ TimeUnit, Callable, ExecutorService }
 
 /** @note IMPLEMENT IN SCALA.JS
 object ThreadPoolConfig {
@@ -247,9 +250,11 @@ trait ExecutorServiceDelegate extends ExecutorService {
  * by throwing a RejectedExecutionException if the executor isShutdown.
  * (CallerRunsPolicy silently discards the runnable in this case, which is arguably broken)
  */
+/** @note IMPLEMENT IN SCALA.JS
 class SaneRejectedExecutionHandler extends RejectedExecutionHandler {
   def rejectedExecution(runnable: Runnable, threadPoolExecutor: ThreadPoolExecutor): Unit = {
     if (threadPoolExecutor.isShutdown) throw new RejectedExecutionException("Shutdown")
     else runnable.run()
   }
 }
+*/

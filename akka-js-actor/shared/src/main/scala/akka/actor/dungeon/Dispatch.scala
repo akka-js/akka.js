@@ -69,7 +69,7 @@ private[akka] trait Dispatch { this: ActorCell ⇒
      * Create the mailbox and enqueue the Create() message to ensure that
      * this is processed before anything else.
      */
-    val mbox = dispatcher.createMailbox(this/** @note IMPLEMENT IN SCALA.JS , mailboxType */)
+    val mbox = dispatcher.createMailbox(this, akka.dispatch.UnboundedMailbox()/** @note IMPLEMENT IN SCALA.JS , mailboxType */)
 
     /*
      * The mailboxType was calculated taking into account what the MailboxType

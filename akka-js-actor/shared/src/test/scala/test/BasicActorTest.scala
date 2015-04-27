@@ -1,9 +1,8 @@
 package test
 
-//import akka.actor._
-//import utest._
+import akka.actor._
+import utest._
 
-/**
 import scala.language.postfixOps
 import scala.concurrent._
 import scala.concurrent.duration._
@@ -11,8 +10,9 @@ import scala.collection.mutable.Queue
 import scala.scalajs.js.Dynamic.global
 import scala.scalajs.js
 
-import org.scalatest._
-*/
+//import org.scalatest._
+
+/*
 import collection.mutable.Stack
 import org.scalatest._
 
@@ -33,8 +33,8 @@ class ExampleSpec extends FlatSpec with Matchers {
     } 
   }
 }
+*/
 
-/**
 case class Greeting(who: String)
 
 class GreetingActor extends Actor {
@@ -50,9 +50,9 @@ class GreetingActor extends Actor {
   }
 }
 
-class Greeting2Actor(args: Seq[Any]) extends ExportableActor {
+class Greeting2Actor(prefix: String/*args: Seq[Any]*/) extends ExportableActor {
   
-  val prefix = args(0).toString
+  //val prefix = args(0).toString
   def receive = {
     case Greeting(who) => {
       println(s"my prefix is $prefix")
@@ -110,5 +110,3 @@ object BasicActorTest extends TestSuite {
     
   }
 }
-
-*/

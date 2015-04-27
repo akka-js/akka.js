@@ -35,6 +35,22 @@ lazy val akkaActor = crossProject.in(file("akka-js-actor"))
     )
   )
 
+lazy val akkaTestkit = crossProject.in(file("akka-js-testkit"))
+  .settings(commonSettings: _*)
+  .settings(
+    version := "0.2-SNAPSHOT",
+    normalizedName := "akka-js-testkit"
+  )
+  .jvmSettings(
+  )
+  .jsSettings(
+    preLinkJSEnv := NodeJSEnv().value,
+    postLinkJSEnv := NodeJSEnv().value,
+    libraryDependencies ++= Seq(
+      "org.scalatest" %%% "scalatestjs" % "3.0.0-SNAP4" % "test"
+    )
+  )
+
 lazy val akkaWebSocket = crossProject.in(file("akka-js-websocket")).
   settings(commonSettings: _*).
   settings(
@@ -59,8 +75,11 @@ lazy val akkaWebSocket = crossProject.in(file("akka-js-websocket")).
 lazy val akkaActorJS = akkaActor.js
 lazy val akkaActorJVM = akkaActor.jvm
 
+lazy val akkaTestkitJS = akkaTestkit.js
+lazy val akkaTestkitJVM = akkaTestkit.jvm
+
 lazy val akkaWebSocketJVM = akkaWebSocket.jvm
 lazy val akkaWebSocketJS = akkaWebSocket.js.dependsOn(akkaActorJS)
 
 lazy val root = project.in(file(".")).settings(commonSettings: _*)
-  .aggregate(akkaActorJS, akkaWebSocketJS, akkaWebSocketJVM)
+  .aggregate(akkaActorJS, akkaTestkitJS, akkaWebSocketJS, akkaWebSocketJVM)

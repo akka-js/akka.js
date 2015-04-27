@@ -432,7 +432,7 @@ import scala.annotation.tailrec
    //private[this] val constructor: Constructor[_] = Reflect.findConstructor(clz, args)
    override def actorClass = clz
    override def produce() = //Reflect.instantiate(constructor, args).asInstanceOf[Actor]
-     instantiate(clz)(args)
+     instantiate(clz)(args: _*)
  }
 
  /**

@@ -24,6 +24,10 @@ Then download the examples and follow the README.md available [here](https://git
 The best source of documentation for the design at large is
 [this report](http://lampwww.epfl.ch/~doeraene/scalajs-actors-design.pdf).
 
+## Akka version
+
+As of now, code is taken from Akka 2.3.9 
+
 ## License
 
 Scala.js actors is distributed under the

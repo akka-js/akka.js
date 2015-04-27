@@ -4,12 +4,7 @@
 
 package akka.actor
 
-/**
- * @note IMPLEMENT IN SCALA.JS
- *
- import akka.dispatch._
- * 
- */
+import akka.dispatch._
 import akka.japi.Creator
 import scala.reflect.ClassTag
 /**
@@ -232,9 +227,6 @@ import scala.annotation.tailrec
    producer
 
    /**
-    * @note IMPLEMENT IN SCALA.JS
-    *
-   /**
     * Convenience method for extracting the dispatcher information from the
     * contained [[Deploy]] instance.
     */
@@ -243,6 +235,9 @@ import scala.annotation.tailrec
      case x                 ⇒ x
    }
 
+   /**
+    * @note IMPLEMENT IN SCALA.JS
+    *
    /**
     * Convenience method for extracting the mailbox information from the
     * contained [[Deploy]] instance.
@@ -257,12 +252,13 @@ import scala.annotation.tailrec
     * contained [[Deploy]] instance.
     */
    def routerConfig: RouterConfig = deploy.routerConfig
-
+   */
    /**
     * Returns a new Props with the specified dispatcher set.
     */
    def withDispatcher(d: String): Props = copy(deploy = deploy.copy(dispatcher = d))
 
+   /**
    /**
     * Returns a new Props with the specified mailbox set.
     */

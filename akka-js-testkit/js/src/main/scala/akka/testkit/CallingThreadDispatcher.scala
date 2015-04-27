@@ -4,7 +4,9 @@
 package akka.testkit
 
 import language.postfixOps
-
+/**@note IMPLEMENT IN SCALA.JS
+ * do we really need this? We're already in a deterministic environment (ie: single threaded)
+ 
 import java.lang.ref.WeakReference
 import java.util.concurrent.locks.ReentrantLock
 import scala.annotation.tailrec
@@ -130,7 +132,7 @@ class CallingThreadDispatcher(_configurator: MessageDispatcherConfigurator) exte
   import CallingThreadDispatcher._
   import configurator.prerequisites._
 
-  val log = akka.event.Logging(eventStream, "CallingThreadDispatcher")
+  val log = akka.event.Logging /** @note IMPLEMENT IN SCALA.JS eventStream, "CallingThreadDispatcher") */
 
   override def id: String = Id
 
@@ -351,3 +353,4 @@ class CallingThreadMailbox(_receiver: akka.actor.Cell, val mailboxType: MailboxT
     }
   }
 }
+*/

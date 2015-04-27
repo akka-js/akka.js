@@ -1,8 +1,9 @@
 package test
 
-import akka.actor._
+//import akka.actor._
 //import utest._
 
+/**
 import scala.language.postfixOps
 import scala.concurrent._
 import scala.concurrent.duration._
@@ -11,7 +12,7 @@ import scala.scalajs.js.Dynamic.global
 import scala.scalajs.js
 
 import org.scalatest._
-
+*/
 import collection.mutable.Stack
 import org.scalatest._
 

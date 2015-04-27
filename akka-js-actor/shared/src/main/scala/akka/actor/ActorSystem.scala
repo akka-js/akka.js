@@ -427,11 +427,7 @@ abstract class ActorSystem extends ActorRefFactory {
   /**
    * Helper object for looking up configured dispatchers.
    */
-  /**
-   * @note IMPLEMENT IN SCALA.JS
-   *
-   def dispatchers: Dispatchers
-   */
+  def dispatchers: Dispatchers  
 
   /**
    * Default dispatcher as configured. This dispatcher is used for all actors

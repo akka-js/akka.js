@@ -12,6 +12,7 @@ import scala.collection.immutable
 import java.util.concurrent.TimeUnit.MILLISECONDS
 
 package object testkit {
+  /** @note IMPLEMENT IN SCALA.JS
   def filterEvents[T](eventFilters: Iterable[EventFilter])(block: ⇒ T)(implicit system: ActorSystem): T = {
     def now = System.currentTimeMillis
 
@@ -51,5 +52,5 @@ package object testkit {
     def dilated(implicit system: ActorSystem): FiniteDuration =
       (duration * TestKitExtension(system).TestTimeFactor).asInstanceOf[FiniteDuration]
   }
-
+  */
 }

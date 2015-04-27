@@ -7,7 +7,12 @@ package akka.testkit
 import akka.actor._
 import java.util.concurrent.atomic.AtomicLong
 import akka.dispatch._
+/** @note IMPLEMENT IN SCALA.JS
 import scala.concurrent.Await
+*/
+import scala.concurrent.duration.Duration
+import java.util.concurrent.TimeUnit
+import scala.concurrent.Future
 import scala.reflect.ClassTag
 import akka.pattern.ask
 
@@ -24,25 +29,28 @@ class TestActorRef[T <: Actor](
   _supervisor: ActorRef,
   name: String)
   extends {
-    val props =
+    /** @note IMPLEMENT IN AKKA.JSval props =
       _props.withDispatcher(
-        if (_props.deploy.dispatcher == Deploy.NoDispatcherGiven) CallingThreadDispatcher.Id
-        else _props.dispatcher)
+         if (_props.deploy.dispatcher == Deploy.NoDispatcherGiven) CallingThreadDispatcher.Id
+        else _props.dispatcher) */
+    val props = _props
     val dispatcher = _system.dispatchers.lookup(props.dispatcher)
     private val disregard = _supervisor match {
       case l: LocalActorRef ⇒ l.underlying.reserveChild(name)
-      case r: RepointableActorRef ⇒ r.underlying match {
+      /** @note IMPLEMENT IN SCALA.JS
+       case r: RepointableActorRef ⇒ r.underlying match {
         case u: UnstartedCell ⇒ throw new IllegalStateException("cannot attach a TestActor to an unstarted top-level actor, ensure that it is started by sending a message and observing the reply")
         case c: ActorCell     ⇒ c.reserveChild(name)
         case o                ⇒ _system.log.error("trying to attach child {} to unknown type of supervisor cell {}, this is not going to end well", name, o.getClass)
-      }
+      } 
       case s ⇒ _system.log.error("trying to attach child {} to unknown type of supervisor {}, this is not going to end well", name, s.getClass)
+    */
     }
   } with LocalActorRef(
     _system.asInstanceOf[ActorSystemImpl],
     props,
     dispatcher,
-    _system.mailboxes.getMailboxType(props, dispatcher.configurator.config),
+    /**@note IMPLEMENT IN SCALA.JS _system.mailboxes.getMailboxType(props, dispatcher.configurator.config), */
     _supervisor.asInstanceOf[InternalActorRef],
     _supervisor.path / name) {
 
@@ -84,14 +92,16 @@ class TestActorRef[T <: Actor](
    * constructor. Beware that this reference is discarded by the ActorRef upon restarting the actor (should this
    * reference be linked to a supervisor). The old Actor may of course still be used in post-mortem assertions.
    */
-  def underlyingActor: T = {
+  def underlyingActor: Future[T] = {
     // volatile mailbox read to bring in actor field
     if (isTerminated) throw new IllegalActorStateException("underlying actor is terminated")
     underlying.actor.asInstanceOf[T] match {
       case null ⇒
-        val t = TestKitExtension(_system).DefaultTimeout
-        Await.result(this.?(InternalGetActor)(t), t.duration).asInstanceOf[T]
-      case ref ⇒ ref
+        /** @note IMPLEMENT IN SCALA.JS val t = TestKitExtension(_system).DefaultTimeout 
+        Await.result(this.?(InternalGetActor)(t), t.duration).asInstanceOf[T]*/
+        val t = Duration(60000L, TimeUnit.MILLISECONDS)
+        this.?(InternalGetActor)(t).asInstanceOf[Future[T]]
+      case ref ⇒ /** @note IMPLEMENT IN SCALA.JS */ Future.successful(ref)
     }
   }
 
@@ -141,8 +151,10 @@ object TestActorRef {
     new TestActorRef(sysImpl, props, supervisor.asInstanceOf[InternalActorRef], name)
   }
 
+  /** @note IMPLEMENT IN SCALA.JS
   def apply[T <: Actor](implicit t: ClassTag[T], system: ActorSystem): TestActorRef[T] = apply[T](randomName)
 
+  
   def apply[T <: Actor](name: String)(implicit t: ClassTag[T], system: ActorSystem): TestActorRef[T] = apply[T](Props({
     system.asInstanceOf[ExtendedActorSystem].dynamicAccess.createInstanceFor[T](t.runtimeClass, Nil).recover({
       case exception ⇒ throw ActorInitializationException(null,
@@ -152,6 +164,7 @@ object TestActorRef {
           "\nOR try to change: 'actorOf(Props[MyActor]' to 'actorOf(Props(new MyActor)'.", exception)
     }).get
   }), name)
+   */
 
   /**
    * Java API: create a TestActorRef in the given system for the given props,

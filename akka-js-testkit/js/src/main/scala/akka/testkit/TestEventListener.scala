@@ -10,12 +10,14 @@ import scala.concurrent.duration.Duration
 import scala.reflect.ClassTag
 import akka.actor.{ DeadLetter, ActorSystem, Terminated, UnhandledMessage }
 import akka.dispatch.sysmsg.{ SystemMessage, Terminate }
+/** @note IMPLEMENT IN SCALA.JS
 import akka.event.Logging.{ Warning, LogEvent, InitializeLogger, Info, Error, Debug, LoggerInitialized }
+*/
 import akka.event.Logging
 import akka.actor.NoSerializationVerificationNeeded
 import akka.japi.Util.immutableSeq
 import java.lang.{ Iterable ⇒ JIterable }
-import akka.util.BoxedType
+/** @note IMPLEMENT IN SCALA.JS import akka.util.BoxedType */
 
 /**
  * Implementation helpers of the EventFilter facilities: send `Mute`

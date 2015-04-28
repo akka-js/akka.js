@@ -88,7 +88,7 @@ trait LookupClassification { this: EventBus ⇒
     def compare(a: Subscriber, b: Subscriber): Int = compareSubscribers(a, b)
   })
   */
-  protected final var subscribers = new mutable.HashMap[Classifier, mutable.HashSet[Subscriber]] 
+  protected final var subscribers = new mutable.HashMap[Classifier, mutable.Set[Subscriber]] 
                                       with mutable.MultiMap[Classifier, Subscriber]
 
   /**

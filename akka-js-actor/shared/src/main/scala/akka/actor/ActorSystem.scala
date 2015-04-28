@@ -868,7 +868,7 @@ private[akka] class ActorSystemImpl(val name: String, applicationConfig: ActorSy
    /**
     * Returns any extension registered to the specified Extension or returns null if not registered
     */
-   @tailrec
+   //@note IMPLEMENT IN SCALA.JS @tailrec
    private def findExtension[T <: Extension](ext: ExtensionId[T]): T = extensions.get(ext) match {
      /** @note IMPLEMENT IN SCALA.JS
      case c: CountDownLatch ⇒
@@ -877,7 +877,7 @@ private[akka] class ActorSystemImpl(val name: String, applicationConfig: ActorSy
        other.asInstanceOf[T] //could be a T or null, in which case we return the null as T
    }
 
-   @tailrec
+   //@note IMPLEMENT IN SCALA.JS @tailrec
    final def registerExtension[T <: Extension](ext: ExtensionId[T]): T = {
      findExtension(ext) match {
        case null ⇒

@@ -700,15 +700,11 @@ private[akka] class ActorSystemImpl(val name: String, applicationConfig: ActorSy
   import settings._
 
   // this provides basic logging (to stdout) until .start() is called below
-  /**
-   * @note IMPLEMENT IN SCALA.JS
-   *
-   val eventStream: EventStream = new EventStream(DebugEventStream)
-   eventStream.startStdoutLogger(settings)
 
-   val log: LoggingAdapter = new BusLogging(eventStream, "ActorSystem(" + name + ")", this.getClass)
-   */
-  val eventStream: EventStream = new EventStream
+ val eventStream: EventStream = new EventStream(DebugEventStream)
+ eventStream.startStdoutLogger(settings)
+
+ val log: LoggingAdapter = new BusLogging(eventStream, "ActorSystem(" + name + ")", this.getClass)
 
  /**
   * @note IMPLEMENT IN SCALA.JS

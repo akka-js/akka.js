@@ -81,7 +81,7 @@ trait LoggingBus extends ActorEventBus {
       ErrorLevel
     }
     */
-    var level = ErrorLevel
+    var level = DebugLevel
     AllLogLevels filter (level >= _) foreach (l ⇒ subscribe(StandardOutLogger, classFor(l)))
     // @note IMPLEMENT IN SCALA.JS guard.withGuard {
       loggers :+= StandardOutLogger
@@ -109,7 +109,7 @@ trait LoggingBus extends ActorEventBus {
       ErrorLevel
     }
     */
-    val level = ErrorLevel
+    val level = DebugLevel
     try {
       /** @note IMPLEMENT IN SCALA.JS
       val defaultLoggers = system.settings.Loggers match {

@@ -9,6 +9,7 @@ import scala.concurrent.duration._
 import scala.collection.mutable.Queue
 import scala.scalajs.js.Dynamic.global
 import scala.scalajs.js
+import akka.event.Logging
 
 //import org.scalatest._
 
@@ -38,7 +39,7 @@ class ExampleSpec extends FlatSpec with Matchers {
 case class Greeting(who: String)
 
 class GreetingActor extends Actor {
-  
+  val log = Logging(context.system, this)
   override def preStart() = println("Greeter started")
   
   def receive = {

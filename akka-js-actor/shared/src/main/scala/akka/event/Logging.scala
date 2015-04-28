@@ -802,7 +802,7 @@ object Logging {
     override val toString = "StandardOutLogger"
     override def !(message: Any)(implicit sender: ActorRef = Actor.noSender): Unit =
       if (message == null) throw new InvalidMessageException("Message is null")
-      else js.Dynamic.global.console.log(message.asInstanceOf[js.Any]) //@note IMPLEMENT IN SCALA.JS print(message)
+      else print(message)
   }
 
   val StandardOutLogger = new StandardOutLogger
@@ -816,7 +816,7 @@ object Logging {
     import scala.scalajs.js
     override def receive: Receive = {
       case InitializeLogger(_) ⇒ sender() ! LoggerInitialized
-      case event: LogEvent     ⇒ js.Dynamic.global.console.log(event.asInstanceOf[js.Any]) //@note IMPLEMENT IN SCALA.JS print(event)
+      case event: LogEvent     ⇒ print(event)
     }
   }
 

@@ -51,7 +51,7 @@ abstract class DynamicAccess {
    * This is the class loader to be used in those special cases where the
    * other factory method are not applicable (e.g. when constructing a ClassLoaderBinaryInputStream).
    */
-  def classLoader: ClassLoader
+  /** @note IMPLEMENT IN SCALA.JS def classLoader: ClassLoader */
 }
 /**
 JS implementation
@@ -65,9 +65,11 @@ JS implementation
  */
 import scala.scalajs.js.annotation
 @annotation.JSExportDescendentClasses
-class JSDynamicAccess(val classLoader: ClassLoader) extends DynamicAccess {
+class JSDynamicAccess(/**val classLoader: ClassLoader*/) extends DynamicAccess {
 	import scala.scalajs.js
 
+  def classLoader: ClassLoader = ???
+  
 	def getRuntimeClass[A](name: String): Class[A] = {
      val ctor =
        name.split("\\.").foldLeft(scala.scalajs.runtime.environmentInfo.exportsNamespace){

@@ -5,11 +5,14 @@
 package akka.event
 
 import akka.actor.ActorRef
+/** @note IMPLEMENT IN SCALA.JS
 import akka.util.Index
 import java.util.concurrent.ConcurrentSkipListSet
+*/
 import java.util.Comparator
 import akka.util.{ Subclassification, SubclassifiedIndex }
-import scala.collection.immutable.TreeSet
+import scala.collection.mutable.TreeSet
+import scala.collection.mutable
 import scala.collection.immutable
 
 /**
@@ -80,9 +83,13 @@ trait PredicateClassifier { this: EventBus ⇒
  */
 trait LookupClassification { this: EventBus ⇒
 
+  /** @note IMPLEMENT IN SCALA.JS
   protected final val subscribers = new Index[Classifier, Subscriber](mapSize(), new Comparator[Subscriber] {
     def compare(a: Subscriber, b: Subscriber): Int = compareSubscribers(a, b)
   })
+  */
+  protected final var subscribers = new mutable.HashMap[Classifier, mutable.HashSet[Subscriber]] 
+                                      with mutable.MultiMap[Classifier, Subscriber]
 
   /**
    * This is a size hint for the number of Classifiers you expect to have (use powers of 2)
@@ -104,6 +111,7 @@ trait LookupClassification { this: EventBus ⇒
    */
   protected def publish(event: Event, subscriber: Subscriber): Unit
 
+  /** @note IMPLEMENT IN SCALA.JS
   def subscribe(subscriber: Subscriber, to: Classifier): Boolean = subscribers.put(to, subscriber)
 
   def unsubscribe(subscriber: Subscriber, from: Classifier): Boolean = subscribers.remove(from, subscriber)
@@ -113,6 +121,33 @@ trait LookupClassification { this: EventBus ⇒
   def publish(event: Event): Unit = {
     val i = subscribers.valueIterator(classify(event))
     while (i.hasNext) publish(event, i.next())
+  }
+  */
+  
+  def subscribe(subscriber: Subscriber, to: Classifier): Boolean = {
+    subscribers.addBinding(to, subscriber)
+    true
+  }
+
+  def unsubscribe(subscriber: Subscriber, from: Classifier): Boolean = {
+    subscribers.removeBinding(from, subscriber)
+    true
+  }
+
+  def unsubscribe(subscriber: Subscriber): Unit = {
+    val it = subscribers.toIterator
+    while(it.hasNext) {
+      val (k, vs) = it.next()
+      
+      vs -= subscriber
+      if(vs.isEmpty) subscribers -= k
+    }
+  }
+
+  def publish(event: Event): Unit = {
+    subscribers.get(classify(event)) match {
+      case Some(set) ⇒ set.map(publish(event, _))   
+    }
   }
 }
 
@@ -193,12 +228,22 @@ trait SubchannelClassification { this: EventBus ⇒
  * Note: the compareClassifiers and compareSubscribers must together form an absolute ordering (think java.util.Comparator.compare)
  */
 trait ScanningClassification { self: EventBus ⇒
+  /** @note IMPLEMENT IN SCALA.JS
   protected final val subscribers = new ConcurrentSkipListSet[(Classifier, Subscriber)](new Comparator[(Classifier, Subscriber)] {
     def compare(a: (Classifier, Subscriber), b: (Classifier, Subscriber)): Int = compareClassifiers(a._1, b._1) match {
       case 0     ⇒ compareSubscribers(a._2, b._2)
       case other ⇒ other
     }
   })
+  */
+  import scala.math.Ordering
+  implicit val ordering = new Ordering[(Classifier, Subscriber)] {
+    def compare(a: (Classifier, Subscriber), b: (Classifier, Subscriber)): Int = compareClassifiers(a._1, b._1) match {
+      case 0     ⇒ compareSubscribers(a._2, b._2)
+      case other ⇒ other
+    }
+  }
+  protected final val subscribers = new TreeSet[(Classifier, Subscriber)]
 
   /**
    * Provides a total ordering of Classifiers (think java.util.Comparator.compare)
@@ -225,15 +270,16 @@ trait ScanningClassification { self: EventBus ⇒
   def unsubscribe(subscriber: Subscriber, from: Classifier): Boolean = subscribers.remove((from, subscriber))
 
   def unsubscribe(subscriber: Subscriber): Unit = {
-    val i = subscribers.iterator()
+    val i = subscribers.iterator
     while (i.hasNext) {
       val e = i.next()
-      if (compareSubscribers(subscriber, e._2) == 0) i.remove()
+      // @note IMPLEMENT IN SCALA.JS if (compareSubscribers(subscriber, e._2) == 0) i.remove()
+      if (compareSubscribers(subscriber, e._2) == 0) subscribers -= e
     }
   }
 
   def publish(event: Event): Unit = {
-    val currentSubscribers = subscribers.iterator()
+    val currentSubscribers = subscribers.iterator
     while (currentSubscribers.hasNext) {
       val (classifier, subscriber) = currentSubscribers.next()
       if (matches(classifier, event))
@@ -246,56 +292,90 @@ trait ScanningClassification { self: EventBus ⇒
  * Maps ActorRefs to ActorRefs to form an EventBus where ActorRefs can listen to other ActorRefs
  */
 trait ActorClassification { this: ActorEventBus with ActorClassifier ⇒
-  import java.util.concurrent.ConcurrentHashMap
+  /** @note IMPLEMENT IN SCALA.JS import java.util.concurrent.ConcurrentHashMap */
   import scala.annotation.tailrec
+  import scala.collection.mutable.HashMap
   private val empty = TreeSet.empty[ActorRef]
-  private val mappings = new ConcurrentHashMap[ActorRef, TreeSet[ActorRef]](mapSize)
+  // @note IMPLEMENT IN SCALA.JS private val mappings = new ConcurrentHashMap[ActorRef, TreeSet[ActorRef]](mapSize)
+  private val mappings = new HashMap[ActorRef, TreeSet[ActorRef]]
+  // we need this because HashMap doesn't provide `replace`, eventually we should move this into its own trait
+  private def hashMapReplace(key: ActorRef, oldValue: TreeSet[ActorRef], newValue: TreeSet[ActorRef]) = {
+    if(mappings.contains(key) && (mappings(key) eq oldValue)) {
+      mappings(key) = newValue
+      true
+    }
+    false
+  } 
+  private def hashMapRemove(key: ActorRef, value: TreeSet[ActorRef]) = {
+    if(mappings.contains(key) && (mappings(key) eq value)) {
+      mappings -= key
+      true
+    }
+    false
+  }
 
   @tailrec
   protected final def associate(monitored: ActorRef, monitor: ActorRef): Boolean = {
     val current = mappings get monitored
     current match {
-      case null ⇒
+      // @note IMPLEMENT IN SCALA.JS case null ⇒
+      case None ⇒
         if (monitored.isTerminated) false
         else {
-          if (mappings.putIfAbsent(monitored, empty + monitor) ne null) associate(monitored, monitor)
+          /** @note IMPLEMENT IN SCALA.JS 
+          if (mappings.putIfAbsent(monitored, empty + monitor) ne null) { 
+          */
+          if (!(mappings contains monitored)) {
+            mappings += monitored -> (empty + monitor)
+            associate(monitored, monitor) 
+          }
           else if (monitored.isTerminated) !dissociate(monitored, monitor) else true
         }
-      case raw: TreeSet[_] ⇒
+      // @note IMPLEMENT IN SCALA.JS case raw: TreeSet[_] ⇒
+      case Some(raw) ⇒
         val v = raw.asInstanceOf[TreeSet[ActorRef]]
         if (monitored.isTerminated) false
         if (v.contains(monitor)) true
         else {
           val added = v + monitor
-          if (!mappings.replace(monitored, v, added)) associate(monitored, monitor)
+          // @note IMPLEMENT IN SCALA.JS if (!mappings.replace(monitored, v, added)) associate(monitored, monitor)
+          if (!hashMapReplace(monitored, v, added)) { 
+            associate(monitored, monitor) 
+          }
           else if (monitored.isTerminated) !dissociate(monitored, monitor) else true
         }
     }
   }
 
-  protected final def dissociate(monitored: ActorRef): immutable.Iterable[ActorRef] = {
+  protected final def dissociate(monitored: ActorRef): mutable.Iterable[ActorRef] = {
     @tailrec
-    def dissociateAsMonitored(monitored: ActorRef): immutable.Iterable[ActorRef] = {
+    def dissociateAsMonitored(monitored: ActorRef): mutable.Iterable[ActorRef] = {
       val current = mappings get monitored
       current match {
-        case null ⇒ empty
-        case raw: TreeSet[_] ⇒
+        // @note IMPLEMENT IN SCALA.JS case null ⇒
+        case None ⇒ empty
+        // @note IMPLEMENT IN SCALA.JS case raw: TreeSet[_] ⇒
+        case Some(raw) ⇒
           val v = raw.asInstanceOf[TreeSet[ActorRef]]
-          if (!mappings.remove(monitored, v)) dissociateAsMonitored(monitored)
+          //@note IMPLEMENT IN SCALA.JS if (!mappings.remove(monitored, v)) dissociateAsMonitored(monitored)
+          if (!hashMapRemove(monitored, v)) dissociateAsMonitored(monitored)
           else v
       }
     }
 
     def dissociateAsMonitor(monitor: ActorRef): Unit = {
-      val i = mappings.entrySet.iterator
-      while (i.hasNext()) {
-        val entry = i.next()
-        val v = entry.getValue
+      // @note IMPLEMENT IN SCALA.JS val i = mappings.entrySet.iterator
+       val i = mappings.iterator
+      while (i.hasNext) {
+        val entry = i.next
+        // @note IMPLEMENT IN SCALA.JS val v = entry.getValue()
+        val v = entry._2
         v match {
           case raw: TreeSet[_] ⇒
             val monitors = raw.asInstanceOf[TreeSet[ActorRef]]
             if (monitors.contains(monitor))
-              dissociate(entry.getKey, monitor)
+              // @note IMPLEMENT IN SCALA.JS dissociate(entry.getKey(), monitor)
+              dissociate(entry._1, monitor)
           case _ ⇒ //Dun care
         }
       }
@@ -308,15 +388,19 @@ trait ActorClassification { this: ActorEventBus with ActorClassifier ⇒
   protected final def dissociate(monitored: ActorRef, monitor: ActorRef): Boolean = {
     val current = mappings get monitored
     current match {
-      case null ⇒ false
-      case raw: TreeSet[_] ⇒
+      // @note IMPLEMENT IN SCALA.JS case null ⇒
+      case None ⇒ false
+      // @note IMPLEMENT IN SCALA.JS case raw: TreeSet[_] ⇒
+      case Some(raw) ⇒
         val v = raw.asInstanceOf[TreeSet[ActorRef]]
         val removed = v - monitor
         if (removed eq raw) false
         else if (removed.isEmpty) {
-          if (!mappings.remove(monitored, v)) dissociate(monitored, monitor) else true
+          //@note IMPLEMENT IN SCALA.JS if (!mappings.remove(monitored, v)) dissociate(monitored, monitor) else true
+          if (!hashMapRemove(monitored, v)) dissociate(monitored, monitor) else true
         } else {
-          if (!mappings.replace(monitored, v, removed)) dissociate(monitored, monitor) else true
+          //@note IMPLEMENT IN SCALA.JS if (!mappings.replace(monitored, v, removed)) dissociate(monitored, monitor) else true
+          if (!hashMapReplace(monitored, v, removed)) dissociate(monitored, monitor) else true
         }
     }
   }
@@ -332,8 +416,12 @@ trait ActorClassification { this: ActorEventBus with ActorClassifier ⇒
   protected def mapSize: Int
 
   def publish(event: Event): Unit = mappings.get(classify(event)) match {
+    /** @note IMPLEMENT IN SCALA.JS 
     case null ⇒ ()
     case some ⇒ some foreach { _ ! event }
+    */
+    case None ⇒ ()
+    case Some(some) ⇒ some foreach { _ ! event }
   }
 
   def subscribe(subscriber: Subscriber, to: Classifier): Boolean =

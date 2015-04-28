@@ -523,11 +523,7 @@ abstract class ActorSystem extends ActorRefFactory {
    * This method has putIfAbsent-semantics, this method can potentially block, waiting for the initialization
    * of the payload, if is in the process of registration from another Thread of execution
    */
-  /**
-   * @note IMPLEMENT IN SCALA.JS
-   *
    def registerExtension[T <: Extension](ext: ExtensionId[T]): T
-   */
 
   /**
    * Returns the payload that is associated with the provided extension
@@ -600,11 +596,7 @@ abstract class ExtendedActorSystem extends ActorSystem {
    * set on all threads created by the ActorSystem, if one was set during
    * creation.
    */
-  /**
-   * @note IMPLEMENT IN SCALA.JS
-   *
    def dynamicAccess: DynamicAccess
-   */
 
   /**
    * For debugging: traverse actor hierarchy and make string representation.
@@ -679,12 +671,13 @@ private[akka] class ActorSystemImpl(val name: String, applicationConfig: ActorSy
   *
   *  protected def createDynamicAccess(): DynamicAccess = new ReflectiveDynamicAccess(classLoader)
   *
-  *  private val _pm: DynamicAccess = createDynamicAccess()
-  *  def dynamicAccess: DynamicAccess = _pm
-  *
   *  def logConfiguration(): Unit = log.info(settings.toString)
   */
-
+  protected def createDynamicAccess(): DynamicAccess = new JSDynamicAccess(/**@note IMPLEMENT IN SCALA.JS classLoader*/)
+  
+  private val _pm: DynamicAccess = createDynamicAccess()
+  def dynamicAccess: DynamicAccess = _pm
+  
   protected def systemImpl: ActorSystemImpl = this
 
   def systemActorOf(props: Props, name: String): ActorRef = systemGuardian.underlying.attachChild(props, name, systemService = true)
@@ -869,20 +862,33 @@ private[akka] class ActorSystemImpl(val name: String, applicationConfig: ActorSy
  * @note IMPLEMENT IN SCALA.JS
  *
    private val extensions = new ConcurrentHashMap[ExtensionId[_], AnyRef]
+   */
+  private val extensions = new scala.collection.mutable.HashMap[ExtensionId[_], AnyRef]
 
    /**
     * Returns any extension registered to the specified Extension or returns null if not registered
     */
    @tailrec
    private def findExtension[T <: Extension](ext: ExtensionId[T]): T = extensions.get(ext) match {
+     /** @note IMPLEMENT IN SCALA.JS
      case c: CountDownLatch ⇒
-       c.await(); findExtension(ext) //Registration in process, await completion and retry
+       c.await(); findExtension(ext) //Registration in process, await completion and retry */
      case other ⇒
        other.asInstanceOf[T] //could be a T or null, in which case we return the null as T
    }
 
    @tailrec
    final def registerExtension[T <: Extension](ext: ExtensionId[T]): T = {
+     findExtension(ext) match {
+       case null ⇒
+         ext.createExtension(this) match {
+           case instance ⇒  
+             extensions += ext -> instance
+             instance
+         }
+       case existing => existing.asInstanceOf[T]  
+     }
+     /** @note IMPLEMENT IN SCALA.JS
      findExtension(ext) match {
        case null ⇒ //Doesn't already exist, commence registration
          val inProcessOfRegistration = new CountDownLatch(1)
@@ -904,7 +910,7 @@ private[akka] class ActorSystemImpl(val name: String, applicationConfig: ActorSy
            case other ⇒ registerExtension(ext) //Someone else is in process of registering an extension for this Extension, retry
          }
        case existing ⇒ existing.asInstanceOf[T]
-     }
+     }*/
    }
 
    def extension[T <: Extension](ext: ExtensionId[T]): T = findExtension(ext) match {
@@ -914,8 +920,9 @@ private[akka] class ActorSystemImpl(val name: String, applicationConfig: ActorSy
 
    def hasExtension(ext: ExtensionId[_ <: Extension]): Boolean = findExtension(ext) != null
 
+   /** @note IMPLEMENT IN SCALA.JS
    private def loadExtensions() {
-     immutableSeq(settings.config.getStringList("akka.extensions")) foreach { fqcn ⇒
+    immutableSeq(settings.config.getStringList("akka.extensions")) foreach { fqcn ⇒
        dynamicAccess.getObjectFor[AnyRef](fqcn) recoverWith { case _ ⇒ dynamicAccess.createInstanceFor[AnyRef](fqcn, Nil) } match {
          case Success(p: ExtensionIdProvider) ⇒ registerExtension(p.lookup())
          case Success(p: ExtensionId[_])      ⇒ registerExtension(p)
@@ -923,8 +930,8 @@ private[akka] class ActorSystemImpl(val name: String, applicationConfig: ActorSy
          case Failure(problem)                ⇒ log.error(problem, "While trying to load extension [{}], skipping...", fqcn)
        }
      }
-   }
- */
+   }*/
+ 
 
   override def toString: String = lookupRoot.path.root.address.toString
 

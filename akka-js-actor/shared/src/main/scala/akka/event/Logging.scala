@@ -7,7 +7,9 @@ import language.existentials
 import akka.actor._
 import akka.{ ConfigurationException, AkkaException }
 import akka.actor.ActorSystem.Settings
+/** @note IMPLEMENT IN SCALA.JS
 import akka.util.ReentrantGuard
+*/
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.TimeoutException
 import scala.annotation.implicitNotFound
@@ -33,7 +35,9 @@ trait LoggingBus extends ActorEventBus {
 
   import Logging._
 
+  /** @note IMPLEMENT IN SCALA.JS
   private val guard = new ReentrantGuard
+  */
   private var loggers = Seq.empty[ActorRef]
   @volatile private var _logLevel: LogLevel = _
 
@@ -52,7 +56,7 @@ trait LoggingBus extends ActorEventBus {
    * will not participate in the automatic management of log level
    * subscriptions!
    */
-  def setLogLevel(level: LogLevel): Unit = guard.withGuard {
+  def setLogLevel(level: LogLevel): Unit = /** guard.withGuard */ {
     val logLvl = _logLevel // saves (2 * AllLogLevel.size - 1) volatile reads (because of the loops below)
     for {
       l ← AllLogLevels
@@ -70,16 +74,19 @@ trait LoggingBus extends ActorEventBus {
   }
 
   private def setUpStdoutLogger(config: Settings) {
+    /** @note IMPLEMENT IN SCALA.JS
     val level = levelFor(config.StdoutLogLevel) getOrElse {
       // only log initialization errors directly with StandardOutLogger.print
       StandardOutLogger.print(Error(new LoggerException, simpleName(this), this.getClass, "unknown akka.stdout-loglevel " + config.StdoutLogLevel))
       ErrorLevel
     }
+    */
+    var level = ErrorLevel
     AllLogLevels filter (level >= _) foreach (l ⇒ subscribe(StandardOutLogger, classFor(l)))
-    guard.withGuard {
+    // @note IMPLEMENT IN SCALA.JS guard.withGuard {
       loggers :+= StandardOutLogger
       _logLevel = level
-    }
+    // @note IMPLEMENT IN SCALA.JS }
   }
 
   /**
@@ -95,16 +102,21 @@ trait LoggingBus extends ActorEventBus {
    */
   private[akka] def startDefaultLoggers(system: ActorSystemImpl) {
     val logName = simpleName(this) + "(" + system + ")"
+    /** @note IMPLEMENT IN SCALA.JS
     val level = levelFor(system.settings.LogLevel) getOrElse {
       // only log initialization errors directly with StandardOutLogger.print
       StandardOutLogger.print(Error(new LoggerException, logName, this.getClass, "unknown akka.loglevel " + system.settings.LogLevel))
       ErrorLevel
     }
+    */
+    val level = ErrorLevel
     try {
+      /** @note IMPLEMENT IN SCALA.JS
       val defaultLoggers = system.settings.Loggers match {
         case Nil     ⇒ classOf[DefaultLogger].getName :: Nil
         case loggers ⇒ loggers
-      }
+      }*/
+      val defaultLoggers = classOf[DefaultLogger].getName :: Nil
       val myloggers =
         for {
           loggerName ← defaultLoggers
@@ -118,10 +130,10 @@ trait LoggingBus extends ActorEventBus {
                 "] due to [" + e.toString + "]", e)
           }).get
         }
-      guard.withGuard {
+      // @note IMPLEMENT IN SCALA.JS guard.withGuard {
         loggers = myloggers
         _logLevel = level
-      }
+      // @note IMPLEMENT IN SCALA.JS }
       try {
         if (system.settings.DebugUnhandledMessage)
           subscribe(system.systemActorOf(Props(new Actor {
@@ -174,6 +186,7 @@ trait LoggingBus extends ActorEventBus {
   private def addLogger(system: ActorSystemImpl, clazz: Class[_ <: Actor], level: LogLevel, logName: String): ActorRef = {
     val name = "log" + Extension(system).id() + "-" + simpleName(clazz)
     val actor = system.systemActorOf(Props(clazz), name)
+    /** @note IMPLEMENT IN SCALA.JS
     implicit def timeout = system.settings.LoggerStartTimeout
     import akka.pattern.ask
     val response = try Await.result(actor ? InitializeLogger(this), timeout.duration) catch {
@@ -183,6 +196,9 @@ trait LoggingBus extends ActorEventBus {
     }
     if (response != LoggerInitialized)
       throw new LoggerInitializationException("Logger " + name + " did not respond with LoggerInitialized, sent instead " + response)
+    */ 
+    actor ! InitializeLogger(this)
+   
     AllLogLevels filter (level >= _) foreach (l ⇒ subscribe(actor, classFor(l)))
     publish(Debug(logName, this.getClass, "logger " + name + " started"))
     actor
@@ -564,10 +580,11 @@ object Logging {
    * Obtain LoggingAdapter with MDC support for the given actor.
    * Don't use it outside its specific Actor as it isn't thread safe
    */
+  /**@note IMPLEMENT IN SCALA.JS
   def getLogger(logSource: UntypedActor): DiagnosticLoggingAdapter = {
     val (str, clazz) = LogSource.fromAnyRef(logSource)
     new BusLogging(logSource.getContext().system.eventStream, str, clazz) with DiagnosticLoggingAdapter
-  }
+  }*/
 
   /**
    * Artificial exception injected into Error events if no Throwable is

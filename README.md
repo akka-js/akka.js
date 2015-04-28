@@ -17,7 +17,7 @@ To build the libraries, use
 
 in an sbt console.
 
-Then download the examples and follow the README.md available [here](https://github.com/yawnt/scala-js-actors-examples)
+Then download the examples and follow the README.md available [here](https://github.com/unicredit/akka.js-examples)
 
 ## Design documentation
 

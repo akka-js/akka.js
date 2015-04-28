@@ -123,7 +123,8 @@ trait TestKitBase {
   val testActor: ActorRef = {
     val impl = system.asInstanceOf[ExtendedActorSystem]
     val ref = impl.systemActorOf(TestActor.props(queue)
-      .withDispatcher(CallingThreadDispatcher.Id),
+      // @note IMPLEMENT IN SCALA.JS .withDispatcher(CallingThreadDispatcher.Id),
+      .withDispatcher("akka.actor.default-dispatcher"),
       "testActor" + TestKit.testActorId.incrementAndGet)
     awaitCond(ref match {
       case r: RepointableRef ⇒ r.isStarted

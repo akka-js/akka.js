@@ -731,11 +731,11 @@ object Logging {
   class LoggerInitializationException(msg: String) extends AkkaException(msg)
 
   trait StdOutLogger {
-    import java.text.SimpleDateFormat
+    // @note IMPLEMENT IN SCALA.JS import java.text.SimpleDateFormat
     import java.util.Date
 
     private val date = new Date()
-    private val dateFormat = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss.SSS")
+    // @note IMPLEMENT IN SCALA.JS private val dateFormat = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss.SSS")
     private val errorFormat = "[ERROR] [%s] [%s] [%s] %s%s"
     private val errorFormatWithoutCause = "[ERROR] [%s] [%s] [%s] %s"
     private val warningFormat = "[WARN] [%s] [%s] [%s] %s"
@@ -744,7 +744,8 @@ object Logging {
 
     def timestamp(event: LogEvent): String = synchronized {
       date.setTime(event.timestamp)
-      dateFormat.format(date)
+      // @note IMPLEMENT IN SCALA.JS dateFormat.format(date)
+      ""
     } // SDF isn't threadsafe
 
     def print(event: Any): Unit = event match {
@@ -795,12 +796,13 @@ object Logging {
    * <code>akka.stdout-loglevel</code>.
    */
   class StandardOutLogger extends MinimalActorRef with StdOutLogger {
+    import scala.scalajs.js
     val path: ActorPath = new RootActorPath(Address("akka", "all-systems"), "/StandardOutLogger")
     def provider: ActorRefProvider = throw new UnsupportedOperationException("StandardOutLogger does not provide")
     override val toString = "StandardOutLogger"
     override def !(message: Any)(implicit sender: ActorRef = Actor.noSender): Unit =
       if (message == null) throw new InvalidMessageException("Message is null")
-      else print(message)
+      else js.Dynamic.global.console.log(message.asInstanceOf[js.Any]) //@note IMPLEMENT IN SCALA.JS print(message)
   }
 
   val StandardOutLogger = new StandardOutLogger
@@ -811,9 +813,10 @@ object Logging {
    * logger.
    */
   class DefaultLogger extends Actor with StdOutLogger {
+    import scala.scalajs.js
     override def receive: Receive = {
       case InitializeLogger(_) ⇒ sender() ! LoggerInitialized
-      case event: LogEvent     ⇒ print(event)
+      case event: LogEvent     ⇒ js.Dynamic.global.console.log(event.asInstanceOf[js.Any]) //@note IMPLEMENT IN SCALA.JS print(event)
     }
   }
 

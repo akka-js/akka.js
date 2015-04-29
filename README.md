@@ -1,4 +1,4 @@
-# Actor system for Scala.js
+# Akka.js
 
 This project aims at providing an actor system for Scala.js, featuring:
 

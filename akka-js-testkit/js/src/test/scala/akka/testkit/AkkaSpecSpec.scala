@@ -9,19 +9,19 @@ import language.postfixOps
 import org.scalatest.WordSpec
 import org.scalatest.Matchers
 import akka.actor._
-import com.typesafe.config.ConfigFactory
+// @note IMPLEMENT IN SCALA.JS import com.typesafe.config.ConfigFactory */
 import scala.concurrent.Await
 import scala.concurrent.duration._
 import akka.actor.DeadLetter
 import akka.pattern.ask
 
-@org.junit.runner.RunWith(classOf[org.scalatest.junit.JUnitRunner])
+// @note IMPLEMENT IN SCALA.JS @org.junit.runner.RunWith(classOf[org.scalatest.junit.JUnitRunner])
 class AkkaSpecSpec extends WordSpec with Matchers {
 
   "An AkkaSpec" must {
 
     "warn about unhandled messages" in {
-      implicit val system = ActorSystem("AkkaSpec0", AkkaSpec.testConf)
+      implicit val system = ActorSystem("AkkaSpec0") // @note IMPLEMENT IN SCALA.JS , AkkaSpec.testConf)
       try {
         val a = system.actorOf(Props.empty)
         EventFilter.warning(start = "unhandled message", occurrences = 1) intercept {

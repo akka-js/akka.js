@@ -53,7 +53,7 @@ object AkkaSpec {
 }
 
 abstract class AkkaSpec(_system: ActorSystem)
-  extends TestKit(_system) with WordSpecLike with Matchers with BeforeAndAfterAll with WatchedByCoroner {
+  extends TestKit(_system) with WordSpecLike with Matchers with BeforeAndAfterAll { // @note IMPLEMENT IN SCALA.JS with WatchedByCoroner {
 
   /** @note IMPLEMENT IN SCALA.JS
   def this(config: Config) = this(ActorSystem(AkkaSpec.getCallerName(getClass),
@@ -71,7 +71,7 @@ abstract class AkkaSpec(_system: ActorSystem)
   override val invokeBeforeAllAndAfterAllEvenIfNoTestsAreExpected = true
 
   final override def beforeAll {
-    startCoroner
+    // @note IMPLEMENT IN SCALA.JS startCoroner
     atStartup()
   }
 
@@ -79,7 +79,7 @@ abstract class AkkaSpec(_system: ActorSystem)
     beforeTermination()
     shutdown()
     afterTermination()
-    stopCoroner()
+    // @note IMPLEMENT IN SCALA.JS stopCoroner()
   }
 
   protected def atStartup() {}
@@ -93,7 +93,7 @@ abstract class AkkaSpec(_system: ActorSystem)
 
   override def expectedTestDuration: FiniteDuration = 60 seconds
 
-  def muteDeadLetters(messageClasses: Class[_]*)(sys: ActorSystem = system): Unit =
+  def muteDeadLetters(messageClasses: Class[_]*)(sys: ActorSystem = system): Unit = ()
     /** @note IMPLEMENT IN SCALA.JS
     if (!sys.log.isDebugEnabled) {
       def mute(clazz: Class[_]): Unit =

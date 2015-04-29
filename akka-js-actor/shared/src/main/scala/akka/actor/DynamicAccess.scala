@@ -113,6 +113,22 @@ class JSDynamicAccess(/**val classLoader: ClassLoader*/) extends DynamicAccess {
     getClassFor(fqcn) flatMap { c ⇒ createInstanceFor(c, args) }
 
   override def getObjectFor[T: ClassTag](fqcn: String): Try[T] = {
-  	throw new Exception("TBD")
+    val splitted = fqcn.split("\\.").reverse
+    val objName = {
+      val name = splitted.head
+      if (name.last == '$') name.dropRight(1)
+      else name
+    }
+    val packageName = splitted.tail.reverse
+
+    val obj =
+        (packageName.foldLeft(scala.scalajs.runtime.environmentInfo.exportsNamespace){
+         (prev, part) =>
+            prev.selectDynamic(part)
+         }).applyDynamic(objName)()
+
+    Try {
+      obj.asInstanceOf[T]
+    }
   }
 }

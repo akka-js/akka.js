@@ -785,21 +785,19 @@ private[akka] class ActorSystemImpl(val name: String, applicationConfig: ActorSy
 
   def start(): this.type = _start
 
-/**
- * @note IMPLEMENT IN SCALA.JS
- *
-   private lazy val terminationCallbacks = {
-     implicit val d = dispatcher
-     val callbacks = new TerminationCallbacks
-     terminationFuture onComplete (_ ⇒ callbacks.run)
-     callbacks
-   }
-   def registerOnTermination[T](code: ⇒ T) { registerOnTermination(new Runnable { def run = code }) }
-   def registerOnTermination(code: Runnable) { terminationCallbacks.add(code) }
-   def awaitTermination(timeout: Duration) { Await.ready(terminationCallbacks, timeout) }
-   def awaitTermination() = awaitTermination(Duration.Inf)
-   def isTerminated = terminationCallbacks.isTerminated
- */
+
+  private lazy val terminationCallbacks = {
+    implicit val d = dispatcher
+    val callbacks = new TerminationCallbacks
+    terminationFuture onComplete (_ ⇒ callbacks.run)
+    callbacks
+  }
+  def registerOnTermination[T](code: ⇒ T) { registerOnTermination(new Runnable { def run = code }) }
+  def registerOnTermination(code: Runnable) { terminationCallbacks.add(code) }
+  // @note IMPLEMENT IN SCALA.JS def awaitTermination(timeout: Duration) { Await.ready(terminationCallbacks, timeout) }
+  // @note IMPLEMENT IN SCALA.JS def awaitTermination() = awaitTermination(Duration.Inf)
+  def isTerminated = terminationCallbacks.isTerminated
+ 
 
   def shutdown(): Unit = {
     if (!settings.LogDeadLettersDuringShutdown) logDeadLetterListener foreach stop
@@ -967,48 +965,53 @@ private[akka] class ActorSystemImpl(val name: String, applicationConfig: ActorSy
    }
  */
 
- /**
-  * @note IMPLEMENT IN SCALA.JS
-  *
-   final class TerminationCallbacks extends Runnable with Awaitable[Unit] {
-     private val lock = new ReentrantGuard
-     private var callbacks: List[Runnable] = _ //non-volatile since guarded by the lock
-     lock withGuard { callbacks = Nil }
+  final class TerminationCallbacks extends Runnable /** @note IMPLEMENT IN SCALA.JS with Awaitable[Unit] */ {
+    /** @note IMPLEMENT IN SCALA.JS
+    private val lock = new ReentrantGuard
+    private var callbacks: List[Runnable] = _ //non-volatile since guarded by the lock
+    lock withGuard { callbacks = Nil }
+    */
+    private var callbacks: List[Runnable] = Nil
 
-     private val latch = new CountDownLatch(1)
+    // @note IMPLEMENT IN SCALA.JS private val latch = new CountDownLatch(1)
 
-     final def add(callback: Runnable): Unit = {
-       latch.getCount match {
-         case 0 ⇒ throw new RejectedExecutionException("Must be called prior to system shutdown.")
-         case _ ⇒ lock withGuard {
-           if (latch.getCount == 0) throw new RejectedExecutionException("Must be called prior to system shutdown.")
-           else callbacks ::= callback
-         }
-       }
-     }
+    final def add(callback: Runnable): Unit = {
+      /** @note IMPLEMENT IN SCALA.JS
+      latch.getCount match {
+        case 0 ⇒ throw new RejectedExecutionException("Must be called prior to system shutdown.")
+        case _ ⇒ lock withGuard {
+          if (latch.getCount == 0) throw new RejectedExecutionException("Must be called prior to system shutdown.")
+          else callbacks ::= callback
+        }
+      }*/
+      callbacks ::= callback
+    }
 
-     final def run(): Unit = lock withGuard {
-       @tailrec def runNext(c: List[Runnable]): List[Runnable] = c match {
-         case Nil ⇒ Nil
-         case callback :: rest ⇒
-           try callback.run() catch { case NonFatal(e) ⇒ log.error(e, "Failed to run termination callback, due to [{}]", e.getMessage) }
-           runNext(rest)
-       }
-       try { callbacks = runNext(callbacks) } finally latch.countDown()
-     }
+    final def run(): Unit = { // @note IMPLEMENT IN SCALA.JS lock withGuard {
+      @tailrec def runNext(c: List[Runnable]): List[Runnable] = c match {
+        case Nil ⇒ Nil
+        case callback :: rest ⇒ callback.run(); runNext(rest)
+          /** @note IMPLEMENT IN SCALA.JS
+          try callback.run() catch { case NonFatal(e) ⇒ log.error(e, "Failed to run termination callback, due to [{}]", e.getMessage) }
+          runNext(rest)
+          */
+      }
+      // @note IMPLEMENT IN SCALA.JS  try { callbacks = runNext(callbacks) } finally latch.countDown()
+      callbacks = runNext(callbacks)
+    }
 
-     final def ready(atMost: Duration)(implicit permit: CanAwait): this.type = {
-       if (atMost.isFinite()) {
-         if (!latch.await(atMost.length, atMost.unit))
-           throw new TimeoutException("Await termination timed out after [%s]" format (atMost.toString))
-       } else latch.await()
+    /** @note IMPLEMENT IN SCALA.JS
+    final def ready(atMost: Duration)(implicit permit: CanAwait): this.type = {
+      if (atMost.isFinite()) {
+        if (!latch.await(atMost.length, atMost.unit))
+          throw new TimeoutException("Await termination timed out after [%s]" format (atMost.toString))
+      } else latch.await()
 
-       this
-     }
+      this
+    }
 
-     final def result(atMost: Duration)(implicit permit: CanAwait): Unit = ready(atMost)
-
-     final def isTerminated: Boolean = latch.getCount == 0
-   }
-  */
+    final def result(atMost: Duration)(implicit permit: CanAwait): Unit = ready(atMost)
+    */
+    final def isTerminated: Boolean = callbacks == Nil // @note IMPLEMENT IN SCALA.JS latch.getCount == 0
+  }
 }

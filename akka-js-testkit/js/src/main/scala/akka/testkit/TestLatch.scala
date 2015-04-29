@@ -34,6 +34,9 @@ class TestLatch(count: Int = 1)(implicit system: ActorSystem) extends Awaitable[
   def isOpen: Boolean = latch.getCount == 0
   def open() = while (!isOpen) countDown()
   def reset() = latch = new CountDownLatch(count)
+  
+  // @note THIS IS A HACK, XXX FIX
+  def await = latch.await
 
   @throws(classOf[TimeoutException])
   def ready(atMost: Duration)(implicit permit: CanAwait) = {

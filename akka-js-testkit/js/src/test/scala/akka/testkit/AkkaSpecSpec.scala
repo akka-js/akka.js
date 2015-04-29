@@ -9,8 +9,9 @@ import language.postfixOps
 import org.scalatest.WordSpec
 import org.scalatest.Matchers
 import akka.actor._
-// @note IMPLEMENT IN SCALA.JS import com.typesafe.config.ConfigFactory */
-import scala.concurrent.Await
+// @note IMPLEMENT IN SCALA.JS import com.typesafe.config.ConfigFactory 
+// @note IMPLEMENT IN SCALA.JS import scala.concurrent.Await
+import akka.concurrent.Await
 import scala.concurrent.duration._
 import akka.actor.DeadLetter
 import akka.pattern.ask
@@ -38,7 +39,7 @@ class AkkaSpecSpec extends WordSpec with Matchers {
       val conf = Map(
         "akka.actor.debug.lifecycle" -> true, "akka.actor.debug.event-stream" -> true,
         "akka.loglevel" -> "DEBUG", "akka.stdout-loglevel" -> "DEBUG")
-      val system = ActorSystem("AkkaSpec1", ConfigFactory.parseMap(conf.asJava).withFallback(AkkaSpec.testConf))
+      val system = ActorSystem("AkkaSpec1")// @note IMPLEMENT IN SCALA.JS , AkkaSpec.testConf), ConfigFactory.parseMap(conf.asJava).withFallback(AkkaSpec.testConf))
       val spec = new AkkaSpec(system) {
         val ref = Seq(testActor, system.actorOf(Props.empty, "name"))
       }
@@ -48,18 +49,19 @@ class AkkaSpecSpec extends WordSpec with Matchers {
     }
 
     "stop correctly when sending PoisonPill to rootGuardian" in {
-      val system = ActorSystem("AkkaSpec2", AkkaSpec.testConf)
+      val system = ActorSystem("AkkaSpec2") // @note IMPLEMENT IN SCALA.JS , AkkaSpec.testConf), AkkaSpec.testConf)
       val spec = new AkkaSpec(system) {}
       val latch = new TestLatch(1)(system)
       system.registerOnTermination(latch.countDown())
 
       system.actorSelection("/") ! PoisonPill
 
-      Await.ready(latch, 2 seconds)
+      // @note IMPLEMENT IN SCALA.JS Await.ready(latch, 2 seconds)
+      latch.await
     }
 
     "enqueue unread messages from testActor to deadLetters" in {
-      val system, otherSystem = ActorSystem("AkkaSpec3", AkkaSpec.testConf)
+      val system, otherSystem = ActorSystem("AkkaSpec3") // @note IMPLEMENT IN SCALA.JS , AkkaSpec.testConf), AkkaSpec.testConf)
 
       try {
         var locker = Seq.empty[DeadLetter]
@@ -87,8 +89,9 @@ class AkkaSpecSpec extends WordSpec with Matchers {
         val latch = new TestLatch(1)(system)
         system.registerOnTermination(latch.countDown())
         TestKit.shutdownActorSystem(system)
-        Await.ready(latch, 2 seconds)
-        Await.result(davyJones ? "Die!", timeout.duration) should be("finally gone")
+        // @note IMPLEMENT IN SCALA.JS Await.ready(latch, 2 seconds)
+        latch.await
+        Await.result(davyJones ? "Die!"/** @note IMPLEMENT IN SCALA.JS , timeout.duration */) should be("finally gone")
 
         // this will typically also contain log messages which were sent after the logger shutdown
         locker should contain(DeadLetter(42, davyJones, probe.ref))

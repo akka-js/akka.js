@@ -39,26 +39,55 @@ class ExampleSpec extends FlatSpec with Matchers {
 object BlockingEventLoop {
   import scala.scalajs.js
   import scala.scalajs.js.Dynamic.global
-  import scala.collection.mutable.Queue
+  import scala.scalajs.js.timers._
+  import scala.collection.mutable.{ Queue, ListBuffer }
   
   private val oldSetTimeout = global.setTimeout
+  private val oldSetInterval = global.setInterval
+  private val oldClearTimeout = global.clearTimeout
+  private val oldClearInterval = global.clearInterval
+  
+  private def timer = js.Date.now()
+  private var lastRun: Double = 0
   
   private val queue = new Queue[js.Function0[_]]
+  private val timeoutEvents = new ListBuffer[(js.Function0[_], Double)]()
+  private val intervalEvents = new ListBuffer[(js.Function0[_], Double)]()
   
-  private var i = 0
-  
-  def switch = global.setTimeout = { (f: js.Function0[_], delay: Number) => 
-    i += 1
-    println(s"ENQUEUING ${i}")
-    queue.enqueue(f)
+  def switch = {
+    global.setTimeout = { (f: js.Function0[_], delay: Number) => 
+      val handle =  f -> (timer + delay.doubleValue())
+      timeoutEvents += handle
+      handle.asInstanceOf[SetTimeoutHandle]
+    }
+    global.setInterval = { (f: js.Function0[_], interval: Number) => 
+      val handle = f -> interval.doubleValue()
+      intervalEvents += handle
+      handle.asInstanceOf[SetIntervalHandle]
+    }
+    global.clearTimeout = (handle: SetTimeoutHandle) => timeoutEvents -= handle.asInstanceOf[(js.Function0[_], Double)]
+    global.clearInterval = (handle: SetIntervalHandle) => intervalEvents -= handle.asInstanceOf[(js.Function0[_], Double)]
   }
   
-  def reset = global.setTimeout = oldSetTimeout
+  def reset = {
+    global.setTimeout = oldSetTimeout
+    global.setInterval = oldSetInterval
+    global.clearTimeout = oldClearTimeout
+    global.clearInterval = oldClearInterval
+  }
   
   def tick = {
-    i -= 1
-    println(s"DEQUEUING ${i}")
-    queue.dequeue()()
+    timeoutEvents.filter(_._2 < timer).foreach({ x => 
+      queue.enqueue(x._1)
+      timeoutEvents -= x
+    })
+    
+    intervalEvents.filter(_._2 < timer - lastRun).foreach({ x => 
+      queue.enqueue(x._1)
+    })
+    
+    if(queue.nonEmpty) queue.dequeue()()
+    lastRun = timer
   }
 }
 
@@ -125,7 +154,7 @@ object BasicActorTest extends TestSuite {
 
       other ! "go"
 
-      //system.scheduler.scheduleOnce(20 seconds)(p.tryFailure(new TimeoutException("too late")))
+      system.scheduler.scheduleOnce(2 seconds)(p.tryFailure(new TimeoutException("too late")))
       val v = Await.result(p.future)
       BlockingEventLoop.reset
       assert(v == 1)

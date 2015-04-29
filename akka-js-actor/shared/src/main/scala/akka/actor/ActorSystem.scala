@@ -449,11 +449,8 @@ abstract class ActorSystem extends ActorRefFactory {
    *
    * Scala API
    */
-/**
- * @note IMPLEMENT IN SCALA.JS
- *
    def registerOnTermination[T](code: ⇒ T): Unit
- */
+ 
 
   /**
    * Java API: Register a block of code (callback) to run after ActorSystem.shutdown has been issued and
@@ -464,11 +461,7 @@ abstract class ActorSystem extends ActorRefFactory {
    *
    * @throws a RejectedExecutionException if the System has already shut down or if shutdown has been initiated.
    */
-/**
- * @note IMPLEMENT IN SCALA.JS
- *
    def registerOnTermination(code: Runnable): Unit
- */
 
   /**
    * Block current thread until the system has been shutdown, or the specified
@@ -508,11 +501,7 @@ abstract class ActorSystem extends ActorRefFactory {
    * returns `false`, the status is actually unknown, since it might have
    * changed since you queried it.
    */
-/**
- * @note IMPLEMENT IN SCALA.JS
- *
    def isTerminated: Boolean
- */
 
   /**
    * Registers the provided extension and creates its payload, if this extension isn't already registered

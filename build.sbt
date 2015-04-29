@@ -47,7 +47,8 @@ lazy val akkaTestkit = crossProject.in(file("akka-js-testkit"))
     preLinkJSEnv := NodeJSEnv().value,
     postLinkJSEnv := NodeJSEnv().value,
     libraryDependencies ++= Seq(
-      "akka.js" %%% "akka-js-actor" % "0.2-SNAPSHOT"
+      "akka.js" %%% "akka-js-actor" % "0.2-SNAPSHOT",
+      "org.scalatest" %%% "scalatestjs" % "2.3.0-SNAP2"
     )
   )
 

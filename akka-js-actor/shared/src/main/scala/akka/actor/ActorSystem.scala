@@ -404,11 +404,7 @@ abstract class ActorSystem extends ActorRefFactory {
   /**
    * Convenient logging adapter for logging to the [[ActorSystem.eventStream]].
    */
-  /**
-   * @note IMPLEMENT IN SCALA.JS
-   *
    def log: LoggingAdapter
-   */
 
   /**
    * Actor reference where messages are re-routed to which were addressed to

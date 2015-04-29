@@ -768,6 +768,7 @@ object TestKit {
                           duration: Duration = 10 seconds,
                           verifySystemShutdown: Boolean = false): Unit = {
     actorSystem.shutdown()
+    /** @note IMPLEMENT IN SCALA.JS
     try actorSystem.awaitTermination(duration) catch {
       case _: TimeoutException ⇒
         val msg = "Failed to stop [%s] within [%s] \n%s".format(actorSystem.name, duration,
@@ -775,6 +776,7 @@ object TestKit {
         if (verifySystemShutdown) throw new RuntimeException(msg)
         else actorSystem.log.warning(msg)
     }
+    */
   }
 }
 

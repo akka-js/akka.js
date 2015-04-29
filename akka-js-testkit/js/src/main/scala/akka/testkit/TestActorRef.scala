@@ -10,6 +10,7 @@ import akka.dispatch._
 /** @note IMPLEMENT IN SCALA.JS
 import scala.concurrent.Await
 */
+import akka.concurrent.Await
 import scala.concurrent.duration.Duration
 import java.util.concurrent.TimeUnit
 import scala.concurrent.Future
@@ -92,16 +93,16 @@ class TestActorRef[T <: Actor](
    * constructor. Beware that this reference is discarded by the ActorRef upon restarting the actor (should this
    * reference be linked to a supervisor). The old Actor may of course still be used in post-mortem assertions.
    */
-  def underlyingActor: Future[T] = {
+  def underlyingActor: T = {
     // volatile mailbox read to bring in actor field
     if (isTerminated) throw new IllegalActorStateException("underlying actor is terminated")
     underlying.actor.asInstanceOf[T] match {
       case null ⇒
         /** @note IMPLEMENT IN SCALA.JS val t = TestKitExtension(_system).DefaultTimeout 
-        Await.result(this.?(InternalGetActor)(t), t.duration).asInstanceOf[T]*/
+        Await.result(this.?(InternalGetActor)(t), t.duration).asInstanceOf[T]*/ 
         val t = Duration(60000L, TimeUnit.MILLISECONDS)
-        this.?(InternalGetActor)(t).asInstanceOf[Future[T]]
-      case ref ⇒ /** @note IMPLEMENT IN SCALA.JS */ Future.successful(ref)
+        Await.result(this.?(InternalGetActor)(t)).asInstanceOf[T]
+      case ref ⇒ ref
     }
   }
 

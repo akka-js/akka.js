@@ -11,11 +11,12 @@ import akka.actor.ActorSystem
 import akka.event.{ Logging, LoggingAdapter }
 import scala.concurrent.duration._
 import scala.concurrent.Future
-import com.typesafe.config.{ Config, ConfigFactory }
+// @note IMPLEMENT IN SCALA.JS import com.typesafe.config.{ Config, ConfigFactory }
 import akka.dispatch.Dispatchers
 import akka.testkit.TestEvent._
 
 object AkkaSpec {
+  /** @note IMPLEMENT IN SCALA.JS
   val testConf: Config = ConfigFactory.parseString("""
       akka {
         loggers = ["akka.testkit.TestEventListener"]
@@ -37,7 +38,7 @@ object AkkaSpec {
   def mapToConfig(map: Map[String, Any]): Config = {
     import scala.collection.JavaConverters._
     ConfigFactory.parseMap(map.asJava)
-  }
+  }*/
 
   def getCallerName(clazz: Class[_]): String = {
     val s = (Thread.currentThread.getStackTrace map (_.getClassName) drop 1)
@@ -54,6 +55,7 @@ object AkkaSpec {
 abstract class AkkaSpec(_system: ActorSystem)
   extends TestKit(_system) with WordSpecLike with Matchers with BeforeAndAfterAll with WatchedByCoroner {
 
+  /** @note IMPLEMENT IN SCALA.JS
   def this(config: Config) = this(ActorSystem(AkkaSpec.getCallerName(getClass),
     ConfigFactory.load(config.withFallback(AkkaSpec.testConf))))
 
@@ -62,6 +64,7 @@ abstract class AkkaSpec(_system: ActorSystem)
   def this(configMap: Map[String, _]) = this(AkkaSpec.mapToConfig(configMap))
 
   def this() = this(ActorSystem(AkkaSpec.getCallerName(getClass), AkkaSpec.testConf))
+  */
 
   val log: LoggingAdapter = Logging(system, this.getClass)
 
@@ -91,11 +94,13 @@ abstract class AkkaSpec(_system: ActorSystem)
   override def expectedTestDuration: FiniteDuration = 60 seconds
 
   def muteDeadLetters(messageClasses: Class[_]*)(sys: ActorSystem = system): Unit =
+    /** @note IMPLEMENT IN SCALA.JS
     if (!sys.log.isDebugEnabled) {
       def mute(clazz: Class[_]): Unit =
         sys.eventStream.publish(Mute(DeadLettersFilter(clazz)(occurrences = Int.MaxValue)))
       if (messageClasses.isEmpty) mute(classOf[AnyRef])
       else messageClasses foreach mute
     }
+    */
 
 }

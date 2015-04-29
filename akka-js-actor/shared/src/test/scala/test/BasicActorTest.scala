@@ -36,6 +36,46 @@ class ExampleSpec extends FlatSpec with Matchers {
 }
 */
 
+object BlockingEventLoop {
+  import scala.scalajs.js
+  import scala.scalajs.js.Dynamic.global
+  import scala.collection.mutable.Queue
+  
+  private val oldSetTimeout = global.setTimeout
+  
+  private val queue = new Queue[js.Function0[_]]
+  
+  private var i = 0
+  
+  def switch = global.setTimeout = { (f: js.Function0[_], delay: Number) => 
+    i += 1
+    println(s"ENQUEUING ${i}")
+    queue.enqueue(f)
+  }
+  
+  def reset = global.setTimeout = oldSetTimeout
+  
+  def tick = {
+    i -= 1
+    println(s"DEQUEUING ${i}")
+    queue.dequeue()()
+  }
+}
+
+object Await {
+  import scala.concurrent.Future
+  import scala.util.{ Success, Failure }
+  @scala.annotation.tailrec
+  def result[A](f: Future[A]): A = {
+    BlockingEventLoop.tick
+    f.value match { 
+      case None => result(f)
+      case Some(Success(m)) => m
+      case Some(Failure(m)) => throw m
+    }
+  }
+}
+
 case class Greeting(who: String)
 
 class GreetingActor extends Actor {
@@ -69,6 +109,7 @@ object BasicActorTest extends TestSuite {
 
   val tests = TestSuite {
     "spawn an actor and send a message" - {
+      BlockingEventLoop.switch
       val system = ActorSystem("greeting-system")
       val actor = system.actorOf(Props(new GreetingActor), name = "greeter")
 
@@ -84,11 +125,13 @@ object BasicActorTest extends TestSuite {
 
       other ! "go"
 
-      system.scheduler.scheduleOnce(2 seconds)(p.tryFailure(new TimeoutException("too late")))
-      p.future
+      //system.scheduler.scheduleOnce(20 seconds)(p.tryFailure(new TimeoutException("too late")))
+      val v = Await.result(p.future)
+      BlockingEventLoop.reset
+      assert(v == 1)
     }
     
-    "spawn an actor with parameters" - {
+    /*"spawn an actor with parameters" - {
       val system = ActorSystem("greeting2-system")
       println("Class is "+classOf[Greeting2Actor])
       val actor = system.actorOf(Props(classOf[Greeting2Actor], "Rob"), name = "greeter2")
@@ -107,7 +150,7 @@ object BasicActorTest extends TestSuite {
 
       system.scheduler.scheduleOnce(2 seconds)(p.tryFailure(new TimeoutException("too late")))
       p.future
-    }
+    }*/
     
   }
 }

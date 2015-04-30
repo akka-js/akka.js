@@ -765,6 +765,7 @@ object TestKit {
    */
   def awaitCond(p: ⇒ Boolean, max: Duration, interval: Duration = 100.millis, noThrow: Boolean = false): Boolean = {
     val stop = now + max
+    
     /** @note IMPLEMENT IN SCALA.JS
     @tailrec
     def poll(): Boolean = {
@@ -781,17 +782,25 @@ object TestKit {
     }
 
     poll()*/
+    println("BURP")
     import scala.scalajs.js
     val f = scala.concurrent.Promise[Boolean]
     
-    val id = js.Dynamic.global.setInterval({
-      if(p) f.success(true)
-      ()
-    }, 100)
+    lazy val fn: js.Function0[Any] = { () =>
+      if (!p) {
+        val toSleep = stop - now
+        if (toSleep <= Duration.Zero) {
+          if (noThrow) f.success(false)
+          else f.failure(new AssertionError("timeout " + max + " expired"))
+        } else {
+          js.Dynamic.global.setTimeout(fn, (toSleep min interval).toMillis.asInstanceOf[js.Any])
+        }
+      } else true          
+    }
     
-    val ret = akka.concurrent.Await.result(f.future)
-    js.Dynamic.global.clearInterval(id)
-    ret
+    js.Dynamic.global.setTimeout(fn, 100)
+    
+    akka.concurrent.Await.result(f.future)
   }
 
   /**

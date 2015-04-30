@@ -43,13 +43,17 @@ lazy val akkaTestkit = crossProject.in(file("akka-js-testkit"))
   )
   .jvmSettings(
   )
-  .jsSettings(
+  .jsSettings( 
+    unmanagedSourceDirectories in Compile += (sourceDirectory in akkaActorJS).value,
+    unmanagedSourceDirectories in Compile += (baseDirectory in akkaActorJS).value / "../shared/src",
     preLinkJSEnv := NodeJSEnv().value,
-    postLinkJSEnv := NodeJSEnv().value,
+    postLinkJSEnv := NodeJSEnv().value.withSourceMap(true),
     libraryDependencies ++= Seq(
-      "akka.js" %%% "akka-js-actor" % "0.2-SNAPSHOT",
-      "org.scalatest" %%% "scalatestjs" % "2.3.0-SNAP2"
-    )
+      "org.scalatest" %%% "scalatestjs" % "2.3.0-SNAP2",
+      "org.scala-js" %%% "scalajs-dom" % "0.8.0",
+      "be.doeraene" %%% "scalajs-pickling" % "0.4.0",
+      "com.lihaoyi" %%% "utest" % "0.3.1" 
+   )
   )
 
 lazy val akkaWebSocket = crossProject.in(file("akka-js-websocket")).

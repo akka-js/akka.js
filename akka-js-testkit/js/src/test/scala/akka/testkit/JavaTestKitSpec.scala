@@ -1,7 +1,7 @@
 package akka.testkit
 
 import language.postfixOps
-
+/** @note IMPLEMENT IN SCALA.JS
 import org.scalatest.WordSpec
 import org.scalatest.Matchers
 import org.scalatest.{ BeforeAndAfterEach, WordSpec }
@@ -10,7 +10,7 @@ import scala.concurrent.{ Future, Await }
 import scala.concurrent.duration._
 import akka.pattern.ask
 
-@org.junit.runner.RunWith(classOf[org.scalatest.junit.JUnitRunner])
+// @note IMPLEMENT IN SCALA.JS @org.junit.runner.RunWith(classOf[org.scalatest.junit.JUnitRunner])
 class JavaTestKitSpec extends AkkaSpec with DefaultTimeout {
 
   "JavaTestKit" must {
@@ -49,3 +49,4 @@ class JavaTestKitSpec extends AkkaSpec with DefaultTimeout {
   }
 
 }
+*/

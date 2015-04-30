@@ -96,7 +96,7 @@ abstract class EventFilter(occurrences: Int) {
    */
   def intercept[T](code: ⇒ T)(implicit system: ActorSystem): T = {
     system.eventStream publish TestEvent.Mute(this)
-    val leeway = TestKitExtension(system).TestEventFilterLeeway
+    val leeway = TestKitSettings.TestEventFilterLeeway // @note IMPLEMENT IN SCALA.JS TestKitExtension(system).TestEventFilterLeeway
     try {
       val result = code
       if (!awaitDone(leeway))

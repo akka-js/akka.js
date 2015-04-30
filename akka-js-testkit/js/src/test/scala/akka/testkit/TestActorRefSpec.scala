@@ -2,7 +2,7 @@
  * Copyright (C) 2009-2014 Typesafe Inc. <http://www.typesafe.com>
  */
 package akka.testkit
-
+/** @note IMPLEMENT IN SCALA.JS
 import language.{ postfixOps, reflectiveCalls }
 import org.scalatest.Matchers
 import org.scalatest.{ BeforeAndAfterEach, WordSpec }
@@ -268,3 +268,4 @@ class TestActorRefSpec extends AkkaSpec("disp1.type=Dispatcher") with BeforeAndA
 
   }
 }
+*/

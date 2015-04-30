@@ -20,7 +20,7 @@ package object testkit {
     try {
       val result = block
 
-      val testKitSettings = TestKitExtension(system)
+      val testKitSettings = TestKitSettings //@note IMPLEMENT IN SCALA.JS TestKitExtension(system)
       val stop = now + testKitSettings.TestEventFilterLeeway.toMillis
       val failed = eventFilters filterNot (_.awaitDone(Duration(stop - now, MILLISECONDS))) map ("Timeout (" + testKitSettings.TestEventFilterLeeway + ") waiting for " + _)
       if (failed.nonEmpty)
@@ -49,6 +49,6 @@ package object testkit {
    */
   implicit class TestDuration(val duration: FiniteDuration) extends AnyVal {
     def dilated(implicit system: ActorSystem): FiniteDuration =
-      (duration * TestKitExtension(system).TestTimeFactor).asInstanceOf[FiniteDuration]
+      (duration * /** @note IMPLEMENT IN SCALA.JS TestKitExtension(system) */ TestKitSettings.TestTimeFactor).asInstanceOf[FiniteDuration]
   }
 }

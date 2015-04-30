@@ -3,8 +3,9 @@ package akka.testkit
 import scala.concurrent.duration._
 import org.scalatest.exceptions.TestFailedException
 
-@org.junit.runner.RunWith(classOf[org.scalatest.junit.JUnitRunner])
-class TestTimeSpec extends AkkaSpec(Map("akka.test.timefactor" -> 2.0)) {
+/*
+// @note IMPLEMENT IN SCALA.JS @org.junit.runner.RunWith(classOf[org.scalatest.junit.JUnitRunner])
+class TestTimeSpec extends AkkaSpec {// @note IMPLEMENT IN SCALA.JS Map("akka.test.timefactor" -> 2.0)) {
 
   "A TestKit" must {
 
@@ -31,4 +32,4 @@ class TestTimeSpec extends AkkaSpec(Map("akka.test.timefactor" -> 2.0)) {
 
   }
 
-}
+}*/

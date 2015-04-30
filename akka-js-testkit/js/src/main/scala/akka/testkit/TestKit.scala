@@ -8,7 +8,7 @@ import scala.annotation.{ varargs, tailrec }
 import scala.collection.immutable
 import scala.concurrent.duration._
 import scala.reflect.ClassTag
-import java.util.concurrent._
+// @note IMPLEMENT IN SCALA.JS import java.util.concurrent._
 import java.util.concurrent.atomic.AtomicInteger
 import akka.actor._
 import akka.actor.Actor._
@@ -56,10 +56,11 @@ object TestActor {
   val FALSE = (x: Any) ⇒ false
 
   // make creator serializable, for VerifySerializabilitySpec
-  def props(queue: BlockingDeque[Message]): Props = Props(classOf[TestActor], queue)
+  // @note IMPLEMENT IN SCALA.JSdef props(queue: BlockingDeque[Message]): Props = Props(classOf[TestActor], queue)
+  def props(queue: scala.collection.mutable.Queue[Message]): Props = Props(classOf[TestActor], queue)
 }
 
-class TestActor(queue: BlockingDeque[TestActor.Message]) extends Actor {
+class TestActor(var queue: scala.collection.mutable.Queue[TestActor.Message]/** @note IMPLEMENT IN SCALA.JS queue: BlockingDeque[TestActor.Message] */) extends Actor {
   import TestActor._
 
   var ignore: Ignore = None
@@ -77,12 +78,17 @@ class TestActor(queue: BlockingDeque[TestActor.Message]) extends Actor {
         case other       ⇒ other
       }
       val observe = ignore map (ignoreFunc ⇒ !ignoreFunc.applyOrElse(x, FALSE)) getOrElse true
-      if (observe) queue.offerLast(RealMessage(x, sender()))
+      if (observe) {
+        // @note IMPLEMENT IN SCALA.JS queue.offerLast(RealMessage(x, sender()))
+        val tmp = queue.reverse
+        tmp.enqueue(RealMessage(x, sender()))
+        queue = tmp.reverse
+      }
   }
 
   override def postStop() = {
-    import scala.collection.JavaConverters._
-    queue.asScala foreach { m ⇒ context.system.deadLetters.tell(DeadLetter(m.msg, m.sender, self), m.sender) }
+    //@note IMPLEMENT IN SCALA.JS import scala.collection.JavaConverters._
+    queue/** @note IMPLEMENT IN SCALA.JS .asScala */ foreach { m ⇒ context.system.deadLetters.tell(DeadLetter(m.msg, m.sender, self), m.sender) }
   }
 }
 
@@ -109,9 +115,10 @@ trait TestKitBase {
   import TestActor.{ Message, RealMessage, NullMessage }
 
   implicit val system: ActorSystem
-  val testKitSettings = TestKitExtension(system)
+  val testKitSettings = TestKitSettings //@note IMPLEMENT IN SCALA.JS TestKitExtension(system)
 
-  private val queue = new LinkedBlockingDeque[Message]()
+  // @note IMPLEMENT IN SCALA.JS private val queue = new LinkedBlockingDeque[Message]()
+  private val queue = new scala.collection.mutable.Queue[Message]()
   private[akka] var lastMessage: Message = NullMessage
 
   def lastSender = lastMessage.sender
@@ -219,6 +226,7 @@ trait TestKitBase {
    * which uses the configuration entry "akka.test.timefactor".
    */
   def awaitCond(p: ⇒ Boolean, max: Duration = Duration.Undefined, interval: Duration = 100.millis, message: String = "") {
+    /** @note IMPLEMENT IN SCALA.JS 
     val _max = remainingOrDilated(max)
     val stop = now + _max
 
@@ -231,7 +239,17 @@ trait TestKitBase {
       }
     }
 
-    poll(_max min interval)
+    poll(_max min interval)*/
+    import scala.scalajs.js
+    val f = scala.concurrent.Promise[Boolean]
+    
+    val id = js.Dynamic.global.setInterval({
+      if(p) f.success(true)
+      ()
+    }, 100)
+    
+    akka.concurrent.Await.result(f.future)
+    js.Dynamic.global.clearInterval(id)
   }
 
   /**
@@ -245,10 +263,10 @@ trait TestKitBase {
    * Note that the timeout is scaled using Duration.dilated,
    * which uses the configuration entry "akka.test.timefactor".
    */
-  def awaitAssert(a: ⇒ Any, max: Duration = Duration.Undefined, interval: Duration = 800.millis) {
+  def awaitAssert(a: ⇒ Any, max: Duration = Duration.Undefined, interval: Duration = 800.millis) { 
     val _max = remainingOrDilated(max)
     val stop = now + _max
-
+    /** @note IMPLEMENT IN SCALA.JS
     @tailrec
     def poll(t: Duration) {
       val failed =
@@ -263,7 +281,23 @@ trait TestKitBase {
       }
     }
 
-    poll(_max min interval)
+    poll(_max min interval)*/
+    import scala.scalajs.js
+    val f = scala.concurrent.Promise[Boolean]
+    
+    val id = js.Dynamic.global.setInterval({
+      val failed =
+        try { a; false } catch {
+          case NonFatal(e) ⇒
+            if ((now + 800.millis) >= stop) throw e
+            true
+        }
+        if(!failed) f.success(true)
+      ()
+    }, 100)
+    
+    akka.concurrent.Await.result(f.future)
+    js.Dynamic.global.clearInterval(id)
   }
 
   /**
@@ -603,7 +637,8 @@ trait TestKitBase {
             msg = lastMessage
             doit(f(o) :: acc, count + 1)
           case RealMessage(o, _) ⇒
-            queue.offerFirst(lastMessage)
+            // @note IMPLEMENT IN SCALA.JS queue.offerFirst(lastMessage)
+            queue.enqueue(lastMessage)
             lastMessage = msg
             acc.reverse
         }
@@ -645,11 +680,14 @@ trait TestKitBase {
   def receiveOne(max: Duration): AnyRef = {
     val message =
       if (max == 0.seconds) {
-        queue.pollFirst
+        // @note IMPLEMENT IN SCALA.JS queue.pollFirst
+        queue.dequeue
       } else if (max.isFinite) {
-        queue.pollFirst(max.length, max.unit)
+        // @note IMPLEMENT IN SCALA.JS queue.pollFirst(max.length, max.unit)
+        queue.dequeue
       } else {
-        queue.takeFirst
+        // @note IMPLEMENT IN SCALA.JS queue.takeFirst
+        queue.dequeue
       }
     lastWasNoMsg = false
     message match {
@@ -727,7 +765,7 @@ object TestKit {
    */
   def awaitCond(p: ⇒ Boolean, max: Duration, interval: Duration = 100.millis, noThrow: Boolean = false): Boolean = {
     val stop = now + max
-
+    /** @note IMPLEMENT IN SCALA.JS
     @tailrec
     def poll(): Boolean = {
       if (!p) {
@@ -742,7 +780,18 @@ object TestKit {
       } else true
     }
 
-    poll()
+    poll()*/
+    import scala.scalajs.js
+    val f = scala.concurrent.Promise[Boolean]
+    
+    val id = js.Dynamic.global.setInterval({
+      if(p) f.success(true)
+      ()
+    }, 100)
+    
+    val ret = akka.concurrent.Await.result(f.future)
+    js.Dynamic.global.clearInterval(id)
+    ret
   }
 
   /**
@@ -756,7 +805,7 @@ object TestKit {
    */
   @deprecated("Use JavaTestKit.dilated", "2.3")
   def dilated(duration: Duration, system: ActorSystem): Duration =
-    duration * TestKitExtension(system).TestTimeFactor
+    duration * TestKitSettings/** @note IMPLEMENT IN SCALA.JS TestKitExtension(system)*/.TestTimeFactor
 
   /**
    * Shut down an actor system and wait for termination.

@@ -3,7 +3,7 @@
  */
 
 package akka.testkit
-
+/** @note IMPLEMENT IN SCALA.JS
 import language.postfixOps
 
 import org.scalatest.Matchers
@@ -59,3 +59,4 @@ class TestFSMRefSpec extends AkkaSpec {
     }
   }
 }
+*/

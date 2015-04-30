@@ -359,21 +359,17 @@ trait ActorRefFactory {
    * the supplied path, it is recommended to send a message and gather the
    * replies in order to resolve the matching set of actors.
    */
- /**
-  * @note IMPLEMENT IN SCALA.JS
-  * Why?
-  *
-  * def actorSelection(path: String): ActorSelection = path match {
-  *   case RelativeActorPath(elems) ⇒
-  *     if (elems.isEmpty) ActorSelection(provider.deadLetters, "")
-  *     else if (elems.head.isEmpty) ActorSelection(provider.rootGuardian, elems.tail)
-  *     else ActorSelection(lookupRoot, elems)
-  *   case ActorPathExtractor(address, elems) ⇒
-  *     ActorSelection(provider.rootGuardianAt(address), elems)
-  *   case _ ⇒
-  *     ActorSelection(provider.deadLetters, "")
-  * }
-  */
+  def actorSelection(path: String): ActorSelection = path match {
+    case RelativeActorPath(elems) ⇒
+      if (elems.isEmpty) ActorSelection(provider.deadLetters, "")
+      else if (elems.head.isEmpty) ActorSelection(provider.rootGuardian, elems.tail)
+      else ActorSelection(lookupRoot, elems)
+    case ActorPathExtractor(address, elems) ⇒
+      ActorSelection(provider.rootGuardianAt(address), elems)
+    case _ ⇒
+      ActorSelection(provider.deadLetters, "")
+  }
+  
 
   /**
    * Construct an [[akka.actor.ActorSelection]] from the given path, which is

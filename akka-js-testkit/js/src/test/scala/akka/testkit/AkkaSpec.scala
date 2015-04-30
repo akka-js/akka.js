@@ -40,7 +40,7 @@ object AkkaSpec {
     ConfigFactory.parseMap(map.asJava)
   }*/
 
-  def getCallerName(clazz: Class[_]): String = {
+  /*def getCallerName(clazz: Class[_]): String = {
     val s = (Thread.currentThread.getStackTrace map (_.getClassName) drop 1)
       .dropWhile(_ matches "(java.lang.Thread|.*AkkaSpec.?$)")
     val reduced = s.lastIndexWhere(_ == clazz.getName) match {
@@ -48,7 +48,7 @@ object AkkaSpec {
       case z  ⇒ s drop (z + 1)
     }
     reduced.head.replaceFirst(""".*\.""", "").replaceAll("[^a-zA-Z_0-9]", "_")
-  }
+  }*/
 
 }
 
@@ -65,6 +65,7 @@ abstract class AkkaSpec(_system: ActorSystem)
 
   def this() = this(ActorSystem(AkkaSpec.getCallerName(getClass), AkkaSpec.testConf))
   */
+  def this() = this(ActorSystem((new scala.util.Random()).nextString(10)))
 
   val log: LoggingAdapter = Logging(system, this.getClass)
 
@@ -91,7 +92,7 @@ abstract class AkkaSpec(_system: ActorSystem)
   def spawn(dispatcherId: String = Dispatchers.DefaultDispatcherId)(body: ⇒ Unit): Unit =
     Future(body)(system.dispatchers.lookup(dispatcherId))
 
-  override def expectedTestDuration: FiniteDuration = 60 seconds
+  /** @note IMPLEMENT IN SCALA.JS override */ def expectedTestDuration: FiniteDuration = 60 seconds
 
   def muteDeadLetters(messageClasses: Class[_]*)(sys: ActorSystem = system): Unit = ()
     /** @note IMPLEMENT IN SCALA.JS

@@ -4,21 +4,29 @@ import scala.scalajs.js
 import scala.scalajs.js.JSON
 import scala.concurrent.duration.{ FiniteDuration, Duration, SECONDS }
 
-class ConfigFactory {
+object ConfigFactory {
   def parseString(s: String) = {
-    val parsedJSON = JSON.parse(s)
-    
+    JSON.parse(s)
   }
 }
 
 class Config(obj: js.Dynamic) {
+  def this() = {
+    this(ConfigFactory.parseString("{}"))
+  }
+  
   private def getNested[A](path: String): A = {
     var tmp = obj.asInstanceOf[js.Object]
-    path.split("\\.") foreach { p =>
+    /*path.split("\\.") foreach { p =>
       if(tmp.hasOwnProperty(p)) tmp = tmp.asInstanceOf[js.Dictionary[js.Any]](p).asInstanceOf[js.Object]
+    }*/
+    
+    val res = path.split("\\.").foldLeft(obj.asInstanceOf[js.Object]){ (prev, part) =>
+      if(prev.hasOwnProperty(part)) prev.asInstanceOf[js.Dictionary[js.Any]](part).asInstanceOf[js.Object]
+      else prev
     }
     
-    tmp.asInstanceOf[A]
+    res.asInstanceOf[A]
   }
   
   def getString(path: String) = getNested[String](path)
@@ -32,6 +40,6 @@ class Config(obj: js.Dynamic) {
     }
   }
   
-  def getStringList(path: String) = ???
+  def getStringList(path: String) = getNested[js.Array[String]](path)
 
 }

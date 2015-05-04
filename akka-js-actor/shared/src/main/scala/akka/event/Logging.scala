@@ -111,12 +111,10 @@ trait LoggingBus extends ActorEventBus {
     */
     val level = DebugLevel
     try {
-      /** @note IMPLEMENT IN SCALA.JS
       val defaultLoggers = system.settings.Loggers match {
         case Nil     ⇒ classOf[DefaultLogger].getName :: Nil
         case loggers ⇒ loggers
-      }*/
-      val defaultLoggers = classOf[DefaultLogger].getName :: Nil
+      }
       val myloggers =
         for {
           loggerName ← defaultLoggers

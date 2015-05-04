@@ -16,6 +16,7 @@ import java.util.concurrent.TimeUnit.MILLISECONDS
  *
  import com.typesafe.config.{ Config, ConfigFactory }
  */
+import com.typesafe.config.Config
 import akka.event._
 import akka.dispatch._
 import akka.dispatch.sysmsg.{ SystemMessageList, EarliestFirstSystemMessageList, LatestFirstSystemMessageList, SystemMessage }
@@ -80,11 +81,7 @@ object ActorSystem {
    *
    * @see <a href="http://typesafehub.github.io/config/v1.2.0/" target="_blank">The Typesafe Config Library API Documentation</a>
    */
-  /**
-   * @note IMPLEMENT IN SCALA.JS
-   *
    def create(name: String, config: Config): ActorSystem = apply(name, config)
-   */
 
   /**
    * Creates a new ActorSystem with the specified name, the specified Config, and specified ClassLoader
@@ -148,11 +145,7 @@ object ActorSystem {
    *
    * @see <a href="http://typesafehub.github.io/config/v1.2.0/" target="_blank">The Typesafe Config Library API Documentation</a>
    */
-  /**
-   * @note IMPLEMENT IN SCALA.JS
-   *
-   def apply(name: String, config: Config): ActorSystem = apply(name, Option(config), None, None)
-   */
+   def apply(name: String, config: Config): ActorSystem = apply(name, Option(config)) // @note IMPLEMENT IN SCALA.JS , None, None)
 
   /**
    * Creates a new ActorSystem with the specified name, the specified Config, and specified ClassLoader
@@ -186,7 +179,11 @@ object ActorSystem {
    }
    */
   def apply(name: String): ActorSystem = {
-    new ActorSystemImpl(name, new Settings(name)).start()
+    new ActorSystemImpl(name, new Settings(new Config, name)).start()
+  }
+  
+  def apply(name: String, config: Option[Config]): ActorSystem = {
+    new ActorSystemImpl(name, new Settings(config.get, name)).start()
   }
 
 
@@ -197,8 +194,11 @@ object ActorSystem {
    *
    * @see <a href="http://typesafehub.github.io/config/v1.2.0/" target="_blank">The Typesafe Config Library API Documentation</a>
    */
-  class Settings(final val name: String) {
-
+  class Settings(cfg: Config, final val name: String) {
+    
+    final val config: Config = cfg
+    
+    
     final val LogDeadLetters: Int = 0
     final val LogDeadLettersDuringShutdown: Boolean = false
 
@@ -208,6 +208,8 @@ object ActorSystem {
     final val DebugEventStream: Boolean = false
     final val DebugUnhandledMessage: Boolean = false
 
+    final val Loggers: immutable.Seq[String] = Vector(cfg.getStringList("akka.loggers"): _*)
+    
     override def toString: String = s"Settings($name)"
 
   }

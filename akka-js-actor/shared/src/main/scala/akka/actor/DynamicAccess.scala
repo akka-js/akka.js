@@ -4,7 +4,7 @@
 package akka.actor
 
 import scala.collection.immutable
-import java.lang.reflect.InvocationTargetException
+// @note IMPLEMENT IN SCALA.JS import java.lang.reflect.InvocationTargetException
 import scala.reflect.ClassTag
 import scala.util.Try
 
@@ -71,11 +71,13 @@ class JSDynamicAccess(/**val classLoader: ClassLoader*/) extends DynamicAccess {
   def classLoader: ClassLoader = ???
   
 	def getRuntimeClass[A](name: String): Class[A] = {
+    
      val ctor =
        name.split("\\.").foldLeft(scala.scalajs.runtime.environmentInfo.exportsNamespace){
          (prev, part) =>
             prev.selectDynamic(part)
          }
+     
      ctor.asInstanceOf[Class[A]]
   	}
 
@@ -107,7 +109,8 @@ class JSDynamicAccess(/**val classLoader: ClassLoader*/) extends DynamicAccess {
       	newRuntimeInstance[T](cls.asInstanceOf[js.Dynamic])(values: _ *)
       val t = implicitly[ClassTag[T]].runtimeClass
       if (t.isInstance(obj)) obj.asInstanceOf[T] else throw new ClassCastException(clazz.getName + " is not a subtype of " + t)
-    } recover { case i: InvocationTargetException if i.getTargetException ne null ⇒ throw i.getTargetException }
+    } recover /** @note IMPLEMENT IN SCALA.JS { case i: InvocationTargetException if i.getTargetException ne null ⇒ throw i.getTargetException } */
+     { case e: Exception ⇒ throw e }
 
   override def createInstanceFor[T: ClassTag](fqcn: String, args: immutable.Seq[(Class[_], AnyRef)]): Try[T] =
     getClassFor(fqcn) flatMap { c ⇒ createInstanceFor(c, args) }

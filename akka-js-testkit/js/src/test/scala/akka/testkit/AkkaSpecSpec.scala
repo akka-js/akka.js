@@ -23,7 +23,7 @@ class AkkaSpecSpec extends WordSpec with Matchers {
 
     "warn about unhandled messages" in {
       akka.concurrent.BlockingEventLoop.switch
-      implicit val system = ActorSystem("AkkaSpec0") // @note IMPLEMENT IN SCALA.JS , AkkaSpec.testConf)
+      implicit val system = ActorSystem("AkkaSpec0", AkkaSpec.testConf)
       try {
         val a = system.actorOf(Props.empty)
         EventFilter.warning(start = "unhandled message", occurrences = 1) intercept {

@@ -521,18 +521,15 @@ private[akka] class LocalActorRefProvider private[akka] (
 
   override val rootPath: ActorPath = RootActorPath(Address("akka", _systemName))
 
-  /**
-   * @note IMPLEMENT IN SCALA.JS
-   * Logging!
-   *
-   * private[akka] val log: LoggingAdapter = Logging(eventStream, "LocalActorRefProvider(" + rootPath.address + ")")
-   */
-  protected object log { // OH GOD, WHY
+
+  private[akka] val log: LoggingAdapter = Logging(eventStream, "LocalActorRefProvider(" + rootPath.address + ")")
+  
+  /*protected object log { // OH GOD, WHY
     def error(msg: String): Unit = Console.err.println(msg)
     def error(ex: Throwable, msg: String): Unit = error(s"$ex -- $msg")
     def debug(msg: String): Unit = Console.err.println(msg)
     def debug(ex: Throwable, msg: String): Unit = debug(s"$ex -- $msg")
-  }
+  }*/
 
   override val deadLetters: InternalActorRef =
     _deadLetters.getOrElse((p: ActorPath) ⇒ new DeadLetterActorRef(this, p, eventStream)).apply(rootPath / "deadLetters")
@@ -768,11 +765,7 @@ private[akka] class LocalActorRefProvider private[akka] (
     // chain death watchers so that killing guardian stops the application
     systemGuardian.sendSystemMessage(Watch(guardian, systemGuardian))
     rootGuardian.sendSystemMessage(Watch(systemGuardian, rootGuardian))
-   /**
-    * @note IMPLEMENT IN SCALA.JS
-    *
-    * eventStream.startDefaultLoggers(_system)
-    */
+    eventStream.startDefaultLoggers(_system)
   }
 
 /**

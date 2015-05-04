@@ -11,11 +11,21 @@ import akka.actor.ActorSystem
 import akka.event.{ Logging, LoggingAdapter }
 import scala.concurrent.duration._
 import scala.concurrent.Future
-// @note IMPLEMENT IN SCALA.JS import com.typesafe.config.{ Config, ConfigFactory }
+import com.typesafe.config.{ Config, ConfigFactory }
 import akka.dispatch.Dispatchers
 import akka.testkit.TestEvent._
 
 object AkkaSpec {
+  val testConf: Config = ConfigFactory.parseString("""
+    {
+      "akka": {
+        "loggers": [
+            "akka.testkit.TestEventListener"
+        ],
+        "loglevel": "WARNING",
+        "stdout-loglevel": "WARNING"
+      }
+    }""")
   /** @note IMPLEMENT IN SCALA.JS
   val testConf: Config = ConfigFactory.parseString("""
       akka {

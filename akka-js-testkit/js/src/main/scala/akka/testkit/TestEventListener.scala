@@ -476,6 +476,8 @@ case class DeadLettersFilter(val messageClass: Class[_])(occurrences: Int) exten
  * }
  * </code></pre>
  */
+import scala.scalajs.js.annotation
+@annotation.JSExport
 class TestEventListener extends Logging.DefaultLogger {
   import TestEvent._
 

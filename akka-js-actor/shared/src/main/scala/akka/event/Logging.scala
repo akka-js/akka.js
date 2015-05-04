@@ -19,6 +19,7 @@ import scala.concurrent.Await
 import scala.util.control.NoStackTrace
 import scala.util.control.NonFatal
 import java.util.Locale
+import scala.reflect.ClassTag
 
 /**
  * This trait brings log level handling to the EventStream: it reads the log
@@ -120,14 +121,20 @@ trait LoggingBus extends ActorEventBus {
           loggerName ← defaultLoggers
           if loggerName != StandardOutLogger.getClass.getName
         } yield {
-          system.dynamicAccess.getClassFor[Actor](loggerName).map({
+          /** @note IMPLEMENT IN SCALA.JS system.dynamicAccess.getClassFor[Actor](loggerName).map({
             case actorClass ⇒ addLogger(system, actorClass, level, logName)
           }).recover({
             case e ⇒ throw new ConfigurationException(
               "Logger specified in config can't be loaded [" + loggerName +
                 "] due to [" + e.toString + "]", e)
-          }).get
-        }
+          }).get*/
+          import scala.scalajs.js
+          val ctor = (js.Dynamic.global /: loggerName.split("\\.")) {
+            (prev, part) => prev.selectDynamic(part)
+          }
+          val actorClass = js.Dynamic.newInstance(ctor)().asInstanceOf[Actor]
+          addLogger(system, actorClass, level, logName)
+      }
       // @note IMPLEMENT IN SCALA.JS guard.withGuard {
         loggers = myloggers
         _logLevel = level
@@ -181,7 +188,8 @@ trait LoggingBus extends ActorEventBus {
   /**
    * INTERNAL API
    */
-  private def addLogger(system: ActorSystemImpl, clazz: Class[_ <: Actor], level: LogLevel, logName: String): ActorRef = {
+  // @note IMPLEMENT IN SCALA.JS private def addLogger(system: ActorSystemImpl, clazz: Class[_ <: Actor], level: LogLevel, logName: String): ActorRef = {
+  private def addLogger[T <: Actor: ClassTag](system: ActorSystemImpl, clazz: T, level: LogLevel, logName: String): ActorRef = {
     val name = "log" + Extension(system).id() + "-" + simpleName(clazz)
     val actor = system.systemActorOf(Props(clazz), name)
     /** @note IMPLEMENT IN SCALA.JS

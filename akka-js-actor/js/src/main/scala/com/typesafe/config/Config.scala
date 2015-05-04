@@ -5,14 +5,14 @@ import scala.scalajs.js.JSON
 import scala.concurrent.duration.{ FiniteDuration, Duration, SECONDS }
 
 object ConfigFactory {
-  def parseString(s: String) = {
-    JSON.parse(s)
+  def parseString(s: String): Config = {
+    new Config(JSON.parse(s))
   }
 }
 
 class Config(obj: js.Dynamic) {
   def this() = {
-    this(ConfigFactory.parseString("{}"))
+    this(JSON.parse("{}"))
   }
   
   private def getNested[A](path: String): A = {

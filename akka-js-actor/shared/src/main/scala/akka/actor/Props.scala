@@ -75,7 +75,8 @@ import scala.annotation.tailrec
    /**
     * The default Props instance, uses the settings from the Props object starting with default*.
     */
-   final val default = Props(defaultDeploy, classOf[CreatorFunctionConsumer], List(defaultCreator))
+   final val default = // @note IMPLEMENT IN SCALA.JS Props(defaultDeploy, classOf[CreatorFunctionConsumer], List(defaultCreator))
+     Props(defaultDeploy, classOf[CreatorFunctionConsumer].getName, List(defaultCreator))
 
    /**
     * INTERNAL API
@@ -90,7 +91,8 @@ import scala.annotation.tailrec
     * Scala API: Returns a Props that has default values except for "creator" which will be a function that creates an instance
     * of the supplied type using the default constructor.
     */
-   def apply[T <: Actor: ClassTag](): Props = apply(defaultDeploy, implicitly[ClassTag[T]].runtimeClass, List.empty)
+   def apply[T <: Actor: ClassTag](): Props = // @note IMPLEMENT IN SCALA.JS
+     apply(defaultDeploy, implicitly[ClassTag[T]].runtimeClass.getName, List.empty)
 
    /**
     * Scala API: Returns a Props that has default values except for "creator" which will be a function that creates an instance
@@ -115,13 +117,15 @@ import scala.annotation.tailrec
    /**
     * Scala API: create a Props given a class and its constructor arguments.
     */
-   def apply(clazz: Class[_], args: Any*): Props = apply(defaultDeploy, clazz, args.toList)
+   // @note IMPLEMENT IN SCALA.JS def apply(clazz: Class[_], args: Any*): Props = apply(defaultDeploy, clazz, args.toList)
+   def apply(clazz: Class[_], args: Any*): Props = apply(defaultDeploy, clazz.getName, args.toList)
 
    /**
     * Java API: create a Props given a class and its constructor arguments.
     */
    @varargs
-   def create(clazz: Class[_], args: AnyRef*): Props = apply(defaultDeploy, clazz, args.toList)
+   // @note IMPLEMENT IN SCALA.JS def create(clazz: Class[_], args: AnyRef*): Props = apply(defaultDeploy, clazz, args.toList)
+   def create(clazz: Class[_], args: AnyRef*): Props = apply(defaultDeploy, clazz.getName, args.toList)
 
    /**
     * Create new Props from the given [[akka.japi.Creator]].
@@ -161,7 +165,8 @@ import scala.annotation.tailrec
     * Create new Props from the given [[akka.japi.Creator]] with the type set to the given actorClass.
     */
    def create[T <: Actor](actorClass: Class[T], creator: Creator[T]): Props = {
-     apply(defaultDeploy, classOf[CreatorConsumer], actorClass :: creator :: Nil)
+     // @note IMPLEMENT IN SCALA.JS apply(defaultDeploy, classOf[CreatorConsumer], actorClass :: creator :: Nil)
+     apply(defaultDeploy, classOf[CreatorConsumer].getName, actorClass :: creator :: Nil)
    }
  }
 
@@ -189,8 +194,11 @@ import scala.annotation.tailrec
   * }}}
   */
  @SerialVersionUID(2L)
- final case class Props(deploy: Deploy, clazz: Class[_], args: immutable.Seq[Any]) {
-     
+ // @note IMPLEMENT IN SCALA.JS final case class Props(deploy: Deploy, clazz: Class[_], args: immutable.Seq[Any]) {
+ final case class Props(deploy: Deploy, clazz: String, args: immutable.Seq[Any]) {
+   
+   def this(deploy: Deploy, clazz: Class[_], args: immutable.Seq[Any]) = this(deploy, clazz.getName, args)
+   
     /**
     * @note IMPLEMENT IN SCALA.JS
     *
@@ -320,7 +328,7 @@ import scala.annotation.tailrec
     * that the instance created for calling `actorClass` is not necessarily reused
     * later to produce the actor.
     */
-   def actorClass: Class[_ <: Actor]
+   def actorClass: String //@note IMPLEMENT IN SCALA.JS Class[_ <: Actor]
  }
 
  private[akka] object IndirectActorProducer {
@@ -334,8 +342,9 @@ import scala.annotation.tailrec
    val CreatorConsumerClass = classOf[CreatorConsumer]
    val TypedCreatorFunctionConsumerClass = classOf[TypedCreatorFunctionConsumer]
 
-   def apply(clazz: Class[_], args: immutable.Seq[Any]): IndirectActorProducer = {
-     if (classOf[IndirectActorProducer].isAssignableFrom(clazz)) {
+   // @note IMPLEMENT IN SCALA.JS def apply(clazz: Class[_], args: immutable.Seq[Any]): IndirectActorProducer = {
+   def apply(clazz: String, args: immutable.Seq[Any]): IndirectActorProducer = {
+     /**if (classOf[IndirectActorProducer].isAssignableFrom(clazz)) {
        def get1stArg[T]: T = args.head.asInstanceOf[T]
        def get2ndArg[T]: T = args.tail.head.asInstanceOf[T]
        // The cost of doing reflection to create these for every props
@@ -363,10 +372,14 @@ import scala.annotation.tailrec
            */
            throw new Exception("TBD in AKKA.js with supported reflection")
        }
-     } else if (classOf[ExportableActor].isAssignableFrom(clazz)) {
+     } else if (classOf[ExportableActor].isAssignableFrom(clazz)) {*/
+       /** @note IMPLEMENT IN SCALA.JS
        if (args.isEmpty) new NoArgsReflectConstructor(clazz.asInstanceOf[Class[_ <: Actor]])
-       else new ArgsReflectConstructor(clazz.asInstanceOf[Class[_ <: Actor]], args)
-     } else throw new IllegalArgumentException(s"unknown actor creator [$clazz]")
+       else new ArgsReflectConstructor(clazz.asInstanceOf[Class[_ <: Actor]], args)   */ 
+       if (args.isEmpty) new NoArgsReflectConstructor(clazz)
+       else new ArgsReflectConstructor(clazz, args)
+     /*
+     } else throw new IllegalArgumentException(s"unknown actor creator [$clazz]") */
    }
  }
 
@@ -382,7 +395,7 @@ import scala.annotation.tailrec
  }
  * 
  */
-
+/**@note IMPLEMENT IN SCALA.JS
  /**
   * INTERNAL API
   */
@@ -406,12 +419,12 @@ import scala.annotation.tailrec
    override def actorClass = clz
    override def produce() = creator()
  }
-
+ */
  trait JsReflectable {
    import scala.scalajs.js
-   private[akka] def instantiate[A](cls: Class[A])(args: Any*): A = {
+   private[akka] def instantiate[A](cls: String)(args: Any*): A = {
      val ctor =
-       cls.getName.split("\\.").foldLeft(scala.scalajs.runtime.environmentInfo.exportsNamespace){
+       cls.split("\\.").foldLeft(scala.scalajs.runtime.environmentInfo.exportsNamespace){
          (prev, part) =>
             prev.selectDynamic(part)
          }
@@ -424,11 +437,11 @@ import scala.annotation.tailrec
      }
   }  
  }
- 
+
  /**
   * INTERNAL API
   */
- private[akka] class ArgsReflectConstructor(clz: Class[_ <: Actor], args: immutable.Seq[Any]) extends IndirectActorProducer with JsReflectable {
+ private[akka] class ArgsReflectConstructor(clz: String /** @note IMPLEMENT IN SCALA.JS Class[_ <: Actor]*/, args: immutable.Seq[Any]) extends IndirectActorProducer with JsReflectable {
    //private[this] val constructor: Constructor[_] = Reflect.findConstructor(clz, args)
    override def actorClass = clz
    override def produce() = //Reflect.instantiate(constructor, args).asInstanceOf[Actor]
@@ -438,7 +451,7 @@ import scala.annotation.tailrec
  /**
   * INTERNAL API
   */
- private[akka] class NoArgsReflectConstructor(clz: Class[_ <: Actor]) extends IndirectActorProducer with JsReflectable {
+ private[akka] class NoArgsReflectConstructor(clz: String /** @note IMPLEMENT IN SCALA.JS Class[_ <: Actor]*/) extends IndirectActorProducer with JsReflectable {
    //Reflect.findConstructor(clz, List.empty)
    override def actorClass = clz
    override def produce() = //Reflect.instantiate(clz)

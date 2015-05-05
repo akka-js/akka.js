@@ -79,6 +79,7 @@ abstract class EventFilter(occurrences: Int) {
   protected def matches(event: LogEvent): Boolean
 
   final def apply(event: LogEvent): Boolean = {
+    println("@@@@" + event)
     if (matches(event)) {
       if (todo != Int.MaxValue) todo -= 1
       true
@@ -487,7 +488,7 @@ class TestEventListener extends Logging.DefaultLogger {
     case InitializeLogger(bus) ⇒
       Seq(classOf[Mute], classOf[UnMute], classOf[DeadLetter], classOf[UnhandledMessage]) foreach (bus.subscribe(context.self, _))
       sender() ! LoggerInitialized
-    case Mute(filters)   ⇒ filters foreach addFilter
+    case Mute(filters)   ⇒ println("+++++"); filters foreach addFilter
     case UnMute(filters) ⇒ filters foreach removeFilter
     case event: LogEvent ⇒ if (!filter(event)) print(event)
     case DeadLetter(msg, snd, rcp) ⇒

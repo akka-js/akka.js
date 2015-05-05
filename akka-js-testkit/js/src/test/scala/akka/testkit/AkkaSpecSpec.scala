@@ -32,7 +32,7 @@ class AkkaSpecSpec extends WordSpec with Matchers {
       } finally {
         TestKit.shutdownActorSystem(system)
       }
-      akka.concurrent.BlockingEventLoop.switch
+      akka.concurrent.BlockingEventLoop.reset
     }
     /**
     "terminate all actors" in {

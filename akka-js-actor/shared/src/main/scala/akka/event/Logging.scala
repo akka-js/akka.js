@@ -121,19 +121,13 @@ trait LoggingBus extends ActorEventBus {
           loggerName ← defaultLoggers
           if loggerName != StandardOutLogger.getClass.getName
         } yield {
-          /** @note IMPLEMENT IN SCALA.JS system.dynamicAccess.getClassFor[Actor](loggerName).map({
+          system.dynamicAccess.getClassFor[Actor](loggerName).map({
             case actorClass ⇒ addLogger(system, actorClass, level, logName)
           }).recover({
             case e ⇒ throw new ConfigurationException(
               "Logger specified in config can't be loaded [" + loggerName +
                 "] due to [" + e.toString + "]", e)
-          }).get*/
-          import scala.scalajs.js
-          val ctor = (js.Dynamic.global /: loggerName.split("\\.")) {
-            (prev, part) => prev.selectDynamic(part)
-          }
-          val actorClass = js.Dynamic.newInstance(ctor)().asInstanceOf[Actor]
-          addLogger(system, actorClass, level, logName)
+          }).get
       }
       // @note IMPLEMENT IN SCALA.JS guard.withGuard {
         loggers = myloggers
@@ -188,8 +182,7 @@ trait LoggingBus extends ActorEventBus {
   /**
    * INTERNAL API
    */
-  // @note IMPLEMENT IN SCALA.JS private def addLogger(system: ActorSystemImpl, clazz: Class[_ <: Actor], level: LogLevel, logName: String): ActorRef = {
-  private def addLogger[T <: Actor: ClassTag](system: ActorSystemImpl, clazz: T, level: LogLevel, logName: String): ActorRef = {
+  private def addLogger(system: ActorSystemImpl, clazz: Class[_ <: Actor], level: LogLevel, logName: String): ActorRef = {
     val name = "log" + Extension(system).id() + "-" + simpleName(clazz)
     val actor = system.systemActorOf(Props(clazz), name)
     /** @note IMPLEMENT IN SCALA.JS
@@ -396,6 +389,11 @@ object LogSource {
  * }
  * </code></pre>
  */
+@scala.scalajs.js.annotation.JSExport
+class LogExt(system: ExtendedActorSystem) extends Extension { // I FEEL THE WRATH OF THE GODS OF ENCAPSULATION :'(
+  private val loggerId = new AtomicInteger
+  def id() = loggerId.incrementAndGet()
+}
 object Logging {
 
   /**
@@ -421,13 +419,14 @@ object Logging {
    */
   private[akka] object Extension extends ExtensionKey[LogExt]
 
+  /** THIS SHOULD STAY HERE BUT UNFORTUNATELY YOU CANNOT @JSEXPORT PRIVATE & NESTED CLASSES
   /**
    * INTERNAL API
    */
   private[akka] class LogExt(system: ExtendedActorSystem) extends Extension {
     private val loggerId = new AtomicInteger
     def id() = loggerId.incrementAndGet()
-  }
+  }*/
 
   /**
    * Marker trait for annotating LogLevel, which must be Int after erasure.

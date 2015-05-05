@@ -335,6 +335,7 @@ import scala.annotation.tailrec
    val TypedCreatorFunctionConsumerClass = classOf[TypedCreatorFunctionConsumer]
 
    def apply(clazz: Class[_], args: immutable.Seq[Any]): IndirectActorProducer = {
+     println(clazz)
      if (classOf[IndirectActorProducer].isAssignableFrom(clazz)) {
        def get1stArg[T]: T = args.head.asInstanceOf[T]
        def get2ndArg[T]: T = args.tail.head.asInstanceOf[T]
@@ -363,7 +364,7 @@ import scala.annotation.tailrec
            */
            throw new Exception("TBD in AKKA.js with supported reflection")
        }
-     } else if (classOf[ExportableActor].isAssignableFrom(clazz)) {
+     } else if (classOf[Actor].isAssignableFrom(clazz)) {
        if (args.isEmpty) new NoArgsReflectConstructor(clazz.asInstanceOf[Class[_ <: Actor]])
        else new ArgsReflectConstructor(clazz.asInstanceOf[Class[_ <: Actor]], args)
      } else throw new IllegalArgumentException(s"unknown actor creator [$clazz]")

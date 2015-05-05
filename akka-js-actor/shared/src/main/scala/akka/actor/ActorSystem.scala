@@ -518,11 +518,7 @@ abstract class ActorSystem extends ActorRefFactory {
    * This method can potentially block, waiting for the initialization
    * of the payload, if is in the process of registration from another Thread of execution
    */
-  /**
-   * @note IMPLEMENT IN SCALA.JS
-   *
    def extension[T <: Extension](ext: ExtensionId[T]): T
-   */
 
   /**
    * Returns whether the specified extension is already registered, this method can potentially block, waiting for the initialization
@@ -855,7 +851,9 @@ private[akka] class ActorSystemImpl(val name: String, applicationConfig: ActorSy
      case c: CountDownLatch ⇒
        c.await(); findExtension(ext) //Registration in process, await completion and retry */
      case other ⇒
-       other.asInstanceOf[T] //could be a T or null, in which case we return the null as T
+       // @note IMPLEMENT IN SCALA.JS other.asInstanceOf[T]
+       if(other == None) null.asInstanceOf[T] 
+       else other.asInstanceOf[T] //could be a T or null, in which case we return the null as T
    }
 
    //@note IMPLEMENT IN SCALA.JS @tailrec

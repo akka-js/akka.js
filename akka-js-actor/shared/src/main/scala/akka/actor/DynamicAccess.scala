@@ -4,9 +4,12 @@
 package akka.actor
 
 import scala.collection.immutable
-// @note IMPLEMENT IN SCALA.JS import java.lang.reflect.InvocationTargetException
 import scala.reflect.ClassTag
 import scala.util.Try
+import scala.scalajs.js.annotation
+import akka.testkit.TestKit
+import akka.testkit.TestEventListener
+import akka.event.LogExt
 
 /**
  * The DynamicAccess implementation is the class which is used for
@@ -53,32 +56,22 @@ abstract class DynamicAccess {
    */
   /** @note IMPLEMENT IN SCALA.JS def classLoader: ClassLoader */
 }
-/**
-JS implementation
-*/
-
-/**
- * This is the default [[akka.actor.DynamicAccess]] implementation used by [[akka.actor.ExtendedActorSystem]]
- * unless overridden. It uses reflection to turn fully-qualified class names into `Class[_]` objects
- * and creates instances from there using `getDeclaredConstructor()` and invoking that. The class loader
- * to be used for all this is determined by the actor system’s class loader by default.
- */
-import scala.scalajs.js.annotation
 @annotation.JSExportDescendentClasses
 class JSDynamicAccess(/**val classLoader: ClassLoader*/) extends DynamicAccess {
 	import scala.scalajs.js
 
   def classLoader: ClassLoader = ???
   
-	def getRuntimeClass[A](name: String): Class[A] = {
+	def getRuntimeClass[A](name: String): js.Dynamic = {
     
      val ctor =
        name.split("\\.").foldLeft(scala.scalajs.runtime.environmentInfo.exportsNamespace){
          (prev, part) =>
+            println(part)
             prev.selectDynamic(part)
          }
      
-     ctor.asInstanceOf[Class[A]]
+     ctor// @note IMPLEMENT IN SCALA.JS.asInstanceOf[Class[A]]
   	}
 
   	def newRuntimeInstance[A](dyn: js.Dynamic)(args: Any*): A = {
@@ -90,12 +83,16 @@ class JSDynamicAccess(/**val classLoader: ClassLoader*/) extends DynamicAccess {
          throw err
      }
   }  
-
+  private val map = scala.collection.mutable.HashMap(
+    "akka.testkit.TestEventListener" -> classOf[akka.testkit.TestEventListener],
+    "akka.event.LogExt" -> classOf[akka.event.LogExt]
+  )
   override def getClassFor[T: ClassTag](fqcn: String): Try[Class[_ <: T]] =
     Try[Class[_ <: T]]({
-      val c = getRuntimeClass[T](fqcn)
+      /*val c = getRuntimeClass[T](fqcn)
       val t = implicitly[ClassTag[T]].runtimeClass
-      if (t.isAssignableFrom(c)) c else throw new ClassCastException(t + " is not assignable from " + c)
+      if (t.isAssignableFrom(c)) c else throw new ClassCastException(t + " is not assignable from " + c)*/
+      map(fqcn).asInstanceOf[Class[T]]
     })
 
   override def createInstanceFor[T: ClassTag](clazz: Class[_], args: immutable.Seq[(Class[_], AnyRef)]): Try[T] =

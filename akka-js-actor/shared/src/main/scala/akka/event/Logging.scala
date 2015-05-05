@@ -30,6 +30,7 @@ import scala.reflect.ClassTag
  * response to changes of LoggingBus.logLevel.
  */
 trait LoggingBus extends ActorEventBus {
+  me => 
 
   type Event >: Logging.LogEvent
   type Classifier >: Class[_]
@@ -185,6 +186,27 @@ trait LoggingBus extends ActorEventBus {
   private def addLogger(system: ActorSystemImpl, clazz: Class[_ <: Actor], level: LogLevel, logName: String): ActorRef = {
     val name = "log" + Extension(system).id() + "-" + simpleName(clazz)
     val actor = system.systemActorOf(Props(clazz), name)
+    val senderActor = system.systemActorOf(Props(new Actor {
+      val timeout = 5 seconds
+      implicit def ec = scala.scalajs.concurrent.JSExecutionContext.queue
+      def receive = operative(context.system.scheduler.scheduleOnce(timeout)(self ! new TimeoutException))
+      
+      override def preStart = actor ! InitializeLogger(me)
+      
+      def operative(canc: Cancellable): Receive = {
+        case _: TimeoutException ⇒ 
+          publish(Warning(logName, this.getClass, "Logger " + name + " did not respond within " + timeout + " to InitializeLogger(bus)"))
+            //"[TIMEOUT]"
+        case LoggerInitialized ⇒ 
+          AllLogLevels filter (level >= _) foreach (l ⇒ subscribe(actor, classFor(l)))
+          publish(Debug(logName, this.getClass, "logger " + name + " started"))
+          context.stop(self); canc.cancel()
+        case response ⇒ 
+          throw new LoggerInitializationException("Logger " + name + " did not respond with LoggerInitialized, sent instead " + response)
+          context.stop(self); canc.cancel()
+      }
+    }), "loggerChecker")
+    
     /** @note IMPLEMENT IN SCALA.JS
     implicit def timeout = system.settings.LoggerStartTimeout
     import akka.pattern.ask
@@ -196,10 +218,8 @@ trait LoggingBus extends ActorEventBus {
     if (response != LoggerInitialized)
       throw new LoggerInitializationException("Logger " + name + " did not respond with LoggerInitialized, sent instead " + response)
     */ 
-    actor ! InitializeLogger(this)
-   
-    AllLogLevels filter (level >= _) foreach (l ⇒ subscribe(actor, classFor(l)))
-    publish(Debug(logName, this.getClass, "logger " + name + " started"))
+    //actor ! InitializeLogger(this)
+      
     actor
   }
 

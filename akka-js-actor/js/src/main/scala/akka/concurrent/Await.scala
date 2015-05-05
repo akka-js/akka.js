@@ -55,6 +55,8 @@ object BlockingEventLoop {
     if(queue.nonEmpty) queue.dequeue()()
     lastRun = timer
   }
+  
+  def isEmpty = queue.isEmpty
 }
 
 sealed trait CanAwait extends AnyRef 

@@ -78,8 +78,7 @@ abstract class EventFilter(occurrences: Int) {
    */
   protected def matches(event: LogEvent): Boolean
 
-  final def apply(event: LogEvent): Boolean = {
-    println("@@@@" + event)
+  final def apply(event: LogEvent): Boolean = { 
     if (matches(event)) {
       if (todo != Int.MaxValue) todo -= 1
       true
@@ -477,20 +476,24 @@ case class DeadLettersFilter(val messageClass: Class[_])(occurrences: Int) exten
  * }
  * </code></pre>
  */
+object TestEventListener { val p = scala.concurrent.Promise[Boolean] }
+
 import scala.scalajs.js.annotation
 @annotation.JSExport
 class TestEventListener extends Logging.DefaultLogger {
   import TestEvent._
 
   var filters: List[EventFilter] = Nil
+  val isInitialized = false
 
   override def receive = {
     case InitializeLogger(bus) ⇒
       Seq(classOf[Mute], classOf[UnMute], classOf[DeadLetter], classOf[UnhandledMessage]) foreach (bus.subscribe(context.self, _))
+      TestEventListener.p.success(true)
       sender() ! LoggerInitialized
-    case Mute(filters)   ⇒ println("+++++"); filters foreach addFilter
+    case Mute(filters)   ⇒ filters foreach addFilter
     case UnMute(filters) ⇒ filters foreach removeFilter
-    case event: LogEvent ⇒ if (!filter(event)) print(event)
+    case event: LogEvent ⇒ if (!filter(event)) print(event) 
     case DeadLetter(msg, snd, rcp) ⇒
       if (!msg.isInstanceOf[Terminate]) {
         val event = Warning(rcp.path.toString, rcp.getClass, msg)

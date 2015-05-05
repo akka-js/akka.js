@@ -5,15 +5,12 @@
 package akka.event
 
 import akka.actor.ActorRef
-/** @note IMPLEMENT IN SCALA.JS
-import akka.util.Index
-import java.util.concurrent.ConcurrentSkipListSet
-*/
 import java.util.Comparator
 import akka.util.{ Subclassification, SubclassifiedIndex }
 import scala.collection.mutable.TreeSet
 import scala.collection.mutable
 import scala.collection.immutable
+import akka.event.Logging.Warning
 
 /**
  * Represents the base type for EventBuses
@@ -207,6 +204,7 @@ trait SubchannelClassification { this: EventBus ⇒
           cache(c)
         }
       }
+
     recv foreach (publish(event, _))
   }
 

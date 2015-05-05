@@ -335,7 +335,6 @@ import scala.annotation.tailrec
    val TypedCreatorFunctionConsumerClass = classOf[TypedCreatorFunctionConsumer]
 
    def apply(clazz: Class[_], args: immutable.Seq[Any]): IndirectActorProducer = {
-     println(clazz)
      if (classOf[IndirectActorProducer].isAssignableFrom(clazz)) {
        def get1stArg[T]: T = args.head.asInstanceOf[T]
        def get2ndArg[T]: T = args.tail.head.asInstanceOf[T]

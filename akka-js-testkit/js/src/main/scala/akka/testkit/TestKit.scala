@@ -782,10 +782,8 @@ object TestKit {
     }
 
     poll()*/
-    println("BURP")
     import scala.scalajs.js
     val f = scala.concurrent.Promise[Boolean]
-    
     lazy val fn: js.Function0[Any] = { () =>
       if (!p) {
         val toSleep = stop - now
@@ -795,7 +793,7 @@ object TestKit {
         } else {
           js.Dynamic.global.setTimeout(fn, (toSleep min interval).toMillis.asInstanceOf[js.Any])
         }
-      } else true          
+      } else f.success(true)        
     }
     
     js.Dynamic.global.setTimeout(fn, 100)

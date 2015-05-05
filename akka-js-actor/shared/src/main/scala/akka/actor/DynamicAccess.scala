@@ -67,7 +67,6 @@ class JSDynamicAccess(/**val classLoader: ClassLoader*/) extends DynamicAccess {
      val ctor =
        name.split("\\.").foldLeft(scala.scalajs.runtime.environmentInfo.exportsNamespace){
          (prev, part) =>
-            println(part)
             prev.selectDynamic(part)
          }
      

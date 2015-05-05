@@ -26,6 +26,7 @@ class AkkaSpecSpec extends WordSpec with Matchers {
       implicit val system = ActorSystem("AkkaSpec0", AkkaSpec.testConf)
       try {
         val a = system.actorOf(Props.empty)
+        akka.concurrent.Await.result(TestEventListener.p.future)
         EventFilter.warning(start = "unhandled message", occurrences = 1) intercept {
           a ! 42
         }

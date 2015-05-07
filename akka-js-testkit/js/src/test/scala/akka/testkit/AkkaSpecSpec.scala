@@ -66,13 +66,14 @@ class AkkaSpecSpec extends WordSpec with Matchers {
       latch.await
       akka.concurrent.BlockingEventLoop.reset
     }
-    /**
+    
     "enqueue unread messages from testActor to deadLetters" in {
-      val system, otherSystem = ActorSystem("AkkaSpec3") // @note IMPLEMENT IN SCALA.JS , AkkaSpec.testConf), AkkaSpec.testConf)
+      akka.concurrent.BlockingEventLoop.switch
+      val system, otherSystem = ActorSystem("AkkaSpec3", AkkaSpec.testConf)
 
       try {
         var locker = Seq.empty[DeadLetter]
-        implicit val timeout = TestKitExtension(system).DefaultTimeout
+        implicit val timeout = TestKitSettings.DefaultTimeout // @note IMPLEMENT IN SCALA.JS TestKitExtension(system).DefaultTimeout
         val davyJones = otherSystem.actorOf(Props(new Actor {
           def receive = {
             case m: DeadLetter ⇒ locker :+= m
@@ -89,9 +90,9 @@ class AkkaSpecSpec extends WordSpec with Matchers {
        * may happen that the system.stop() suspends the testActor before it had
        * a chance to put the message into its private queue
        */
-        probe.receiveWhile(1 second) {
+        /*probe.receiveWhile(1 second) {
           case null ⇒
-        }
+        }*/
 
         val latch = new TestLatch(1)(system)
         system.registerOnTermination(latch.countDown())
@@ -106,6 +107,7 @@ class AkkaSpecSpec extends WordSpec with Matchers {
         TestKit.shutdownActorSystem(system)
         TestKit.shutdownActorSystem(otherSystem)
       }
-    }*/
+    }
+    akka.concurrent.BlockingEventLoop.reset
   }
 }

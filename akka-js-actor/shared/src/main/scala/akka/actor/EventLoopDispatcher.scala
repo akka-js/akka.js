@@ -7,8 +7,25 @@ import scala.concurrent.duration.FiniteDuration
 
 class EventLoopScheduler extends Scheduler {
 
-  def schedule(initialDelay: scala.concurrent.duration.FiniteDuration,interval: scala.concurrent.duration.FiniteDuration,runnable: Runnable)(implicit executor: scala.concurrent.ExecutionContext): akka.actor.Cancellable = ???
-  def scheduleOnce(delay: scala.concurrent.duration.FiniteDuration,runnable: Runnable)(implicit executor: scala.concurrent.ExecutionContext): akka.actor.Cancellable = ???
+  def schedule(
+      initialDelay: FiniteDuration, 
+      interval: FiniteDuration,
+      runnable: Runnable)
+      (implicit executor: ExecutionContext): Cancellable = {
+    schedule(initialDelay, interval) {
+      runnable.run()
+    }
+  }
+  
+  def scheduleOnce(
+      delay: FiniteDuration,
+      runnable: Runnable)
+      (implicit executor: ExecutionContext): Cancellable = {
+    scheduleOnce(delay) {
+      runnable.run()
+    }
+  }
+  
 
   override def schedule(
                          initialDelay: FiniteDuration,

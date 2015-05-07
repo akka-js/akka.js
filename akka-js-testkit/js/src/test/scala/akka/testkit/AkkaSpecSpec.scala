@@ -52,19 +52,21 @@ class AkkaSpecSpec extends WordSpec with Matchers {
       spec.awaitCond(spec.ref forall (_.isTerminated), 2 seconds)
       akka.concurrent.BlockingEventLoop.reset
     }
-    /**
+    
     "stop correctly when sending PoisonPill to rootGuardian" in {
-      val system = ActorSystem("AkkaSpec2") // @note IMPLEMENT IN SCALA.JS , AkkaSpec.testConf), AkkaSpec.testConf)
-      //val spec = new AkkaSpec(system) {}
+      akka.concurrent.BlockingEventLoop.switch
+      val system = ActorSystem("AkkaSpec2" , AkkaSpec.testConf)
+      val spec = new AkkaSpec(system) {}
       val latch = new TestLatch(1)(system)
       system.registerOnTermination(latch.countDown())
 
       system.actorSelection("/") ! PoisonPill
-
+     
       // @note IMPLEMENT IN SCALA.JS Await.ready(latch, 2 seconds)
       latch.await
+      akka.concurrent.BlockingEventLoop.reset
     }
-
+    /**
     "enqueue unread messages from testActor to deadLetters" in {
       val system, otherSystem = ActorSystem("AkkaSpec3") // @note IMPLEMENT IN SCALA.JS , AkkaSpec.testConf), AkkaSpec.testConf)
 

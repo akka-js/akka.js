@@ -378,7 +378,7 @@ trait ActorRefFactory {
    * the supplied path, it is recommended to send a message and gather the
    * replies in order to resolve the matching set of actors.
    */
-  def actorSelection(path: ActorPath): ActorSelection =
+  def actorSelection(path: ActorPath): ActorSelection = 
     ActorSelection(provider.rootGuardianAt(path.address), path.elements)
 
   /**

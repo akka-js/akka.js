@@ -60,6 +60,7 @@ object TestActor {
   def props(queue: scala.collection.mutable.Queue[Message]): Props = Props(classOf[TestActor], queue)
 }
 
+@scala.scalajs.js.annotation.JSExport
 class TestActor(var queue: scala.collection.mutable.Queue[TestActor.Message]/** @note IMPLEMENT IN SCALA.JS queue: BlockingDeque[TestActor.Message] */) extends Actor {
   import TestActor._
 
@@ -226,10 +227,9 @@ trait TestKitBase {
    * which uses the configuration entry "akka.test.timefactor".
    */
   def awaitCond(p: ⇒ Boolean, max: Duration = Duration.Undefined, interval: Duration = 100.millis, message: String = "") {
-    /** @note IMPLEMENT IN SCALA.JS 
     val _max = remainingOrDilated(max)
     val stop = now + _max
-
+    /** @note IMPLEMENT IN SCALA.JS 
     @tailrec
     def poll(t: Duration) {
       if (!p) {
@@ -240,16 +240,19 @@ trait TestKitBase {
     }
 
     poll(_max min interval)*/
+    
     import scala.scalajs.js
     val f = scala.concurrent.Promise[Boolean]
+    lazy val fn: js.Function0[Any] = { () =>
+      if (!p) {
+        assert(now < stop, "timeout " + _max + " expired: " + message)
+        js.Dynamic.global.setTimeout(fn, ((stop - now) min interval).toMillis.asInstanceOf[js.Any])
+      } else f.success(true)        
+    }
     
-    val id = js.Dynamic.global.setInterval({
-      if(p) f.success(true)
-      ()
-    }, 100)
+    js.Dynamic.global.setTimeout(fn, 100)
     
     akka.concurrent.Await.result(f.future)
-    js.Dynamic.global.clearInterval(id)
   }
 
   /**

@@ -38,19 +38,21 @@ class AkkaSpecSpec extends WordSpec with Matchers {
     /**
     "terminate all actors" in {
       // verbose config just for demonstration purposes, please leave in in case of debugging
-      import scala.collection.JavaConverters._
+      /*import scala.collection.JavaConverters._
       val conf = Map(
         "akka.actor.debug.lifecycle" -> true, "akka.actor.debug.event-stream" -> true,
-        "akka.loglevel" -> "DEBUG", "akka.stdout-loglevel" -> "DEBUG")
-      val system = ActorSystem("AkkaSpec1")// @note IMPLEMENT IN SCALA.JS , AkkaSpec.testConf), ConfigFactory.parseMap(conf.asJava).withFallback(AkkaSpec.testConf))
-      val spec = new AkkaSpec(system) {
+        "akka.loglevel" -> "DEBUG", "akka.stdout-loglevel" -> "DEBUG")*/
+      akka.concurrent.BlockingEventLoop.switch
+      val system = ActorSystem("AkkaSpec1" , AkkaSpec.testConf)// @note IMPLEMENT IN SCALA.JS , ConfigFactory.parseMap(conf.asJava).withFallback(AkkaSpec.testConf))
+      val spec = new AkkaSpec(system) { // SCALATEST?
         val ref = Seq(testActor, system.actorOf(Props.empty, "name"))
       }
       spec.ref foreach (_.isTerminated should not be true)
       TestKit.shutdownActorSystem(system)
       spec.awaitCond(spec.ref forall (_.isTerminated), 2 seconds)
+      akka.concurrent.BlockingEventLoop.reset
     }
-
+    
     "stop correctly when sending PoisonPill to rootGuardian" in {
       val system = ActorSystem("AkkaSpec2") // @note IMPLEMENT IN SCALA.JS , AkkaSpec.testConf), AkkaSpec.testConf)
       //val spec = new AkkaSpec(system) {}

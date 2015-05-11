@@ -1,6 +1,7 @@
 package akka.concurrent
 
 import scala.concurrent.duration.Duration
+import java.util.concurrent.TimeUnit
 
 object BlockingEventLoop {
   import scala.scalajs.js
@@ -14,7 +15,6 @@ object BlockingEventLoop {
   private val oldClearInterval = global.clearInterval
   
   private def timer = js.Date.now()
-  private var lastRun: Double = 0
   
   private val queue = new Queue[js.Function0[_]]
   private val timeoutEvents = new ListBuffer[(js.Function0[_], Double)]()
@@ -42,18 +42,17 @@ object BlockingEventLoop {
     global.clearInterval = oldClearInterval
   }
   
-  def tick = {
+  def tick(implicit lastRan: LastRan) = {
     timeoutEvents.filter(_._2 < timer).foreach({ x => 
       queue.enqueue(x._1)
       timeoutEvents -= x
     })
     
-    intervalEvents.filter(_._2 < timer - lastRun).foreach({ x => 
+    intervalEvents.filter(_._2 < timer - lastRan.time).foreach({ x => 
       queue.enqueue(x._1)
     })
     
     if(queue.nonEmpty) queue.dequeue()()
-    lastRun = timer
   }
   
   def isEmpty = queue.isEmpty
@@ -61,23 +60,59 @@ object BlockingEventLoop {
 
 sealed trait CanAwait extends AnyRef 
 
+object AwaitPermission extends CanAwait
+
 trait Awaitable[T] {
-   // def ready(atMost: Duration)(implicit permit: CanAwait): Awaitable.this.type 
-   // def result(atMost: Duration)(implicit permit: CanAwait): T 
+   def ready(atMost: Duration)(implicit permit: CanAwait): Awaitable.this.type 
+   def result(atMost: Duration)(implicit permit: CanAwait): T 
 }
+
+case class LastRan(time: Double)
 
 object Await {
   import scala.concurrent.Future
+  import scala.scalajs.js.Date
   import scala.util.{ Success, Failure }
-  @scala.annotation.tailrec
-  def result[A](f: Future[A]): A = {
-    BlockingEventLoop.tick
-    f.value match { 
-      case None => result(f)
-      case Some(Success(m)) => m
-      case Some(Failure(m)) => throw m
+  
+  def ready[T](awaitable: Awaitable[T], atMost: Duration): awaitable.type = 
+    awaitable.ready(atMost)(AwaitPermission)
+  
+  def result[T](f: Future[T]): T = { 
+    @scala.annotation.tailrec
+    def loop(f: Future[T])(implicit lr: LastRan): T = {
+      BlockingEventLoop.tick
+      
+      f.value match { 
+        case None => loop(f)(LastRan(System.currentTimeMillis()))
+        case Some(Success(m)) => m
+        case Some(Failure(m)) => throw m
+      }
     }
+    
+    loop(f)(LastRan(0L))
+  }    
+    
+  def result[T](f: Future[T], atMost: Duration): T = {
+    val futureDate = atMost.toMillis + System.currentTimeMillis()
+    
+    @scala.annotation.tailrec
+    def loop(f: Future[T])(implicit lr: LastRan): T = {
+      BlockingEventLoop.tick
+      
+      if(System.currentTimeMillis() >= futureDate) throw new java.util.concurrent.TimeoutException(s"Futures timed out after [${atMost.toMillis}] milliseconds")
+      else f.value match { 
+        case None => loop(f)(LastRan(System.currentTimeMillis()))
+        case Some(Success(m)) => m
+        case Some(Failure(m)) => throw m
+      }
+    }
+    
+    loop(f)(LastRan(0L))
   }
+    
+  def result[T](awaitable: Awaitable[T], atMost: Duration): T = 
+    awaitable.result(atMost)(AwaitPermission)
+
 }
 
 class CountDownLatch(val c: Int) {
@@ -93,5 +128,12 @@ class CountDownLatch(val c: Int) {
   def reset() = counter = c
   
   
-  def await = Await.result(closed.future)
+  def await(timeout: Long, unit: TimeUnit): Boolean = {
+    try {
+      Await.result(closed.future, Duration.fromNanos(TimeUnit.NANOSECONDS.convert(timeout, unit)))
+      true
+    } catch {
+      case e: Exception => throw e
+    }
+  }
 }

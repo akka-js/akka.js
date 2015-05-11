@@ -62,8 +62,7 @@ class AkkaSpecSpec extends WordSpec with Matchers {
 
       system.actorSelection("/") ! PoisonPill
      
-      // @note IMPLEMENT IN SCALA.JS Await.ready(latch, 2 seconds)
-      latch.await
+      Await.ready(latch, 2 seconds)
       akka.concurrent.BlockingEventLoop.reset
     }
     
@@ -97,9 +96,9 @@ class AkkaSpecSpec extends WordSpec with Matchers {
         val latch = new TestLatch(1)(system)
         system.registerOnTermination(latch.countDown())
         TestKit.shutdownActorSystem(system)
-        // @note IMPLEMENT IN SCALA.JS Await.ready(latch, 2 seconds)
-        latch.await
-        Await.result(davyJones ? "Die!"/** @note IMPLEMENT IN SCALA.JS , timeout.duration */) should be("finally gone")
+        Await.ready(latch, 2 seconds)
+        
+        Await.result(davyJones ? "Die!", timeout.duration) should be("finally gone")
 
         // this will typically also contain log messages which were sent after the logger shutdown
         locker should contain(DeadLetter(42, davyJones, probe.ref))

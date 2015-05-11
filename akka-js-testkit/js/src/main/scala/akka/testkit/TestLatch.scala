@@ -34,9 +34,6 @@ class TestLatch(count: Int = 1)(implicit system: ActorSystem) extends Awaitable[
   def isOpen: Boolean = latch.getCount == 0
   def open() = while (!isOpen) countDown()
   def reset() = latch = new CountDownLatch(count)
-  
-  // @note THIS IS A HACK, XXX FIX
-  def await = latch.await
 
   @throws(classOf[TimeoutException])
   def ready(atMost: Duration)(implicit permit: CanAwait) = {
@@ -44,12 +41,11 @@ class TestLatch(count: Int = 1)(implicit system: ActorSystem) extends Awaitable[
       case f: FiniteDuration ⇒ f
       case _                 ⇒ throw new IllegalArgumentException("TestLatch does not support waiting for " + atMost)
     }
-    /** @note IMPLEMENT IN SCALA.jS
+    
     val opened = latch.await(waitTime.dilated.toNanos, TimeUnit.NANOSECONDS)
     if (!opened) throw new TimeoutException(
-      "Timeout of %s with time factor of %s" format (atMost.toString, TestKitExtension(system).TestTimeFactor))
-    */
-    latch.await
+      "Timeout of %s with time factor of %s" format (atMost.toString, TestKitSettings.TestTimeFactor))// @note IMPLEMENT IN SCALA.JS TestKitExtension(system).TestTimeFactor))
+    
     this
   }
   @throws(classOf[Exception])

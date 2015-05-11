@@ -432,11 +432,10 @@ trait Actor {
    * [[akka.actor.UntypedActorContext]], which is the Java API of the actor
    * context.
    */
-  var _context: ActorContext = {
+   implicit val context: ActorContext = {
     /**
      * @note IMPLEMENT IN SCALA.JS
-     *
-     implicit val context: ActorContext = {
+     *     
      val contextStack = ActorCell.contextStack.get
      */
     val contextStack = ActorCell.contextStack
@@ -462,21 +461,17 @@ trait Actor {
    * self ! message
    * </pre>
    */
-  /**
-   * @note IMPLEMENT IN SCALA.JS
-   *
-   implicit final val _self = context.self //MUST BE A VAL, TRUST ME
-   */
+  implicit final val self = context.self //MUST BE A VAL, TRUST ME
   // WE NEED THIS BECAUSE WE NEED TO SET THE FIELDS IN ACTOR CELL
-  var _self = context.self
-  implicit final def context: ActorContext = _context
-  implicit final def self: ActorRef = _self
+  //var _self = context.self
+  //implicit def context: ActorContext = _context
+  //implicit final def self: ActorRef = _self
 
-  private[akka] final def setActorFields(context: ActorContext,
+  /*private[akka] final def setActorFields(context: ActorContext,
                                          self: ActorRef): Unit = {
     this._context = context
     this._self = self
-  }
+  }*/
 
   /**
    * The reference sender Actor of the last received message.

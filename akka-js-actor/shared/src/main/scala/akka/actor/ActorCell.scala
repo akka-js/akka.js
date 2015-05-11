@@ -769,17 +769,35 @@ private[akka] class ActorCell(
     behaviorStack = emptyBehaviorStack
   }
 
-  final protected def setActorFields(actorInstance: Actor, context: ActorContext, self: ActorRef): Unit =
-    actorInstance.setActorFields(context = context, self = self)
+  final protected def setActorFields(actorInstance: Actor, context: ActorContext, self: ActorRef): Unit = {
+    //actorInstance.setActorFields(context = context, self = self)
+    import scala.scalajs.js
+    
+    
+    def getProto(a: Any) = js.Object.getPrototypeOf(a.asInstanceOf[js.Object])
+    def getGetter(a: js.Object, s: String) = js.Object.getOwnPropertyDescriptor(a.asInstanceOf[js.Object], s).get.toString()
+  
+    def setField(instance: AnyRef, f: String, v: Any) = {
+      val proto = getProto(instance)
+      val getter = getGetter(proto, f).split("this\\.")(1).split("\\(")(0)
+      val otherstring = proto.asInstanceOf[js.Dictionary[_]](getter).toString()
+    
+      val fin = otherstring.split("this\\.")(1).split("}")(0).trim()
+    
+      instance.asInstanceOf[js.Dictionary[js.Any]](fin) = v.asInstanceOf[js.Any]
+    }
+    if(actorInstance ne null) {
+      setField(actorInstance, "context", context)
+      setField(actorInstance, "self", self)
     /**
      * @note IMPLEMENT IN SCALA.JS
      *
-         if (actorInstance ne null) {
            if (!lookupAndSetField(actorInstance.getClass, actorInstance, "context", context)
              || !lookupAndSetField(actorInstance.getClass, actorInstance, "self", self))
              throw new IllegalActorStateException(actorInstance.getClass + " is not an Actor since it have not mixed in the 'Actor' trait")
-         }
      */
+    }
+  }
 
   // logging is not the main purpose, and if it fails there’s nothing we can do
   protected final def publish(e: LogEvent): Unit = try system.eventStream.publish(e) catch { case NonFatal(_) ⇒ }

@@ -8,7 +8,6 @@ import org.scalatest.Matchers
 import akka.actor.ActorSystem
 
 // @note IMPLEMENT IN SCALA.JS @org.junit.runner.RunWith(classOf[org.scalatest.junit.JUnitRunner])
-/*
 class ImplicitSenderSpec
   extends WordSpec with Matchers with BeforeAndAfterAll with TestKitBase with ImplicitSender {
 
@@ -21,4 +20,4 @@ class ImplicitSenderSpec
       self should be(testActor)
     }
   }
-}*/
+}

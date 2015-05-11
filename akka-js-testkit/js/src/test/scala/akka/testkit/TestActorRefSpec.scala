@@ -2,13 +2,15 @@
  * Copyright (C) 2009-2014 Typesafe Inc. <http://www.typesafe.com>
  */
 package akka.testkit
-/** @note IMPLEMENT IN SCALA.JS
+
 import language.{ postfixOps, reflectiveCalls }
 import org.scalatest.Matchers
 import org.scalatest.{ BeforeAndAfterEach, WordSpec }
 import akka.actor._
 import akka.event.Logging.Warning
-import scala.concurrent.{ Future, Promise, Await }
+//import scala.concurrent.{ Future, Promise, Await }
+import scala.concurrent.{ Future, Promise }
+import akka.concurrent.{ Await, BlockingEventLoop }
 import scala.concurrent.duration._
 import akka.actor.ActorSystem
 import akka.pattern.ask
@@ -20,16 +22,16 @@ import akka.dispatch.Dispatcher
 object TestActorRefSpec {
 
   var counter = 4
-  val thread = Thread.currentThread
-  var otherthread: Thread = null
+  //val thread = Thread.currentThread
+  //var otherthread: Thread = null
 
   trait TActor extends Actor {
     def receive = new Receive {
       val recv = receiveT
       def isDefinedAt(o: Any) = recv.isDefinedAt(o)
       def apply(o: Any) {
-        if (Thread.currentThread ne thread)
-          otherthread = Thread.currentThread
+        //if (Thread.currentThread ne thread)
+        //  otherthread = Thread.currentThread
         recv(o)
       }
     }
@@ -56,7 +58,7 @@ object TestActorRefSpec {
 
   class WorkerActor() extends TActor {
     def receiveT = {
-      case "work" ⇒
+      case "work" ⇒ 
         sender() ! "workDone"
         context stop self
       case replyTo: Promise[_] ⇒ replyTo.asInstanceOf[Promise[Any]].success("complexReply")
@@ -104,31 +106,33 @@ object TestActorRefSpec {
 
 }
 
-@org.junit.runner.RunWith(classOf[org.scalatest.junit.JUnitRunner])
-class TestActorRefSpec extends AkkaSpec("disp1.type=Dispatcher") with BeforeAndAfterEach with DefaultTimeout {
+//@org.junit.runner.RunWith(classOf[org.scalatest.junit.JUnitRunner])
+class TestActorRefSpec extends AkkaSpec(/*"disp1.type=Dispatcher"*/) with BeforeAndAfterEach with DefaultTimeout {
 
   import TestActorRefSpec._
 
-  override def beforeEach(): Unit = otherthread = null
+  //override def beforeEach(): Unit = otherthread = null
 
-  private def assertThread(): Unit = otherthread should (be(null) or equal(thread))
+  //private def assertThread(): Unit = otherthread should (be(null) or equal(thread))
 
   "A TestActorRef should be an ActorRef, hence it" must {
 
     "support nested Actor creation" when {
 
       "used with TestActorRef" in {
+        BlockingEventLoop.switch
         val a = TestActorRef(Props(new Actor {
           val nested = TestActorRef(Props(new Actor { def receive = { case _ ⇒ } }))
           def receive = { case _ ⇒ sender() ! nested }
         }))
         a should not be (null)
-        val nested = Await.result((a ? "any").mapTo[ActorRef], timeout.duration)
+        /*val nested = Await.result((a ? "any").mapTo[ActorRef], timeout.duration)
         nested should not be (null)
-        a should not be theSameInstanceAs(nested)
+        a should not be theSameInstanceAs(nested)*/
+        BlockingEventLoop.reset
       }
 
-      "used with ActorRef" in {
+      /*"used with ActorRef" in {
         val a = TestActorRef(Props(new Actor {
           val nested = context.actorOf(Props(new Actor { def receive = { case _ ⇒ } }))
           def receive = { case _ ⇒ sender() ! nested }
@@ -137,10 +141,12 @@ class TestActorRefSpec extends AkkaSpec("disp1.type=Dispatcher") with BeforeAndA
         val nested = Await.result((a ? "any").mapTo[ActorRef], timeout.duration)
         nested should not be (null)
         a should not be theSameInstanceAs(nested)
-      }
+      }*/
 
     }
-
+  }
+}
+/** @note IMPLEMENT IN SCALA.JS
     "support reply via sender()" in {
       val serverRef = TestActorRef(Props[ReplyActor])
       val clientRef = TestActorRef(Props(classOf[SenderActor], serverRef))

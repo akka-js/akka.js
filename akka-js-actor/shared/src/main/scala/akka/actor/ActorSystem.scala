@@ -208,7 +208,10 @@ object ActorSystem {
     final val DebugEventStream: Boolean = false
     final val DebugUnhandledMessage: Boolean = false
 
-    final val Loggers: immutable.Seq[String] = Vector(cfg.getStringList("akka.loggers"): _*)
+    final val Loggers: immutable.Seq[String] = cfg.getStringList("akka.loggers") match {
+      case null => Nil
+      case m => Vector(m: _*)
+    }
     
     override def toString: String = s"Settings($name)"
 

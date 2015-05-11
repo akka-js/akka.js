@@ -8,7 +8,6 @@ import scala.annotation.{ varargs, tailrec }
 import scala.collection.immutable
 import scala.concurrent.duration._
 import scala.reflect.ClassTag
-// @note IMPLEMENT IN SCALA.JS import java.util.concurrent._
 import java.util.concurrent.atomic.AtomicInteger
 import akka.actor._
 import akka.actor.Actor._
@@ -20,6 +19,7 @@ import akka.actor.IllegalActorStateException
 import akka.actor.DeadLetter
 import akka.actor.Terminated
 import akka.event.LoggingReceive
+import akka.concurrent.BlockingEventLoop
 
 object TestActor {
   type Ignore = Option[PartialFunction[Any, Boolean]]
@@ -129,6 +129,8 @@ trait TestKitBase {
    * registration as message target.
    */
   val testActor: ActorRef = {
+    import akka.concurrent._
+    BlockingEventLoop.switch
     val impl = system.asInstanceOf[ExtendedActorSystem]
     val ref = impl.systemActorOf(TestActor.props(queue)
       // @note IMPLEMENT IN SCALA.JS .withDispatcher(CallingThreadDispatcher.Id),
@@ -138,6 +140,7 @@ trait TestKitBase {
       case r: RepointableRef ⇒ r.isStarted
       case _                 ⇒ true
     }, 1 second, 10 millis)
+    BlockingEventLoop.reset
     ref
   }
 

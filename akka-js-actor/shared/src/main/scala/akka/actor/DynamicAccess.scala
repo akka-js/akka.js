@@ -84,7 +84,8 @@ class JSDynamicAccess(/**val classLoader: ClassLoader*/) extends DynamicAccess {
   }  
   private val map = scala.collection.mutable.HashMap(
     "akka.testkit.TestEventListener" -> classOf[akka.testkit.TestEventListener],
-    "akka.event.LogExt" -> classOf[akka.event.LogExt]
+    "akka.event.LogExt" -> classOf[akka.event.LogExt],
+    "akka.event.Logging$DefaultLogger" -> classOf[akka.event.Logging.DefaultLogger]
   )
   override def getClassFor[T: ClassTag](fqcn: String): Try[Class[_ <: T]] =
     Try[Class[_ <: T]]({

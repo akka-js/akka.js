@@ -837,6 +837,7 @@ object Logging {
    * <code>akka.loggers</code> is not set, it defaults to just this
    * logger.
    */
+  //@scala.scalajs.js.annotation.JSExport
   class DefaultLogger extends Actor with StdOutLogger {
     import scala.scalajs.js
     override def receive: Receive = {

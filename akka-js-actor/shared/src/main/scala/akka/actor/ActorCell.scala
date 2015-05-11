@@ -771,6 +771,20 @@ private[akka] class ActorCell(
 
   final protected def setActorFields(actorInstance: Actor, context: ActorContext, self: ActorRef): Unit = {
     //actorInstance.setActorFields(context = context, self = self)
+    
+   /** XXX: FIX ME
+    *  The issue is the following:
+    *  `context` and `self` need to be `val`s inside Actor, otherwise you cannot `import` them.
+    *  Being `val`s they cannot be overwritten, so Akka/JVM uses `java.lang.reflect.Field` which
+    *  is not available in JS environments (of course).
+    *  What I'm doing at the moment is mimicking the behaviour, by recursively following up the 
+    *  function chain of `context` and `self` (starting from the property getter) to find out
+    *  the *hidden* name, which is then overwritten. This results in the correct result being 
+    *  returned when accessing the properties, but relies heavily on undefined behaviour subject 
+    *  to changes, so we should really find a more reliable solution. @sjrd mentioned a scalac
+    *  plugin or an IR manipulator as possible alternatives.
+    */
+    
     import scala.scalajs.js
     
     

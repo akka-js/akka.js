@@ -30,5 +30,5 @@ As of now, code is taken from Akka 2.3.9
 
 ## License
 
-Scala.js actors is distributed under the
+Akka.js is distributed under the
 [Scala License](http://www.scala-lang.org/license.html).

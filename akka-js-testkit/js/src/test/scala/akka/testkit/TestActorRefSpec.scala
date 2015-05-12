@@ -8,20 +8,23 @@ import org.scalatest.Matchers
 import org.scalatest.{ BeforeAndAfterEach, WordSpec }
 import akka.actor._
 import akka.event.Logging.Warning
-//import scala.concurrent.{ Future, Promise, Await }
 import scala.concurrent.{ Future, Promise }
 import akka.concurrent.{ Await, BlockingEventLoop }
 import scala.concurrent.duration._
 import akka.actor.ActorSystem
 import akka.pattern.ask
 import akka.dispatch.Dispatcher
+import akka.concurrent.BlockingEventLoop
+import scala.scalajs.js.annotation._
 
 /**
  * Test whether TestActorRef behaves as an ActorRef should, besides its own spec.
  */
 object TestActorRefSpec {
 
-  var counter = 4
+  var counter = 4 
+  var p = Promise[Int]
+  }
   //val thread = Thread.currentThread
   //var otherthread: Thread = null
 
@@ -38,6 +41,7 @@ object TestActorRefSpec {
     def receiveT: Receive
   }
 
+  @JSExport
   class ReplyActor extends TActor {
     import context.system
     var replyTo: ActorRef = null
@@ -56,6 +60,7 @@ object TestActorRefSpec {
     }
   }
 
+  @JSExport
   class WorkerActor() extends TActor {
     def receiveT = {
       case "work" ⇒ 
@@ -66,6 +71,7 @@ object TestActorRefSpec {
     }
   }
 
+  @JSExport
   class SenderActor(replyActor: ActorRef) extends TActor {
 
     def receiveT = {
@@ -73,14 +79,17 @@ object TestActorRefSpec {
       case "complex2" ⇒ replyActor ! "complexRequest2"
       case "simple"   ⇒ replyActor ! "simpleRequest"
       case "complexReply" ⇒ {
-        counter -= 1
+        TestActorRefSpec.counter -= 1
+        if(TestActorRefSpec.counter == 0) TestActorRefSpec.p.success(0)
       }
       case "simpleReply" ⇒ {
-        counter -= 1
+        TestActorRefSpec.counter -= 1
+        if(TestActorRefSpec.counter == 0) TestActorRefSpec.p.success(0)
       }
     }
   }
 
+  @JSExport
   class Logger extends Actor {
     var count = 0
     var msg: String = _
@@ -89,6 +98,7 @@ object TestActorRefSpec {
     }
   }
 
+  @JSExport
   class ReceiveTimeoutActor(target: ActorRef) extends Actor {
     context setReceiveTimeout 1.second
     def receive = {
@@ -102,9 +112,10 @@ object TestActorRefSpec {
    * Forwarding `Terminated` to non-watching testActor is not possible,
    * and therefore the `Terminated` message is wrapped.
    */
+  @JSExport
   case class WrappedTerminated(t: Terminated)
 
-}
+//}
 
 //@org.junit.runner.RunWith(classOf[org.scalatest.junit.JUnitRunner])
 class TestActorRefSpec extends AkkaSpec(/*"disp1.type=Dispatcher"*/) with BeforeAndAfterEach with DefaultTimeout {
@@ -126,52 +137,60 @@ class TestActorRefSpec extends AkkaSpec(/*"disp1.type=Dispatcher"*/) with Before
           def receive = { case _ ⇒ sender() ! nested }
         }))
         a should not be (null)
-        /*val nested = Await.result((a ? "any").mapTo[ActorRef], timeout.duration)
+        // @note BUG IN SCALA.JS, mapTo DOESN'T WORK val nested = Await.result((a ? "any").mapTo[ActorRef], timeout.duration)
+        val nested = Await.result((a ? "any"), timeout.duration).asInstanceOf[ActorRef]
         nested should not be (null)
-        a should not be theSameInstanceAs(nested)*/
+        a should not be theSameInstanceAs(nested)
         BlockingEventLoop.reset
       }
 
-      /*"used with ActorRef" in {
+      "used with ActorRef" in {
+        BlockingEventLoop.switch
         val a = TestActorRef(Props(new Actor {
           val nested = context.actorOf(Props(new Actor { def receive = { case _ ⇒ } }))
           def receive = { case _ ⇒ sender() ! nested }
         }))
         a should not be (null)
-        val nested = Await.result((a ? "any").mapTo[ActorRef], timeout.duration)
+        // @note BUG IN SCALA.JS, mapTo DOESN'T WORK val nested = Await.result((a ? "any").mapTo[ActorRef], timeout.duration)
+        val nested = Await.result((a ? "any"), timeout.duration).asInstanceOf[ActorRef]
         nested should not be (null)
         a should not be theSameInstanceAs(nested)
-      }*/
+        BlockingEventLoop.reset
+      }
 
+      "support reply via sender()" in {
+        BlockingEventLoop.switch
+
+        val serverRef = TestActorRef(Props[ReplyActor])
+        val clientRef = TestActorRef(Props(classOf[SenderActor], serverRef))
+
+        counter = 4
+
+        clientRef ! "complex"
+        clientRef ! "simple"
+        clientRef ! "simple"
+        clientRef ! "simple"
+
+        Await.result(p.future) should be(0)
+        p = Promise[Int]
+
+        counter = 4
+
+        clientRef ! "complex2"
+        clientRef ! "simple"
+        clientRef ! "simple"
+        clientRef ! "simple"
+
+        Await.result(p.future) should be(0) 
+
+        BlockingEventLoop.reset
+
+        //assertThread()
+      }
     }
   }
 }
 /** @note IMPLEMENT IN SCALA.JS
-    "support reply via sender()" in {
-      val serverRef = TestActorRef(Props[ReplyActor])
-      val clientRef = TestActorRef(Props(classOf[SenderActor], serverRef))
-
-      counter = 4
-
-      clientRef ! "complex"
-      clientRef ! "simple"
-      clientRef ! "simple"
-      clientRef ! "simple"
-
-      counter should be(0)
-
-      counter = 4
-
-      clientRef ! "complex2"
-      clientRef ! "simple"
-      clientRef ! "simple"
-      clientRef ! "simple"
-
-      counter should be(0)
-
-      assertThread()
-    }
-
     "stop when sent a poison pill" in {
       EventFilter[ActorKilledException]() intercept {
         val a = TestActorRef(Props[WorkerActor])

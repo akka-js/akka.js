@@ -419,7 +419,7 @@ import scala.annotation.tailrec
        val res = js.Dynamic.newInstance(ctor)(args.map(_.asInstanceOf[js.Any]): _*).asInstanceOf[A]
        res
      } catch {
-       case err: Exception => err.printStackTrace()
+       case err: Exception => println(s"instantiate: missing ${cls.getName}");err.printStackTrace()
          throw err
      }
   }  

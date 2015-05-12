@@ -101,7 +101,7 @@ class TestActorRef[T <: Actor](
         /** @note IMPLEMENT IN SCALA.JS val t = TestKitExtension(_system).DefaultTimeout 
         Await.result(this.?(InternalGetActor)(t), t.duration).asInstanceOf[T]*/ 
         val t = Duration(60000L, TimeUnit.MILLISECONDS)
-        Await.result(this.?(InternalGetActor)(t)).asInstanceOf[T]
+        Await.result(this.?(InternalGetActor)(t)).asInstanceOf[T]      
       case ref ⇒ ref
     }
   }

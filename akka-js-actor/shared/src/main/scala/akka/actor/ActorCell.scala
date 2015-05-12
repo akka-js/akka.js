@@ -314,7 +314,7 @@ private[akka] trait Cell {
    * schedule the actor to run, depending on which type of cell it is.
    * Is only allowed to throw Fatal Throwables.
    */
-  final def sendMessage(message: Any, sender: ActorRef): Unit =
+  final def sendMessage(message: Any, sender: ActorRef): Unit = 
     sendMessage(Envelope(message, sender, system))
 
   /**
@@ -803,6 +803,8 @@ private[akka] class ActorCell(
     if(actorInstance ne null) {
       setField(actorInstance, "context", context)
       setField(actorInstance, "self", self)
+      assert(actorInstance.context eq context)
+      assert(actorInstance.self eq self)
     /**
      * @note IMPLEMENT IN SCALA.JS
      *

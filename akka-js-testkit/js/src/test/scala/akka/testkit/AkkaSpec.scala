@@ -75,7 +75,7 @@ abstract class AkkaSpec(_system: ActorSystem)
 
   def this() = this(ActorSystem(AkkaSpec.getCallerName(getClass), AkkaSpec.testConf))
   */
-  def this() = this(ActorSystem((new scala.util.Random()).nextString(10)))
+  def this() = this(ActorSystem(scala.util.Random.alphanumeric.take(10).mkString))
 
   val log: LoggingAdapter = Logging(system, this.getClass)
 

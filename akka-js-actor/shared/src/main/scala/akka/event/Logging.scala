@@ -414,6 +414,7 @@ class LogExt(system: ExtendedActorSystem) extends Extension { // I FEEL THE WRAT
   private val loggerId = new AtomicInteger
   def id() = loggerId.incrementAndGet()
 }
+@scala.scalajs.js.annotation.JSExport
 object Logging {
 
   /**
@@ -837,7 +838,7 @@ object Logging {
    * <code>akka.loggers</code> is not set, it defaults to just this
    * logger.
    */
-  //@scala.scalajs.js.annotation.JSExport
+  @scala.scalajs.js.annotation.JSExportAll
   class DefaultLogger extends Actor with StdOutLogger {
     import scala.scalajs.js
     override def receive: Receive = {

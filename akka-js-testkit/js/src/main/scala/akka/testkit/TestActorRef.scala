@@ -151,10 +151,8 @@ object TestActorRef {
     val sysImpl = system.asInstanceOf[ActorSystemImpl]
     new TestActorRef(sysImpl, props, supervisor.asInstanceOf[InternalActorRef], name)
   }
-
-  /** @note IMPLEMENT IN SCALA.JS
+  
   def apply[T <: Actor](implicit t: ClassTag[T], system: ActorSystem): TestActorRef[T] = apply[T](randomName)
-
   
   def apply[T <: Actor](name: String)(implicit t: ClassTag[T], system: ActorSystem): TestActorRef[T] = apply[T](Props({
     system.asInstanceOf[ExtendedActorSystem].dynamicAccess.createInstanceFor[T](t.runtimeClass, Nil).recover({
@@ -165,7 +163,6 @@ object TestActorRef {
           "\nOR try to change: 'actorOf(Props[MyActor]' to 'actorOf(Props(new MyActor)'.", exception)
     }).get
   }), name)
-   */
 
   /**
    * Java API: create a TestActorRef in the given system for the given props,

@@ -201,78 +201,91 @@ class TestActorRefSpec extends AkkaSpec(/*"disp1.type=Dispatcher"*/) with Before
             }
           }))
           a.!(PoisonPill)(testActor)
-          println("LOL")
           expectMsgPF(5 seconds) {
             case WrappedTerminated(Terminated(`a`)) ⇒ true
           }
-          println("LOL222")
           a.isTerminated should be(true)
           assertThread()
         }
         BlockingEventLoop.reset
       }
-    }
-  }
-}
-/** @note IMPLEMENT IN SCALA.JS
-    "restart when Kill:ed" in {
-      EventFilter[ActorKilledException]() intercept {
-        counter = 2
 
-        val boss = TestActorRef(Props(new TActor {
-          val ref = TestActorRef(Props(new TActor {
-            def receiveT = { case _ ⇒ }
-            override def preRestart(reason: Throwable, msg: Option[Any]) { counter -= 1 }
-            override def postRestart(reason: Throwable) { counter -= 1 }
-          }), self, "child")
 
-          override def supervisorStrategy =
-            OneForOneStrategy(maxNrOfRetries = 5, withinTimeRange = 1 second)(List(classOf[ActorKilledException]))
+      "restart when Killed" in {
+        BlockingEventLoop.switch
+        EventFilter[ActorKilledException]() intercept {
+          counter = 2
+          val p = Promise[Int]
 
-          def receiveT = { case "sendKill" ⇒ ref ! Kill }
-        }))
+          val boss = TestActorRef(Props(new TActor {
+            val ref = TestActorRef(Props(new TActor {
+              def receiveT = { case _ ⇒ }
+              override def preRestart(reason: Throwable, msg: Option[Any]) { counter -= 1; if(counter == 0) p.success(0) }
+              override def postRestart(reason: Throwable) { counter -= 1; if(counter == 0) p.success(0) }
+            }), self, "child")
 
-        boss ! "sendKill"
+            override def supervisorStrategy =
+              OneForOneStrategy(maxNrOfRetries = 5, withinTimeRange = 1 second)(List(classOf[ActorKilledException]))
 
-        counter should be(0)
-        assertThread()
+            def receiveT = { case "sendKill" ⇒ ref ! Kill }
+          }))
+
+          boss ! "sendKill"
+
+          //counter should be(0)
+          Await.result(p.future, 5 seconds) should be(0)
+          assertThread()
+          
+        }
+        BlockingEventLoop.reset
+      }
+
+
+      "support futures" in {
+        BlockingEventLoop.switch
+        val a = TestActorRef[WorkerActor]
+        val f = a ? "work"
+        // CallingThreadDispatcher means that there is no delay
+        //f should be('completed)
+        Await.result(f, timeout.duration) should be("workDone")
+        BlockingEventLoop.reset
+      }
+
+      "support receive timeout" in {
+        BlockingEventLoop.switch
+        val a = TestActorRef(new ReceiveTimeoutActor(testActor))
+        expectMsg("timeout")
+        BlockingEventLoop.reset
       }
     }
-
-    "support futures" in {
-      val a = TestActorRef[WorkerActor]
-      val f = a ? "work"
-      // CallingThreadDispatcher means that there is no delay
-      f should be('completed)
-      Await.result(f, timeout.duration) should be("workDone")
-    }
-
-    "support receive timeout" in {
-      val a = TestActorRef(new ReceiveTimeoutActor(testActor))
-      expectMsg("timeout")
-    }
-
   }
-
+    
   "A TestActorRef" must {
 
     "allow access to internals" in {
+      BlockingEventLoop.switch
+      val p = Promise[Int]
       val ref = TestActorRef(new TActor {
         var s: String = _
         def receiveT = {
-          case x: String ⇒ s = x
+          case x: String ⇒ s = x; p.success(0)
         }
       })
       ref ! "hallo"
       val actor = ref.underlyingActor
+      Await.result(p.future)
       actor.s should be("hallo")
+      BlockingEventLoop.reset
     }
+  
 
     "set receiveTimeout to None" in {
+      BlockingEventLoop.switch
       val a = TestActorRef[WorkerActor]
       a.underlyingActor.context.receiveTimeout should be theSameInstanceAs Duration.Undefined
+      BlockingEventLoop.reset
     }
-
+    /** @note IMPLEMENT IN SCALA.JS
     "set CallingThreadDispatcher" in {
       val a = TestActorRef[WorkerActor]
       a.underlying.dispatcher.getClass should be(classOf[CallingThreadDispatcher])
@@ -281,21 +294,22 @@ class TestActorRefSpec extends AkkaSpec(/*"disp1.type=Dispatcher"*/) with Before
     "allow override of dispatcher" in {
       val a = TestActorRef(Props[WorkerActor].withDispatcher("disp1"))
       a.underlying.dispatcher.getClass should be(classOf[Dispatcher])
-    }
+    }*/
 
+    
     "proxy receive for the underlying actor without sender()" in {
       val ref = TestActorRef[WorkerActor]
       ref.receive("work")
       ref.isTerminated should be(true)
     }
 
+    /** @note IMPLEMENT IN SCALA.JS
     "proxy receive for the underlying actor with sender()" in {
       val ref = TestActorRef[WorkerActor]
       ref.receive("work", testActor)
       ref.isTerminated should be(true)
       expectMsg("workDone")
     }
-
+*/
   }
 }
-*/

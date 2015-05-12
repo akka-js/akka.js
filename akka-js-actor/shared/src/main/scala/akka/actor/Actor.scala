@@ -432,6 +432,7 @@ trait Actor {
    * [[akka.actor.UntypedActorContext]], which is the Java API of the actor
    * context.
    */
+   @scala.scalajs.js.annotation.JSExport
    implicit val context: ActorContext = {
     /**
      * @note IMPLEMENT IN SCALA.JS
@@ -461,6 +462,7 @@ trait Actor {
    * self ! message
    * </pre>
    */
+  @scala.scalajs.js.annotation.JSExport
   implicit final val self = context.self //MUST BE A VAL, TRUST ME
   // WE NEED THIS BECAUSE WE NEED TO SET THE FIELDS IN ACTOR CELL
   //var _self = context.self

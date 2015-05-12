@@ -655,6 +655,7 @@ private[akka] class ActorCell(
 
       // If no becomes were issued, the actors behavior is its receive method
       behaviorStack = if (behaviorStack.isEmpty) instance.receive :: behaviorStack else behaviorStack
+
       instance
     } finally {
      /**
@@ -789,16 +790,17 @@ private[akka] class ActorCell(
     
     
     def getProto(a: Any) = js.Object.getPrototypeOf(a.asInstanceOf[js.Object])
-    def getGetter(a: js.Object, s: String) = js.Object.getOwnPropertyDescriptor(a.asInstanceOf[js.Object], s).get.toString()
+    def getGetter(a: js.Object, s: String) = js.Object.getOwnPropertyDescriptor(a, s).get.toString()
   
     def setField(instance: AnyRef, f: String, v: Any) = {
-      val proto = getProto(instance)
-      val getter = getGetter(proto, f).split("this\\.")(1).split("\\(")(0)
-      val otherstring = proto.asInstanceOf[js.Dictionary[_]](getter).toString()
-    
-      val fin = otherstring.split("this\\.")(1).split("}")(0).trim()
-    
-      instance.asInstanceOf[js.Dictionary[js.Any]](fin) = v.asInstanceOf[js.Any]
+      try {
+        val proto = getProto(instance)
+        val getter = getGetter(proto, f).split("this\\.")(1).split("\\(")(0)
+        val otherstring = proto.asInstanceOf[js.Dictionary[_]](getter).toString()
+        val fin = otherstring.split("this\\.")(1).split("}")(0).trim()
+
+        instance.asInstanceOf[js.Dictionary[js.Any]](fin) = v.asInstanceOf[js.Any]
+      } catch { case e: Throwable => e.printStackTrace(); throw e }
     }
     if(actorInstance ne null) {
       setField(actorInstance, "context", context)

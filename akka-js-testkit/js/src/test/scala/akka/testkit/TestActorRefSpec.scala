@@ -124,7 +124,7 @@ class TestActorRefSpec extends AkkaSpec(/*"disp1.type=Dispatcher"*/) with Before
 
   //override def beforeEach(): Unit = otherthread = null
 
-  //private def assertThread(): Unit = otherthread should (be(null) or equal(thread))
+  private def assertThread(): Unit = () //otherthread should (be(null) or equal(thread))
 
   "A TestActorRef should be an ActorRef, hence it" must {
 
@@ -185,31 +185,36 @@ class TestActorRefSpec extends AkkaSpec(/*"disp1.type=Dispatcher"*/) with Before
 
         BlockingEventLoop.reset
 
-        //assertThread()
+        assertThread()
+      }
+
+
+    "stop when sent a poison pill" in {
+        BlockingEventLoop.switch
+        EventFilter[ActorKilledException]() intercept {
+          val a = TestActorRef(Props[WorkerActor])
+          val forwarder = system.actorOf(Props(new Actor {
+            context.watch(a)
+            def receive = {
+              case t: Terminated ⇒ testActor forward WrappedTerminated(t)
+              case x             ⇒ testActor forward x
+            }
+          }))
+          a.!(PoisonPill)(testActor)
+          println("LOL")
+          expectMsgPF(5 seconds) {
+            case WrappedTerminated(Terminated(`a`)) ⇒ true
+          }
+          println("LOL222")
+          a.isTerminated should be(true)
+          assertThread()
+        }
+        BlockingEventLoop.reset
       }
     }
   }
 }
 /** @note IMPLEMENT IN SCALA.JS
-    "stop when sent a poison pill" in {
-      EventFilter[ActorKilledException]() intercept {
-        val a = TestActorRef(Props[WorkerActor])
-        val forwarder = system.actorOf(Props(new Actor {
-          context.watch(a)
-          def receive = {
-            case t: Terminated ⇒ testActor forward WrappedTerminated(t)
-            case x             ⇒ testActor forward x
-          }
-        }))
-        a.!(PoisonPill)(testActor)
-        expectMsgPF(5 seconds) {
-          case WrappedTerminated(Terminated(`a`)) ⇒ true
-        }
-        a.isTerminated should be(true)
-        assertThread()
-      }
-    }
-
     "restart when Kill:ed" in {
       EventFilter[ActorKilledException]() intercept {
         counter = 2

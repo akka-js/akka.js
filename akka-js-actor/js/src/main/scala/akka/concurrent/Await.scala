@@ -36,6 +36,7 @@ object BlockingEventLoop {
   }
   
   def reset = {
+    assert(isEmpty)
     global.setTimeout = oldSetTimeout
     global.setInterval = oldSetInterval
     global.clearTimeout = oldClearTimeout

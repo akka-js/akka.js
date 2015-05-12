@@ -415,6 +415,13 @@ class LogExt(system: ExtendedActorSystem) extends Extension { // I FEEL THE WRAT
   def id() = loggerId.incrementAndGet()
 }
 @scala.scalajs.js.annotation.JSExport
+class DefaultLogger extends Actor with Logging.StdOutLogger {
+    import scala.scalajs.js
+    override def receive: Receive = {
+      case Logging.InitializeLogger(_) ⇒ sender() ! Logging.LoggerInitialized
+      case event: Logging.LogEvent     ⇒ print(event)
+    }
+  }
 object Logging {
 
   /**
@@ -838,14 +845,13 @@ object Logging {
    * <code>akka.loggers</code> is not set, it defaults to just this
    * logger.
    */
-  @scala.scalajs.js.annotation.JSExportAll
-  class DefaultLogger extends Actor with StdOutLogger {
+  /*class DefaultLogger extends Actor with StdOutLogger {
     import scala.scalajs.js
     override def receive: Receive = {
       case InitializeLogger(_) ⇒ sender() ! LoggerInitialized
       case event: LogEvent     ⇒ print(event)
     }
-  }
+  }*/
 
   /**
    * Returns the StackTrace for the given Throwable as a String

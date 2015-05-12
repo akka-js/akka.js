@@ -81,9 +81,9 @@ class TestActor(var queue: scala.collection.mutable.Queue[TestActor.Message]/** 
       val observe = ignore map (ignoreFunc ⇒ !ignoreFunc.applyOrElse(x, FALSE)) getOrElse true
       if (observe) {
         // @note IMPLEMENT IN SCALA.JS queue.offerLast(RealMessage(x, sender()))
-        val tmp = queue.reverse
-        tmp.enqueue(RealMessage(x, sender()))
-        queue = tmp.reverse
+        val all = queue.dequeueAll { x => true }
+        queue.enqueue(RealMessage(x, sender()))
+        queue.enqueue(all: _*)
       }
   }
 
@@ -119,7 +119,30 @@ trait TestKitBase {
   val testKitSettings = TestKitSettings //@note IMPLEMENT IN SCALA.JS TestKitExtension(system)
 
   // @note IMPLEMENT IN SCALA.JS private val queue = new LinkedBlockingDeque[Message]()
-  private val queue = new scala.collection.mutable.Queue[Message]()
+  private val queue = new scala.collection.mutable.Queue[Message]() 
+  
+  private def pollFirst(max: Duration): AnyRef = {
+      val stop = System.nanoTime().nanos + max
+      
+      import scala.scalajs.js
+      val f = scala.concurrent.Promise[AnyRef]
+      lazy val fn: js.Function0[Any] = { () =>
+        try {
+          val res = queue.dequeue()
+          f.success(res)
+        } catch {
+          case e: Throwable =>
+            val toSleep = stop - now
+            if (toSleep <= Duration.Zero) f.failure(new AssertionError("timeout " + max + " expired"))
+            else js.Dynamic.global.setTimeout(fn, (toSleep min (100 millis)).toMillis.asInstanceOf[js.Any])
+        }      
+      }
+    
+      js.Dynamic.global.setTimeout(fn, 100)
+    
+      akka.concurrent.Await.result(f.future, max)
+  }
+    
   private[akka] var lastMessage: Message = NullMessage
 
   def lastSender = lastMessage.sender
@@ -130,6 +153,7 @@ trait TestKitBase {
    */
   val testActor: ActorRef = {
     import akka.concurrent._
+    // Need to switch into blocking mode, otherwise anything that extends TestKitBase will fail due to `awaitCond`
     BlockingEventLoop.switch
     val impl = system.asInstanceOf[ExtendedActorSystem]
     val ref = impl.systemActorOf(TestActor.props(queue)
@@ -690,7 +714,7 @@ trait TestKitBase {
         queue.dequeue
       } else if (max.isFinite) {
         // @note IMPLEMENT IN SCALA.JS queue.pollFirst(max.length, max.unit)
-        queue.dequeue
+        pollFirst(max).asInstanceOf[Message]
       } else {
         // @note IMPLEMENT IN SCALA.JS queue.takeFirst
         queue.dequeue

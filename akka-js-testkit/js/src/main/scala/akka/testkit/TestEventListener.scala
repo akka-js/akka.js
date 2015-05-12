@@ -12,6 +12,7 @@ import akka.actor.{ DeadLetter, ActorSystem, Terminated, UnhandledMessage }
 import akka.dispatch.sysmsg.{ SystemMessage, Terminate }
 import akka.event.Logging.{ Warning, LogEvent, InitializeLogger, Info, Error, Debug, LoggerInitialized }
 import akka.event.Logging
+import akka.event.DefaultLogger
 import akka.actor.NoSerializationVerificationNeeded
 import akka.japi.Util.immutableSeq
 import java.lang.{ Iterable ⇒ JIterable }
@@ -480,7 +481,7 @@ object TestEventListener { val p = scala.concurrent.Promise[Boolean] }
 
 import scala.scalajs.js.annotation
 @annotation.JSExport
-class TestEventListener extends Logging.DefaultLogger {
+class TestEventListener extends /*Logging.*/DefaultLogger {
   import TestEvent._
 
   var filters: List[EventFilter] = Nil

@@ -20,6 +20,17 @@ object BlockingEventLoop {
   private val timeoutEvents = new ListBuffer[(js.Function0[_], Double)]()
   private val intervalEvents = new ListBuffer[(js.Function0[_], Double)]()
   
+  def wait(max: Duration): Unit = {
+    import scala.scalajs.js
+    val p = scala.concurrent.Promise[Int]
+    
+    val fn: js.Function0[Any] = { () =>
+      p.success(0)
+    }
+    js.Dynamic.global.setTimeout(fn, max.toMillis)
+    Await.result(p.future)
+  }
+  
   def switch = {
     global.setTimeout = { (f: js.Function0[_], delay: Number) => 
       val handle =  f -> (timer + delay.doubleValue())

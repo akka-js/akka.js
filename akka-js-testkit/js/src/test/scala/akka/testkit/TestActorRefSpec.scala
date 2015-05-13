@@ -129,17 +129,6 @@ class TestActorRefSpec extends AkkaSpec(/*"disp1.type=Dispatcher"*/) with Before
   //override def beforeEach(): Unit = otherthread = null
 
   private def assertThread(): Unit = () //otherthread should (be(null) or equal(thread))
-
-  private def wait(max: Duration): Unit = {
-    import scala.scalajs.js
-    val p = Promise[Int]
-    
-    val fn: js.Function0[Any] = { () =>
-      p.success(0)
-    }
-    js.Dynamic.global.setTimeout(fn, max.toMillis)
-    Await.result(p.future)
-  }
   
   "A TestActorRef should be an ActorRef, hence it" must {
 
@@ -315,9 +304,9 @@ class TestActorRefSpec extends AkkaSpec(/*"disp1.type=Dispatcher"*/) with Before
     "proxy receive for the underlying actor without sender()" in {      
       BlockingEventLoop.switch
       val ref = TestActorRef[WorkerActor]
-      wait(10 millis)
+      BlockingEventLoop.wait(10 millis)
       ref.receive("work")
-      wait(10 millis)
+      BlockingEventLoop.wait(10 millis)
       ref.isTerminated should be(true)
       BlockingEventLoop.reset
     }
@@ -325,9 +314,9 @@ class TestActorRefSpec extends AkkaSpec(/*"disp1.type=Dispatcher"*/) with Before
     "proxy receive for the underlying actor with sender()" in {
       BlockingEventLoop.switch
       val ref = TestActorRef[WorkerActor]
-      wait(10 millis)
+      BlockingEventLoop.wait(10 millis)
       ref.receive("work", testActor)
-      wait(10 millis)
+      BlockingEventLoop.wait(10 millis)
       ref.isTerminated should be(true)
       expectMsg("workDone")
       BlockingEventLoop.reset

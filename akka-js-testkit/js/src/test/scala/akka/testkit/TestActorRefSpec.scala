@@ -16,6 +16,8 @@ import akka.pattern.ask
 import akka.dispatch.Dispatcher
 import akka.concurrent.BlockingEventLoop
 import scala.scalajs.js.annotation._
+import scala.scalajs.js
+import scala.concurrent.duration._
 
 /**
  * Test whether TestActorRef behaves as an ActorRef should, besides its own spec.
@@ -65,7 +67,9 @@ object TestActorRefSpec {
     def receiveT = {
       case "work" ⇒ 
         sender() ! "workDone"
+        try {
         context stop self
+        } catch { case e: Throwable => e.printStackTrace() }
       case replyTo: Promise[_] ⇒ replyTo.asInstanceOf[Promise[Any]].success("complexReply")
       case replyTo: ActorRef   ⇒ replyTo ! "complexReply"
     }
@@ -126,6 +130,17 @@ class TestActorRefSpec extends AkkaSpec(/*"disp1.type=Dispatcher"*/) with Before
 
   private def assertThread(): Unit = () //otherthread should (be(null) or equal(thread))
 
+  private def wait(max: Duration): Unit = {
+    import scala.scalajs.js
+    val p = Promise[Int]
+    
+    val fn: js.Function0[Any] = { () =>
+      p.success(0)
+    }
+    js.Dynamic.global.setTimeout(fn, max.toMillis)
+    Await.result(p.future)
+  }
+  
   "A TestActorRef should be an ActorRef, hence it" must {
 
     "support nested Actor creation" when {
@@ -297,19 +312,25 @@ class TestActorRefSpec extends AkkaSpec(/*"disp1.type=Dispatcher"*/) with Before
     }*/
 
     
-    "proxy receive for the underlying actor without sender()" in {
+    "proxy receive for the underlying actor without sender()" in {      
+      BlockingEventLoop.switch
       val ref = TestActorRef[WorkerActor]
+      wait(10 millis)
       ref.receive("work")
+      wait(10 millis)
       ref.isTerminated should be(true)
+      BlockingEventLoop.reset
     }
 
-    /** @note IMPLEMENT IN SCALA.JS
     "proxy receive for the underlying actor with sender()" in {
+      BlockingEventLoop.switch
       val ref = TestActorRef[WorkerActor]
+      wait(10 millis)
       ref.receive("work", testActor)
+      wait(10 millis)
       ref.isTerminated should be(true)
       expectMsg("workDone")
+      BlockingEventLoop.reset
     }
-*/
   }
 }

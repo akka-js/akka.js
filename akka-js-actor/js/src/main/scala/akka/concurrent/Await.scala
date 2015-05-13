@@ -100,7 +100,7 @@ object Await {
         case Some(Failure(m)) => throw m
       }
     }
-    
+
     loop(f)(LastRan(0L))
   }    
     

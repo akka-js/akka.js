@@ -158,7 +158,6 @@ private[akka] trait FaultHandling { this: ActorCell ⇒
     }
 
     val wasTerminating = isTerminating
-
     if (setChildrenTerminationReason(ChildrenContainer.Termination)) {
       if (!wasTerminating) {
         // do not process normal messages while waiting for all children to terminate

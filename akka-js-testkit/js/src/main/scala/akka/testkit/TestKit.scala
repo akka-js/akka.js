@@ -61,7 +61,7 @@ object TestActor {
 }
 
 @scala.scalajs.js.annotation.JSExport
-class TestActor(var queue: scala.collection.mutable.Queue[TestActor.Message]/** @note IMPLEMENT IN SCALA.JS queue: BlockingDeque[TestActor.Message] */) extends Actor {
+class TestActor(val queue: scala.collection.mutable.Queue[TestActor.Message]/** @note IMPLEMENT IN SCALA.JS queue: BlockingDeque[TestActor.Message] */) extends Actor {
   import TestActor._
 
   var ignore: Ignore = None
@@ -81,9 +81,7 @@ class TestActor(var queue: scala.collection.mutable.Queue[TestActor.Message]/** 
       val observe = ignore map (ignoreFunc ⇒ !ignoreFunc.applyOrElse(x, FALSE)) getOrElse true
       if (observe) {
         // @note IMPLEMENT IN SCALA.JS queue.offerLast(RealMessage(x, sender()))
-        val all = queue.dequeueAll { x => true }
         queue.enqueue(RealMessage(x, sender()))
-        queue.enqueue(all: _*)
       }
   }
 
@@ -129,7 +127,7 @@ trait TestKitBase {
       lazy val fn: js.Function0[Any] = { () =>
         try {
           val res = queue.dequeue()
-          f.success(res)
+          f.success(res)         
         } catch {
           case e: Throwable =>
             val toSleep = stop - now
@@ -138,9 +136,11 @@ trait TestKitBase {
         }      
       }
     
-      js.Dynamic.global.setTimeout(fn, 100)
+      js.Dynamic.global.setTimeout(fn, 0)
     
-      akka.concurrent.Await.result(f.future, max)
+      try {
+        akka.concurrent.Await.result(f.future, max)
+      } catch { case _: Throwable=> null.asInstanceOf[AnyRef] }
   }
     
   private[akka] var lastMessage: Message = NullMessage
@@ -314,20 +314,20 @@ trait TestKitBase {
     poll(_max min interval)*/
     import scala.scalajs.js
     val f = scala.concurrent.Promise[Boolean]
-    
-    val id = js.Dynamic.global.setInterval({
+    lazy val fn: js.Function0[Any] = { () =>
       val failed =
         try { a; false } catch {
           case NonFatal(e) ⇒
-            if ((now + 800.millis) >= stop) throw e
+            if ((now + (_max min interval)) >= stop) throw e
             true
         }
         if(!failed) f.success(true)
-      ()
-    }, 100)
+        else js.Dynamic.global.setTimeout(fn, ((stop - now) min interval).toMillis)     
+    }
+    
+    js.Dynamic.global.setTimeout(fn, (_max min interval).toMillis)
     
     akka.concurrent.Await.result(f.future)
-    js.Dynamic.global.clearInterval(id)
   }
 
   /**

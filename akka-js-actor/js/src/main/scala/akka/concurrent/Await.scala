@@ -14,7 +14,7 @@ object BlockingEventLoop {
   private val oldClearTimeout = global.clearTimeout
   private val oldClearInterval = global.clearInterval
   
-  private var isBlocking = false
+   var isBlocking = false
   
   private def timer = js.Date.now()
   

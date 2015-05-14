@@ -127,7 +127,7 @@ trait TestKitBase {
       lazy val fn: js.Function0[Any] = { () =>
         try {
           val res = queue.dequeue()
-          f.success(res)         
+          f.success(res)  
         } catch {
           case e: Throwable =>
             val toSleep = stop - now
@@ -135,7 +135,6 @@ trait TestKitBase {
             else js.Dynamic.global.setTimeout(fn, (toSleep min (100 millis)).toMillis.asInstanceOf[js.Any])
         }      
       }
-    
       js.Dynamic.global.setTimeout(fn, 0)
     
       try {
@@ -154,7 +153,8 @@ trait TestKitBase {
   val testActor: ActorRef = {
     import akka.concurrent._
     // Need to switch into blocking mode, otherwise anything that extends TestKitBase will fail due to `awaitCond`
-    BlockingEventLoop.blockingOn
+    val wasBlocking = BlockingEventLoop.isBlocking
+    if(!wasBlocking) BlockingEventLoop.blockingOn 
     val impl = system.asInstanceOf[ExtendedActorSystem]
     val ref = impl.systemActorOf(TestActor.props(queue)
       // @note IMPLEMENT IN SCALA.JS .withDispatcher(CallingThreadDispatcher.Id),
@@ -164,7 +164,7 @@ trait TestKitBase {
       case r: RepointableRef ⇒ r.isStarted
       case _                 ⇒ true
     }, 1 second, 10 millis)
-    BlockingEventLoop.blockingOff
+    if(!wasBlocking) BlockingEventLoop.blockingOff
     ref
   }
 

@@ -154,7 +154,7 @@ trait TestKitBase {
   val testActor: ActorRef = {
     import akka.concurrent._
     // Need to switch into blocking mode, otherwise anything that extends TestKitBase will fail due to `awaitCond`
-    BlockingEventLoop.switch
+    BlockingEventLoop.blockingOn
     val impl = system.asInstanceOf[ExtendedActorSystem]
     val ref = impl.systemActorOf(TestActor.props(queue)
       // @note IMPLEMENT IN SCALA.JS .withDispatcher(CallingThreadDispatcher.Id),
@@ -164,7 +164,7 @@ trait TestKitBase {
       case r: RepointableRef ⇒ r.isStarted
       case _                 ⇒ true
     }, 1 second, 10 millis)
-    BlockingEventLoop.reset
+    BlockingEventLoop.blockingOff
     ref
   }
 

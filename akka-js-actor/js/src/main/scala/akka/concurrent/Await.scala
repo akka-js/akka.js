@@ -41,9 +41,7 @@ object BlockingEventLoop {
           timeoutEvents += handle
           handle.asInstanceOf[SetTimeoutHandle]
         }
-      else oldSetTimeout(delay.asInstanceOf[js.Any]) {
-        f
-      } 
+      else oldSetTimeout(f, delay.asInstanceOf[js.Any]) 
     }
     global.setInterval = { (f: js.Function0[_], interval: Number) => 
       if(isBlocking) {
@@ -51,9 +49,7 @@ object BlockingEventLoop {
         intervalEvents += handle
         handle.asInstanceOf[SetIntervalHandle]
       }
-      else oldSetInterval(interval.asInstanceOf[js.Any]) {
-        f
-      }
+      else oldSetInterval(f, interval.asInstanceOf[js.Any])
     }
     global.clearTimeout = (handle: SetTimeoutHandle) => timeoutEvents -= handle.asInstanceOf[(js.Function0[_], Double)]
     global.clearInterval = (handle: SetIntervalHandle) => intervalEvents -= handle.asInstanceOf[(js.Function0[_], Double)]

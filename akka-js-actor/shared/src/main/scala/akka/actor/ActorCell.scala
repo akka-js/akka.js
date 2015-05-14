@@ -788,14 +788,23 @@ private[akka] class ActorCell(
     
     import scala.scalajs.js
     
-    
     def getProto(a: Any) = js.Object.getPrototypeOf(a.asInstanceOf[js.Object])
-    def getGetter(a: js.Object, s: String) = js.Object.getOwnPropertyDescriptor(a, s).get.toString()
+    def getGetter(a: js.Object, s: String) = {
+      @tailrec
+      def getG(p: js.Object): (js.Object, String) = { 
+        val desc = js.Object.getOwnPropertyDescriptor(p, s)
+        if(desc.toString() != "undefined")
+          (p, desc.get.toString())
+        else getG(getProto(p))
+      }
+      
+      getG(getProto(a))
+    }
   
     def setField(instance: AnyRef, f: String, v: Any) = {
       try {
-        val proto = getProto(instance)
-        val getter = getGetter(proto, f).split("this\\.")(1).split("\\(")(0)
+        val (proto, str) = getGetter(instance.asInstanceOf[js.Object], f)
+        val getter = str.split("this\\.")(1).split("\\(")(0)
         val otherstring = proto.asInstanceOf[js.Dictionary[_]](getter).toString()
         val fin = otherstring.split("this\\.")(1).split("}")(0).trim()
 

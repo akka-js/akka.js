@@ -19,7 +19,7 @@ class TestProbeSpec extends AkkaSpec with DefaultTimeout {
 
   "A TestProbe" must {
 
-    /*"reply to futures" in {
+    "reply to futures" in {
       val tk = TestProbe() // TestProbe needs to happen before blocking mode kicks in, because it uses it itself (otherwise -> deadlock)
       BlockingEventLoop.switch
       val future = tk.ref ? "hello"
@@ -139,7 +139,7 @@ class TestProbeSpec extends AkkaSpec with DefaultTimeout {
       testActor ! "pigdog"
       expectMsg("pigdog")
       BlockingEventLoop.reset
-    }*/
+    }
 
     "watch actors when queue non-empty" in {
       val probe = TestProbe()
@@ -148,13 +148,14 @@ class TestProbeSpec extends AkkaSpec with DefaultTimeout {
       val target = system.actorOf(Props(new Actor {
         def receive = Actor.emptyBehavior
       }), "potatoActor")
+      
       system.stop(target)  
       probe.ref ! "hello"
       probe watch target
       
       probe.expectMsg(1.seconds, "hello")
-
       probe.expectMsg(2.seconds, Terminated(target)(false, false))
+      
       BlockingEventLoop.reset
     }
 

@@ -3,15 +3,19 @@ package akka.dispatch
 import java.util.Collection
 import java.util.concurrent.{ TimeUnit, Callable, ExecutorService }
 import scalajs.js.timers.setTimeout
+import scalajs.js.Dynamic.global
 
 class EventLoopExecutor extends ExecutorServiceDelegate {
   def executor: ExecutorService = this
   
   private[this] var _isShutdown = false
   
-  override def execute(command: Runnable) = if (!_isShutdown) setTimeout(0) {
+  // XXX: DO NOT CHANGE THIS TO USE scaaljs.js.timers.setTimeout
+  // We need to access global because otherwise the overridden setTimeout
+  // in `akka-js-testkit` fails to execute
+  override def execute(command: Runnable) = if (!_isShutdown) global.setTimeout({
     command.run()
-  } 
+  }, 0) 
   
   override def shutdown() = _isShutdown = true
   

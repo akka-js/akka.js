@@ -20,6 +20,8 @@ object BlockingEventLoop {
   private val timeoutEvents = new ListBuffer[(js.Function0[_], Double)]()
   private val intervalEvents = new ListBuffer[(js.Function0[_], Double)]()
   
+  private var counter = 0
+  
   def wait(max: Duration): Unit = {
     import scala.scalajs.js
     val p = scala.concurrent.Promise[Int]
@@ -32,10 +34,13 @@ object BlockingEventLoop {
   }
   
   def switch = {
+    if(counter == 0) {
     global.setTimeout = { (f: js.Function0[_], delay: Number) => 
-      val handle =  f -> (timer + delay.doubleValue())
-      timeoutEvents += handle
-      handle.asInstanceOf[SetTimeoutHandle]
+      if(f.toString() != "undefined") {
+        val handle =  f -> (timer + delay.doubleValue())
+        timeoutEvents += handle
+        handle.asInstanceOf[SetTimeoutHandle]
+      }
     }
     global.setInterval = { (f: js.Function0[_], interval: Number) => 
       val handle = f -> interval.doubleValue()
@@ -44,14 +49,20 @@ object BlockingEventLoop {
     }
     global.clearTimeout = (handle: SetTimeoutHandle) => timeoutEvents -= handle.asInstanceOf[(js.Function0[_], Double)]
     global.clearInterval = (handle: SetIntervalHandle) => intervalEvents -= handle.asInstanceOf[(js.Function0[_], Double)]
+    
+    }
+    counter +=1
   }
   
   def reset = {
+    counter -= 1
+    if(counter == 0) {
     assert(isEmpty)
     global.setTimeout = oldSetTimeout
     global.setInterval = oldSetInterval
     global.clearTimeout = oldClearTimeout
-    global.clearInterval = oldClearInterval
+    global.clearInterval = oldClearInterval  
+    }
   }
   
   def tick(implicit lastRan: LastRan) = {

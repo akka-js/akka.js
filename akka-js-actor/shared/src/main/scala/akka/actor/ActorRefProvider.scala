@@ -420,7 +420,7 @@ private[akka] object LocalActorRefProvider {
 
     def receive = {
       case Terminated(_)    ⇒ context.stop(self)
-      case StopChild(child) ⇒ println("UCCI UCCI");context.stop(child)
+      case StopChild(child) ⇒ context.stop(child)
       case m                ⇒ context.system.deadLetters forward DeadLetter(m, sender(), self)
     }
 

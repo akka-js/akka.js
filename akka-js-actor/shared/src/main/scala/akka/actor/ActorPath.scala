@@ -18,7 +18,7 @@ object ActorPath {
    */
   def fromString(s: String): ActorPath = s match {
     case ActorPathExtractor(addr, elems) ⇒ RootActorPath(addr) / elems
-    case _                               ⇒ throw new /** @note IMPLEMENT IN SCALA.JS MalformedURL*/Exception("cannot parse as ActorPath: " + s)
+    case _                               ⇒ throw new MalformedURLException("cannot parse as ActorPath: " + s)
   }
 
   @deprecated("Use `isValidPathElement` instead", since = "2.3.8")

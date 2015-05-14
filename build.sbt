@@ -8,32 +8,32 @@ val commonSettings = Seq(
         "-feature",
         "-encoding", "utf8"
     ),
-    resolvers += "Typesafe repository" at "http://repo.typesafe.com/typesafe/releases/"
+    resolvers += "Typesafe repository" at "http://repo.typesafe.com/typesafe/releases/",
+    resolvers += "sonatype-snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
 )
 
-lazy val akkaTestkit = crossProject.in(file("akka-js-testkit"))
+lazy val akkaActorTest = crossProject.in(file("akka-js-actor-tests"))
   .settings(commonSettings: _*)
   .settings(
     version := "0.2-SNAPSHOT",
-    normalizedName := "akka-js-testkit"
+    normalizedName := "akka-js-actor-tests"
   )
   .jvmSettings(
   )
-  .jsSettings( 
+  .jsSettings(  
+    scalaJSOptimizerOptions ~= { _.withBypassLinkingErrors(true) },
     unmanagedSourceDirectories in Compile += baseDirectory.value / "../../akka-js-actor/js/src",
     unmanagedSourceDirectories in Compile += baseDirectory.value / "../../akka-js-actor/shared/src",
+    unmanagedSourceDirectories in Compile += baseDirectory.value / "../../akka-js-testkit/js/src",
     preLinkJSEnv := NodeJSEnv().value,
     postLinkJSEnv := NodeJSEnv().value.withSourceMap(true),
     libraryDependencies ++= Seq(
-      "org.scalatest" %%% "scalatestjs" % "2.3.0-SNAP2",
-      "org.scala-js" %%% "scalajs-dom" % "0.8.1-SNAPSHOT",
-      "be.doeraene" %%% "scalajs-pickling" % "0.4.1-SNAPSHOT",
-      "com.lihaoyi" %%% "utest" % "0.3.1" 
+      "org.scalacheck" %%% "scalacheck" % "1.12.2" % "test",
+      "org.scalatest" %%% "scalatestjs" % "2.3.0-SNAP2"
    )
   )
 
-lazy val akkaTestkitJS = akkaTestkit.js
-lazy val akkaTestkitJVM = akkaTestkit.jvm
+lazy val akkaActorTestJS = akkaActorTest.js
 
 lazy val root = project.in(file(".")).settings(commonSettings: _*)
-  .aggregate(akkaTestkitJS)
+  .aggregate(akkaActorTestJS)

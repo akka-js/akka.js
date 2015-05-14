@@ -14,13 +14,13 @@ object BlockingEventLoop {
   private val oldClearTimeout = global.clearTimeout
   private val oldClearInterval = global.clearInterval
   
+  private var isBlocking = false
+  
   private def timer = js.Date.now()
   
   private val queue = new Queue[js.Function0[_]]
   private val timeoutEvents = new ListBuffer[(js.Function0[_], Double)]()
   private val intervalEvents = new ListBuffer[(js.Function0[_], Double)]()
-  
-  private var counter = 0
   
   def wait(max: Duration): Unit = {
     import scala.scalajs.js
@@ -33,36 +33,38 @@ object BlockingEventLoop {
     Await.result(p.future)
   }
   
-  def switch = {
-    if(counter == 0) {
+  def switch() = {
     global.setTimeout = { (f: js.Function0[_], delay: Number) => 
-      if(f.toString() != "undefined") {
-        val handle =  f -> (timer + delay.doubleValue())
-        timeoutEvents += handle
-        handle.asInstanceOf[SetTimeoutHandle]
-      }
+      if(isBlocking)
+        if(f.toString() != "undefined") {
+          val handle =  f -> (timer + delay.doubleValue())
+          timeoutEvents += handle
+          handle.asInstanceOf[SetTimeoutHandle]
+        }
+      else oldSetTimeout(delay.asInstanceOf[js.Any]) {
+        f
+      } 
     }
     global.setInterval = { (f: js.Function0[_], interval: Number) => 
-      val handle = f -> interval.doubleValue()
-      intervalEvents += handle
-      handle.asInstanceOf[SetIntervalHandle]
+      if(isBlocking) {
+        val handle = f -> interval.doubleValue()
+        intervalEvents += handle
+        handle.asInstanceOf[SetIntervalHandle]
+      }
+      else oldSetInterval(interval.asInstanceOf[js.Any]) {
+        f
+      }
     }
     global.clearTimeout = (handle: SetTimeoutHandle) => timeoutEvents -= handle.asInstanceOf[(js.Function0[_], Double)]
     global.clearInterval = (handle: SetIntervalHandle) => intervalEvents -= handle.asInstanceOf[(js.Function0[_], Double)]
-    
-    }
-    counter +=1
   }
   
-  def reset = {
-    counter -= 1
-    if(counter == 0) {
+  def reset() = {
     assert(isEmpty)
     global.setTimeout = oldSetTimeout
     global.setInterval = oldSetInterval
     global.clearTimeout = oldClearTimeout
     global.clearInterval = oldClearInterval  
-    }
   }
   
   def tick(implicit lastRan: LastRan) = {
@@ -79,6 +81,10 @@ object BlockingEventLoop {
   }
   
   def isEmpty = queue.isEmpty
+  def blockingOn = isBlocking = true
+  def blockingOff = isBlocking = false
+  
+  switch()
 }
 
 sealed trait CanAwait extends AnyRef 

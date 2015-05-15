@@ -5,22 +5,18 @@ package akka.actor
 
 import language.postfixOps
 import akka.testkit._
-// @note IMPLEMENT IN SCALA.JS import org.scalatest.junit.JUnitSuiteLike
 import com.typesafe.config.ConfigFactory
-// @note IMPLEMENT IN SCALA.JS import scala.concurrent.{ ExecutionContext, Await, Future }
 import scala.concurrent.{ ExecutionContext, Future }
 import akka.concurrent.{ Await, BlockingEventLoop }
 import scala.concurrent.duration._
-// @note IMPLEMENT IN SCALA.JS import java.util.concurrent.{ RejectedExecutionException, ConcurrentLinkedQueue }
+import java.util.concurrent.RejectedExecutionException
 import akka.util.Timeout
-// @note IMPLEMENT IN SCALA.JS import akka.japi.Util.immutableSeq
 import akka.pattern.ask
 import akka.dispatch._
 import com.typesafe.config.Config
-import java.util.concurrent./** @note IMPLEMENT IN SCALA.JS { LinkedBlockingQueue, BlockingQueue, */TimeUnit //}
-// @note IMPLEMENT IN SCALA.JS import akka.util.Switch
-// @note IMPLEMENT IN SCALA.JS import akka.util.Helpers.ConfigOps
+import java.util.concurrent./** @note IMPLEMENT IN SCALA.JS { LinkedBlockingQueue, BlockingQueue, */TimeUnit
 import scala.scalajs.js.annotation.JSExport
+import scala.concurrent.Promise
 
 // @note IMPLEMENT IN SCALA.JS class JavaExtensionSpec extends JavaExtension with JUnitSuiteLike
 
@@ -231,50 +227,62 @@ class ActorSystemSpec extends AkkaSpec(/*ActorSystemSpec.config*/) with Implicit
       system2.scheduler.scheduleOnce(200.millis.dilated) { system2.shutdown() }
 
       //system2.awaitTermination(5 seconds)
-      BlockingEventLoop.wait(5 seconds)
+      BlockingEventLoop.wait(1 seconds)
       callbackWasRun should be(true)
       BlockingEventLoop.blockingOff
-    } /*
+    } 
 
     "return isTerminated status correctly" in {
+      BlockingEventLoop.blockingOn
       val system = ActorSystem()
+      
       system.isTerminated should be(false)
       system.shutdown()
-      system.awaitTermination(10 seconds)
+     // system.awaitTermination(10 seconds)
+      BlockingEventLoop.wait(1 seconds)
       system.isTerminated should be(true)
+      BlockingEventLoop.blockingOff
     }
 
     "throw RejectedExecutionException when shutdown" in {
+      BlockingEventLoop.blockingOn
       val system2 = ActorSystem("AwaitTermination", AkkaSpec.testConf)
       system2.shutdown()
-      system2.awaitTermination(10 seconds)
+      //system2.awaitTermination(10 seconds)
+      BlockingEventLoop.wait(2 seconds)
 
-      intercept[RejectedExecutionException] {
+      intercept[RuntimeException] { // should be RejectedExecutionException, waiting for https://github.com/scala-js/scala-js/pull/1663
         system2.registerOnTermination { println("IF YOU SEE THIS THEN THERE'S A BUG HERE") }
       }.getMessage should be("Must be called prior to system shutdown.")
+      BlockingEventLoop.blockingOff
     }
 
     "reliably create waves of actors" in {
+      BlockingEventLoop.blockingOn
       import system.dispatcher
       implicit val timeout = Timeout((20 seconds).dilated)
-      val waves = for (i ← 1 to 3) yield system.actorOf(Props[ActorSystemSpec.Waves]) ? 50000
+      val waves = for (i ← 1 to 3) yield system.actorOf(Props[/*ActorSystemSpec.*/Waves]) ? 20000
       Await.result(Future.sequence(waves), timeout.duration + 5.seconds) should be(Seq("done", "done", "done"))
+      BlockingEventLoop.blockingOff
     }
 
     "find actors that just have been created" in {
+      BlockingEventLoop.blockingOn
       system.actorOf(Props(new FastActor(TestLatch(), testActor)).withDispatcher("slow"))
       expectMsgType[Class[_]] should be(classOf[LocalActorRef])
+      BlockingEventLoop.blockingOff
     }
 
     "reliable deny creation of actors while shutting down" in {
+      BlockingEventLoop.blockingOn
       val system = ActorSystem()
       import system.dispatcher
       system.scheduler.scheduleOnce(200 millis) { system.shutdown() }
       var failing = false
       var created = Vector.empty[ActorRef]
-      while (!system.isTerminated) {
+      BlockingEventLoop.aWhile (!system.isTerminated) {
         try {
-          val t = system.actorOf(Props[ActorSystemSpec.Terminater])
+          val t = system.actorOf(Props[/*ActorSystemSpec.*/Terminater])
           failing should not be true // because once failing => always failing (it’s due to shutdown)
           created :+= t
         } catch {
@@ -283,22 +291,25 @@ class ActorSystemSpec extends AkkaSpec(/*ActorSystemSpec.config*/) with Implicit
 
         if (!failing && system.uptime >= 5) {
           println(created.last)
-          println(system.asInstanceOf[ExtendedActorSystem].printTree)
+          //println(system.asInstanceOf[ExtendedActorSystem].printTree)
           fail("System didn't terminate within 5 seconds")
         }
       }
 
-      created filter (ref ⇒ !ref.isTerminated && !ref.asInstanceOf[ActorRefWithCell].underlying.isInstanceOf[UnstartedCell]) should be(Seq())
+      created filter (ref ⇒ !ref.isTerminated /*&& !ref.asInstanceOf[ActorRefWithCell].underlying.isInstanceOf[UnstartedCell]*/) should be(Seq())
+      BlockingEventLoop.blockingOff
     }
 
     "shut down when /user fails" in {
+      BlockingEventLoop.blockingOn
       implicit val system = ActorSystem("Stop", AkkaSpec.testConf)
       EventFilter[ActorKilledException]() intercept {
         system.actorSelection("/user") ! Kill
         awaitCond(system.isTerminated)
       }
+      BlockingEventLoop.blockingOff
     }
-
+/*
     "allow configuration of guardian supervisor strategy" in {
       implicit val system = ActorSystem("Stop",
         ConfigFactory.parseString("akka.actor.guardian-supervisor-strategy=akka.actor.StoppingSupervisorStrategy")

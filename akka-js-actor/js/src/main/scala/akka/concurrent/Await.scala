@@ -34,6 +34,23 @@ object BlockingEventLoop {
     Await.result(p.future)
   }
   
+  def aWhile(cond: => Boolean)(b: => Unit) = {
+    import scala.scalajs.js
+    import scala.scalajs.js.Dynamic.global
+        
+    val p = scala.concurrent.Promise[Boolean]
+    lazy val fn: js.Function0[Any] = { () =>
+      if(cond) {
+        b
+        global.setTimeout(fn, 100)
+      } else p.success(true)
+    }
+        
+    global.setTimeout(fn, 100)
+    
+    Await.result(p.future) 
+  }
+  
   def switch() = {
     global.setTimeout = { (f: js.Function0[_], delay: Number) => 
       if(isBlocking)

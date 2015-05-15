@@ -749,11 +749,7 @@ private[akka] class ActorSystemImpl(val name: String, applicationConfig: ActorSy
   def /(path: Iterable[String]): ActorPath = guardian.path / path
 
   private lazy val _start: this.type = try {
-    /**
-     * @note IMPLEMENT IN SCALA.JS
-     *
-     registerOnTermination(stopScheduler())
-     */
+    registerOnTermination(stopScheduler()) 
     // the provider is expected to start default loggers, LocalActorRefProvider does this
     provider.init(this)
 
@@ -964,6 +960,7 @@ private[akka] class ActorSystemImpl(val name: String, applicationConfig: ActorSy
     private var callbacks: List[Runnable] = Nil
 
     // @note IMPLEMENT IN SCALA.JS private val latch = new CountDownLatch(1)
+    private var latch = 1
 
     final def add(callback: Runnable): Unit = {
       /** @note IMPLEMENT IN SCALA.JS
@@ -974,20 +971,21 @@ private[akka] class ActorSystemImpl(val name: String, applicationConfig: ActorSy
           else callbacks ::= callback
         }
       }*/
-      callbacks ::= callback
+      latch match {
+        case 0 ⇒ throw new RuntimeException("Must be called prior to system shutdown.")
+        case _ ⇒ callbacks ::= callback 
+      }
     }
 
     final def run(): Unit = { // @note IMPLEMENT IN SCALA.JS lock withGuard {
       @tailrec def runNext(c: List[Runnable]): List[Runnable] = c match {
         case Nil ⇒ Nil
-        case callback :: rest ⇒ callback.run(); runNext(rest)
-          /** @note IMPLEMENT IN SCALA.JS
+        case callback :: rest ⇒ 
           try callback.run() catch { case NonFatal(e) ⇒ log.error(e, "Failed to run termination callback, due to [{}]", e.getMessage) }
           runNext(rest)
-          */
       }
       // @note IMPLEMENT IN SCALA.JS  try { callbacks = runNext(callbacks) } finally latch.countDown()
-      callbacks = runNext(callbacks)
+      try { callbacks = runNext(callbacks) } finally latch -= 1
     }
 
     /** @note IMPLEMENT IN SCALA.JS
@@ -1002,6 +1000,6 @@ private[akka] class ActorSystemImpl(val name: String, applicationConfig: ActorSy
 
     final def result(atMost: Duration)(implicit permit: CanAwait): Unit = ready(atMost)
     */
-    final def isTerminated: Boolean = callbacks == Nil // @note IMPLEMENT IN SCALA.JS latch.getCount == 0
+    final def isTerminated: Boolean = latch == 0 // @note IMPLEMENT IN SCALA.JS latch.getCount == 0
   }
 }

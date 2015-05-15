@@ -204,7 +204,6 @@ trait SubchannelClassification { this: EventBus ⇒
           cache(c)
         }
       }
-
     recv foreach (publish(event, _))
   }
 

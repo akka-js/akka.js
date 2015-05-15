@@ -2,6 +2,7 @@ package akka.concurrent
 
 import scala.concurrent.duration.Duration
 import java.util.concurrent.TimeUnit
+import scala.scalajs.runtime.UndefinedBehaviorError
 
 object BlockingEventLoop {
   import scala.scalajs.js
@@ -51,8 +52,14 @@ object BlockingEventLoop {
       }
       else oldSetInterval(f, interval.asInstanceOf[js.Any])
     }
-    global.clearTimeout = (handle: SetTimeoutHandle) => timeoutEvents -= handle.asInstanceOf[(js.Function0[_], Double)]
-    global.clearInterval = (handle: SetIntervalHandle) => intervalEvents -= handle.asInstanceOf[(js.Function0[_], Double)]
+    global.clearTimeout = (handle: SetTimeoutHandle) => 
+      try { 
+        timeoutEvents -= handle.asInstanceOf[(js.Function0[_], Double)] } 
+      catch { case _: UndefinedBehaviorError => oldClearTimeout(handle) }
+    global.clearInterval = (handle: SetIntervalHandle) => 
+      try {
+        intervalEvents -= handle.asInstanceOf[(js.Function0[_], Double)]
+      } catch { case _: UndefinedBehaviorError => oldClearInterval(handle) }
   }
   
   def reset() = {

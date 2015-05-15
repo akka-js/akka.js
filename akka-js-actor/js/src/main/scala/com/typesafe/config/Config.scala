@@ -2,7 +2,10 @@ package com.typesafe.config
 
 import scala.scalajs.js
 import scala.scalajs.js.JSON
-import scala.concurrent.duration.{ FiniteDuration, Duration, SECONDS }
+import scala.concurrent.duration._
+import org.scalatest.time.Milliseconds
+import scala.concurrent.{ Promise, Future }
+import scala.util.{ Success, Failure }
 
 object ConfigFactory {
   def parseString(s: String): Config = {
@@ -11,9 +14,16 @@ object ConfigFactory {
 }
 
 class Config(obj: js.Dynamic) {
+  val fallback = Promise[Config]
+  
   def this() = {
     this(JSON.parse("{}"))
   }
+  
+  def withFallback(c: Config) = {
+    fallback.success(c)
+    this
+  } 
   
   private def getNested[A](path: String): A = {
     /*var tmp = obj.asInstanceOf[js.Object]
@@ -29,7 +39,13 @@ class Config(obj: js.Dynamic) {
     
       res.asInstanceOf[A]
     } catch {
-      case e: NoSuchElementException => null.asInstanceOf[A]
+      case e: NoSuchElementException => 
+        if(!fallback.isCompleted) null.asInstanceOf[A]
+        else {
+          fallback.future.value match {
+            case Some(Success(c)) => c.getNested[A](path)
+          }
+        }
     }
   }
   
@@ -37,9 +53,16 @@ class Config(obj: js.Dynamic) {
   
   def getBoolean(path: String) = getNested[Boolean](path)
   
+  def getInt(path: String) = getNested[Int](path)
+  
+  def getNanosDuration(path: String) = {
+    val res = getString(path)
+    Duration(res.toInt, NANOSECONDS)
+  }
+  
   def getMillisDuration(path: String) = {
     val res = getString(path)
-    if(res.takeRight(1) == "s") Duration(res.toInt, SECONDS)
+    Duration(res.toInt, MILLISECONDS)
   }
   
   def getStringList(path: String) = getNested[js.Array[String]](path)

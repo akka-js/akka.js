@@ -7,6 +7,7 @@ import akka.actor.Actor
 import akka.actor.DeadLetter
 import akka.event.Logging.Info
 
+@scala.scalajs.js.annotation.JSExport
 class DeadLetterListener extends Actor {
 
   val eventStream = context.system.eventStream

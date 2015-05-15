@@ -477,7 +477,7 @@ case class DeadLettersFilter(val messageClass: Class[_])(occurrences: Int) exten
  * }
  * </code></pre>
  */
-object TestEventListener { val p = scala.concurrent.Promise[Boolean] }
+object TestEventListener { var p = scala.concurrent.Promise[Boolean] }
 
 import scala.scalajs.js.annotation
 @annotation.JSExport
@@ -490,6 +490,8 @@ class TestEventListener extends /*Logging.*/DefaultLogger {
   override def receive = {
     case InitializeLogger(bus) ⇒
       Seq(classOf[Mute], classOf[UnMute], classOf[DeadLetter], classOf[UnhandledMessage]) foreach (bus.subscribe(context.self, _))
+      /// XXX: is this correct? don't think so
+      if(TestEventListener.p.isCompleted) TestEventListener.p = scala.concurrent.Promise[Boolean]
       TestEventListener.p.success(true)
       sender() ! LoggerInitialized
     case Mute(filters)   ⇒ filters foreach addFilter

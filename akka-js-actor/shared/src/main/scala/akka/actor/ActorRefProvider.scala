@@ -137,12 +137,8 @@ trait ActorRefProvider {
    * Create actor reference for a specified local or remote path. If no such
    * actor exists, it will be (equivalent to) a dead letter reference.
    */
-/**
- * @note IMPLEMENT IN SCALA.JS
- *
    @deprecated("use actorSelection instead of actorFor", "2.2")
    def actorFor(path: ActorPath): InternalActorRef
- */
 
   /**
    * Create actor reference for a specified local or remote path, which will
@@ -150,12 +146,8 @@ trait ActorRefProvider {
    * (equivalent to) a dead letter reference. If `s` is a relative URI, resolve
    * it relative to the given ref.
    */
-/**
- * @note IMPLEMENT IN SCALA.JS
- *
    @deprecated("use actorSelection instead of actorFor", "2.2")
    def actorFor(ref: InternalActorRef, s: String): InternalActorRef
- */
 
   /**
    * Create actor reference for the specified child path starting at the
@@ -163,12 +155,8 @@ trait ActorRefProvider {
    * i.e. it cannot be used to obtain a reference to an actor which is not
    * physically or logically attached to this actor system.
    */
-/**
- * @note IMPLEMENT IN SCALA.JS
- *
    @deprecated("use actorSelection instead of actorFor", "2.2")
    def actorFor(ref: InternalActorRef, p: Iterable[String]): InternalActorRef
- */
 
   /**
    * Create actor reference for a specified path. If no such
@@ -271,12 +259,8 @@ trait ActorRefFactory {
    * `watch(ref)` to be notified of the target’s termination, which is also
    * signaled if the queried path cannot be resolved.
    */
-/**
- * @note IMPLEMENT IN SCALA.JS
- *
    @deprecated("use actorSelection instead of actorFor", "2.2")
    def actorFor(path: ActorPath): ActorRef = provider.actorFor(path)
- */
 
   /**
    * Look-up an actor by path represented as string.
@@ -292,12 +276,8 @@ trait ActorRefFactory {
    * relative to the current context as described for look-ups by
    * `actorOf(Iterable[String])`
    */
-/**
- * @note IMPLEMENT IN SCALA.JS
- *
    @deprecated("use actorSelection instead of actorFor", "2.2")
    def actorFor(path: String): ActorRef = provider.actorFor(lookupRoot, path)
- */
 
   /**
    * Look-up an actor by applying the given path elements, starting from the
@@ -317,12 +297,8 @@ trait ActorRefFactory {
    *
    * For maximum performance use a collection with efficient head & tail operations.
    */
-/**
- * @note IMPLEMENT IN SCALA.JS
- *
    @deprecated("use actorSelection instead of actorFor", "2.2")
    def actorFor(path: Iterable[String]): ActorRef = provider.actorFor(lookupRoot, path)
- */
 
   /**
    * Java API: Look-up an actor by applying the given path elements, starting from the
@@ -768,9 +744,6 @@ private[akka] class LocalActorRefProvider private[akka] (
     eventStream.startDefaultLoggers(_system)
   }
 
-/**
- * @note IMPLEMENT IN SCALA.JS
- *
    @deprecated("use actorSelection instead of actorFor", "2.2")
    override def actorFor(ref: InternalActorRef, path: String): InternalActorRef = path match {
      case RelativeActorPath(elems) ⇒
@@ -811,7 +784,6 @@ private[akka] class LocalActorRefProvider private[akka] (
        log.debug("resolve of unknown path [{}] failed", path)
        deadLetters
    }
- */
 
   def resolveActorRef(path: ActorPath): ActorRef = {
     if (path.root == rootPath) resolveActorRef(rootGuardian, path.elements)

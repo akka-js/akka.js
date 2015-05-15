@@ -199,7 +199,7 @@ object ActorSystem {
     final val config: Config = cfg
     
     
-    final val LogDeadLetters: Int = 0
+    final val LogDeadLetters: Int = 1
     final val LogDeadLettersDuringShutdown: Boolean = false
 
     final val AddLoggingReceive: Boolean = true
@@ -756,14 +756,12 @@ private[akka] class ActorSystemImpl(val name: String, applicationConfig: ActorSy
      */
     // the provider is expected to start default loggers, LocalActorRefProvider does this
     provider.init(this)
-    /**
-     * @note IMPLEMENT IN SCALA.JS
-     *
-     * if (settings.LogDeadLetters > 0)
-     *   logDeadLetterListener = Some(systemActorOf(Props[DeadLetterListener], "deadLetterListener"))
-     * loadExtensions()
-     * if (LogConfigOnStart) logConfiguration()
-     */
+
+    if (settings.LogDeadLetters > 0)
+      logDeadLetterListener = Some(systemActorOf(Props[DeadLetterListener], "deadLetterListener"))
+    //loadExtensions()
+    //if (LogConfigOnStart) logConfiguration()
+    
     this
   } catch {
     case NonFatal(e) ⇒

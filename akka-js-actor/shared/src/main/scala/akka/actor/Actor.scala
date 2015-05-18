@@ -414,6 +414,8 @@ trait ExportableActor extends Actor {
   
 }
 
+import scala.scalajs.js
+@js.annotation.JSExportDescendentClasses(ignoreInvalidDescendants = true)
 trait Actor {
 
   import Actor._

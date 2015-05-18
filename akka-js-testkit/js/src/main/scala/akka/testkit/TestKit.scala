@@ -118,12 +118,13 @@ trait TestKitBase {
 
   // @note IMPLEMENT IN SCALA.JS private val queue = new LinkedBlockingDeque[Message]()
   private val queue = new scala.collection.mutable.Queue[Message]() 
-  
+
   private def pollFirst(max: Duration): AnyRef = {
       val stop = System.nanoTime().nanos + max
       
       import scala.scalajs.js
       val f = scala.concurrent.Promise[AnyRef]
+
       lazy val fn: js.Function0[Any] = { () =>
         try {
           val res = queue.dequeue()
@@ -132,7 +133,7 @@ trait TestKitBase {
           case e: Throwable =>
             val toSleep = stop - now
             if (toSleep <= Duration.Zero) f.failure(new AssertionError("timeout " + max + " expired"))
-            else js.Dynamic.global.setTimeout(fn, (toSleep min (100 millis)).toMillis.asInstanceOf[js.Any])
+            else js.Dynamic.global.setTimeout(fn, 0)
         }      
       }
       js.Dynamic.global.setTimeout(fn, 0)

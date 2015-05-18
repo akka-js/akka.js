@@ -3,7 +3,6 @@ package com.typesafe.config
 import scala.scalajs.js
 import scala.scalajs.js.JSON
 import scala.concurrent.duration._
-import org.scalatest.time.Milliseconds
 import scala.concurrent.{ Promise, Future }
 import scala.util.{ Success, Failure }
 

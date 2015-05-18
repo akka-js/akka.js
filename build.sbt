@@ -12,6 +12,27 @@ val commonSettings = Seq(
     resolvers += "sonatype-snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
 )
 
+lazy val akkaActor = crossProject.in(file("akka-js-actor"))
+  .settings(commonSettings: _*)
+  .settings(
+    version := "0.2-SNAPSHOT"
+  )
+  .jvmSettings()
+  .jsSettings( 
+    unmanagedSourceDirectories in Compile += baseDirectory.value / "../../akka-js-testkit/js/src",
+    libraryDependencies += "org.scalatest" %%% "scalatestjs" % "2.3.0-SNAP2"
+  )
+
+lazy val akkaTestkit = crossProject.in(file("akka-js-testkit"))
+  .settings(commonSettings: _*)
+  .settings(
+    version := "0.2-SNAPSHOT"
+  )
+  .jvmSettings()
+  .jsSettings(
+    libraryDependencies += "org.scalatest" %%% "scalatestjs" % "2.3.0-SNAP2"
+  )
+
 lazy val akkaActorTest = crossProject.in(file("akka-js-actor-tests"))
   .settings(commonSettings: _*)
   .settings(
@@ -22,9 +43,6 @@ lazy val akkaActorTest = crossProject.in(file("akka-js-actor-tests"))
   )
   .jsSettings(  
     scalaJSOptimizerOptions ~= { _.withBypassLinkingErrors(true) },
-    unmanagedSourceDirectories in Compile += baseDirectory.value / "../../akka-js-actor/js/src",
-    unmanagedSourceDirectories in Compile += baseDirectory.value / "../../akka-js-actor/shared/src",
-    unmanagedSourceDirectories in Compile += baseDirectory.value / "../../akka-js-testkit/js/src",
     preLinkJSEnv := NodeJSEnv().value,
     postLinkJSEnv := NodeJSEnv().value.withSourceMap(true),
     libraryDependencies ++= Seq(
@@ -33,7 +51,12 @@ lazy val akkaActorTest = crossProject.in(file("akka-js-actor-tests"))
    )
   )
 
-lazy val akkaActorTestJS = akkaActorTest.js
+
+lazy val akkaActorJS = akkaActor.js
+
+lazy val akkaTestkitJS = akkaTestkit.js.dependsOn(akkaActorJS)
+
+lazy val akkaActorTestJS = akkaActorTest.js.dependsOn(akkaActorJS, akkaTestkitJS)
 
 lazy val root = project.in(file(".")).settings(commonSettings: _*)
-  .aggregate(akkaActorTestJS)
+  .aggregate(akkaActorJS, akkaTestkitJS, akkaActorTestJS)

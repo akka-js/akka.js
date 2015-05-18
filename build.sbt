@@ -36,8 +36,7 @@ lazy val akkaTestkit = crossProject.in(file("akka-js-testkit"))
 lazy val akkaActorTest = crossProject.in(file("akka-js-actor-tests"))
   .settings(commonSettings: _*)
   .settings(
-    version := "0.2-SNAPSHOT",
-    normalizedName := "akka-js-actor-tests"
+    version := "0.2-SNAPSHOT"
   )
   .jvmSettings(
   )

@@ -10,6 +10,7 @@ import scala.scalajs.js.annotation
 import akka.testkit.TestKit
 import akka.testkit.TestEventListener
 import akka.event.LogExt
+import akka.worker.WorkerActorRefProvider
 
 /**
  * The DynamicAccess implementation is the class which is used for
@@ -84,6 +85,8 @@ class JSDynamicAccess(/**val classLoader: ClassLoader*/) extends DynamicAccess {
   }  
   private val map = scala.collection.mutable.HashMap(
     "akka.testkit.TestEventListener" -> classOf[akka.testkit.TestEventListener],
+    "akka.actor.LocalActorRefProvider" -> classOf[akka.actor.LocalActorRefProvider],
+    "akka.worker.WorkerActorRefProvider" -> classOf[akka.worker.WorkerActorRefProvider],
     "akka.event.LogExt" -> classOf[akka.event.LogExt],
     "akka.event.DefaultLogger" -> classOf[akka.event.DefaultLogger]
   )

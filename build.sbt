@@ -1,5 +1,6 @@
 val commonSettings = Seq(
     EclipseKeys.useProjectId := true,
+    EclipseKeys.skipParents in ThisBuild := false,
     scalaVersion := "2.11.6",
     organization := "akka.js",
     scalacOptions ++= Seq(
@@ -20,7 +21,10 @@ lazy val akkaActor = crossProject.in(file("akka-js-actor"))
   .jvmSettings()
   .jsSettings( 
     unmanagedSourceDirectories in Compile += baseDirectory.value / "../../akka-js-testkit/js/src",
-    libraryDependencies += "org.scalatest" %%% "scalatestjs" % "2.3.0-SNAP2"
+    libraryDependencies ++= Seq(
+      "org.scalatest" %%% "scalatestjs" % "2.3.0-SNAP2",
+      "org.scala-js" %%% "scalajs-dom" % "0.8.0"
+    )
   )
 
 lazy val akkaTestkit = crossProject.in(file("akka-js-testkit"))
@@ -50,6 +54,21 @@ lazy val akkaActorTest = crossProject.in(file("akka-js-actor-tests"))
    )
   )
 
+lazy val akkaWorkerMainJS = project.in(file("akka-js-worker/main"))
+  .enablePlugins(ScalaJSPlugin)
+  .settings(commonSettings: _*)
+  .settings(
+    version := "0.2-SNAPSHOT"
+  )
+  .dependsOn(akkaActor.js)
+
+lazy val akkaWorkerWorkerJS = project.in(file("akka-js-worker/worker"))
+  .enablePlugins(ScalaJSPlugin)
+  .settings(commonSettings: _*)
+  .settings(
+    version := "0.2-SNAPSHOT"
+  )
+  .dependsOn(akkaActor.js)
 
 lazy val akkaActorJS = akkaActor.js
 
@@ -58,4 +77,4 @@ lazy val akkaTestkitJS = akkaTestkit.js.dependsOn(akkaActorJS)
 lazy val akkaActorTestJS = akkaActorTest.js.dependsOn(akkaActorJS, akkaTestkitJS)
 
 lazy val root = project.in(file(".")).settings(commonSettings: _*)
-  .aggregate(akkaActorJS, akkaTestkitJS, akkaActorTestJS)
+  .aggregate(akkaActorJS, akkaTestkitJS, akkaActorTestJS, akkaWorkerMainJS, akkaWorkerWorkerJS)

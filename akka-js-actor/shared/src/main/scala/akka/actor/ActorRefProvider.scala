@@ -466,7 +466,8 @@ private[akka] object LocalActorRefProvider {
  *
  * Depending on this class is not supported, only the [[ActorRefProvider]] interface is supported.
  */
-private[akka] class LocalActorRefProvider private[akka] (
+@scala.scalajs.js.annotation.JSExport
+/*private[akka]*/ class LocalActorRefProvider /*private[akka]*/ (
                                                           _systemName: String,
                                                           override val settings: ActorSystem.Settings,
                                                           val eventStream: EventStream,

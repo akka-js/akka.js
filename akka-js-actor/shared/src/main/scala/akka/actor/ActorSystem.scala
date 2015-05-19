@@ -199,6 +199,11 @@ object ActorSystem {
     final val config: Config = cfg
     
     
+    final val ProviderClass: String = cfg.getString("akka.actor.provider") match {
+      case null => "akka.actor.LocalActorRefProvider"
+      case m => m
+    }
+    
     final val LogDeadLetters: Int = 1
     final val LogDeadLettersDuringShutdown: Boolean = false
 
@@ -699,25 +704,19 @@ private[akka] class ActorSystemImpl(val name: String, applicationConfig: ActorSy
   */
   val scheduler: Scheduler = new EventLoopScheduler
 
- /**
-  * @note IMPLEMENT IN SCALA.JS
-  *
-  * val provider: ActorRefProvider = try {
-  *   val arguments = Vector(
-  *     classOf[String] -> name,
-  *     classOf[Settings] -> settings,
-  *     classOf[EventStream] -> eventStream,
-  *     classOf[DynamicAccess] -> dynamicAccess)
-  *
-  *   dynamicAccess.createInstanceFor[ActorRefProvider](ProviderClass, arguments).get
-  * } catch {
-  *   case NonFatal(e) ⇒
-  *     Try(stopScheduler())
-  *     throw e
-  * }
-  */
-
-  val provider: ActorRefProvider = new LocalActorRefProvider(name, settings, eventStream)
+  val provider: ActorRefProvider = try { 
+    val arguments = Vector(
+      classOf[String] -> name,
+      classOf[Settings] -> settings,
+      classOf[EventStream] -> eventStream,
+      classOf[Option[_]] -> None)
+      //classOf[DynamicAccess] -> dynamicAccess)
+    dynamicAccess.createInstanceFor[ActorRefProvider](ProviderClass, arguments).get
+  } catch {
+    case NonFatal(e) ⇒
+      Try(stopScheduler())
+      throw e
+  }
 
   def deadLetters: ActorRef = provider.deadLetters
 

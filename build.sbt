@@ -22,6 +22,8 @@ lazy val akkaActor = crossProject.in(file("akka-js-actor"))
   .jsSettings( 
     unmanagedSourceDirectories in Compile += baseDirectory.value / "../../akka-js-testkit/js/src",
     libraryDependencies ++= Seq(
+      "com.github.benhutchison" %%% "prickle" % "1.1.5",
+      "be.doeraene" %%% "scalajs-pickling" % "0.4.0",
       "org.scalatest" %%% "scalatestjs" % "2.3.0-SNAP2",
       "org.scala-js" %%% "scalajs-dom" % "0.8.0"
     )

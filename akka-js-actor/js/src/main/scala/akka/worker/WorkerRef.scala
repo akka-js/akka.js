@@ -1,6 +1,6 @@
 package akka.worker
 
-import scala.collection.mutable.HashMap
+import scala.collection.mutable.{ MutableList, HashMap }
 import akka.actor._
 import akka.event.{ EventStream, LoggingAdapter }
 import akka.dispatch.MessageDispatcher
@@ -12,6 +12,9 @@ import scala.scalajs.js
 import scala.concurrent.{ Future, Promise }
 import scala.util.control.NonFatal
 import scala.scalajs.js.annotation.JSExport
+//import be.doeraene.spickling._
+//import be.doeraene.spickling.jsany._
+import prickle._
 
 trait Transferable extends js.Any
 
@@ -27,20 +30,33 @@ package object pm extends js.GlobalScope {
   def postMessage(aMessage: Any, transferList: Seq[Transferable]): Unit = js.native
 }
 
+case class SendMessage(message: Any, receiver: ActorRef, sender: ActorRef)
+
 object AkkaWorker {
   import akka.worker.pm
   import js.Dynamic.global
   
-  val listener: js.Function1[MessageEvent, _] = { (msg: MessageEvent) =>
-    val data = msg.data
+  def isWorker: Boolean = js.isUndefined(js.Dynamic.global.document) 
+  
+  private val network = new MutableList[Worker]()
+  private val systems = new HashMap[String, ActorSystem]()
+  
+  def apply(stringUrl: String) = {
+    network += new Worker(stringUrl)
+    println(network)
+    println(network(0))
   }
-  global.onmessage = listener
   
+  def addSystem(system: ActorSystem) = systems += system.name -> system
+
+  def get(i: Int) = network(i)
   
-  
-  val network = new HashMap[String, Worker]
-  def apply(stringUrl: String) = network += stringUrl -> new Worker(stringUrl)
-  
+  def handleEvent(e: MessageEvent) = {
+    //val res = e.data.asInstanceOf[(ActorPath, Any)]
+    val seq = Unpickle[Seq[String]].fromString(e.data.asInstanceOf[String]).get
+    val systemName = ActorPath.fromString(seq(0)).address.system
+    systems(systemName).actorFor(seq(0)) ! seq(1)
+  } 
 }
 
 private[akka] trait WorkerRef extends ActorRefScope {
@@ -96,7 +112,16 @@ class WorkerActorRefProvider (
   override def tempContainer: VirtualPathContainer = local.tempContainer
   
   def init(system: ActorSystemImpl): Unit = {
+    import scala.scalajs.js.Dynamic.global
     local.init(system)
+    AkkaWorker.addSystem(system)
+    
+    if(AkkaWorker.isWorker && global.onmessage == null) {
+      val listener: js.Function1[MessageEvent, _] = { (msg: MessageEvent) =>
+        AkkaWorker.handleEvent(msg)
+      }
+      global.onmessage = listener
+    }
   }
   
   def localAddressForRemote(a: Address) = a.copy(protocol = "akka")
@@ -228,6 +253,13 @@ private[akka] class WorkerActorRef private[akka] (val localAddressToUse: Address
 
   def isTerminated: Boolean = { println("NOT IMPLEMENTED"); false }
 
-  override def !(message: Any)(implicit sender: ActorRef = Actor.noSender): Unit = println("NOT IMPLEMENTED")
+  override def !(message: Any)(implicit sender: ActorRef = Actor.noSender): Unit = {
+    val worker = AkkaWorker.get(0)
+    val localPath: String = (RootActorPath(this.path.address.copy(protocol = "akka", host = None, port = None)) / this.path.elements).toString()
+
+    val pickle = Pickle.intoString(Seq(localPath, message.asInstanceOf[String]))
+    
+    worker.postMessage(pickle.asInstanceOf[js.Any])
+  }
   
 }

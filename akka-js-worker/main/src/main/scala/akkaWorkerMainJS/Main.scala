@@ -11,17 +11,28 @@ class A extends Actor {
   }
 }
 
+@scala.scalajs.js.annotation.JSExportAll
 object WebApp extends js.JSApp {
   def main(): Unit = {
-    val s = ActorSystem("lol", ConfigFactory.parseString("{\"akka\":{\"actor\":{\"provider\":\"akka.worker.WorkerActorRefProvider\"}}}"))
+    val s = ActorSystem("main", ConfigFactory.parseString("{\"akka\":{\"actor\":{\"provider\":\"akka.worker.WorkerActorRefProvider\"}}}"))
+    AkkaWorker("worker.js")
     
-    s.actorOf(Props[A], "kartoffeln") ! "HELLO"
+    //s.actorOf(Props[A], "kartoffeln") ! "HELLO"
+    val remoteActor = s.actorFor("akka.cm://worker@127.0.0.1:1/user/kartoffeln")
+    
+    remoteActor ! "HEY YO"
+    
+
   }
   
   def worker(): Unit = {
-    val s = ActorSystem("lol", ConfigFactory.parseString("{\"akka\":{\"actor\":{\"provider\":\"akka.worker.WorkerActorRefProvider\"}}}"))
-    val remoteActor = s.actorFor("akka.cm://lol@127.0.0.1:1/user/kartoffeln")
+    //val s = ActorSystem("lol", ConfigFactory.parseString("{\"akka\":{\"actor\":{\"provider\":\"akka.worker.WorkerActorRefProvider\"}}}"))
+    //val remoteActor = s.actorFor("akka.cm://lol@127.0.0.1:1/user/kartoffeln")
     
-    remoteActor ! "LOLOLLOL"
+    //remoteActor ! "LOLOLLOL"
+    val s = ActorSystem("worker", ConfigFactory.parseString("{\"akka\":{\"actor\":{\"provider\":\"akka.worker.WorkerActorRefProvider\"}}}"))
+    
+    s.actorOf(Props[A], "kartoffeln")
+    //val remoteActor = s.actorFor("akka.cm://lol@127.0.0.1:1/user/kartoffeln")
   }
 }

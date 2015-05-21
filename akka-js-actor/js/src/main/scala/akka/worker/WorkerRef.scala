@@ -5,7 +5,7 @@ import akka.actor._
 import akka.event.{ EventStream, LoggingAdapter }
 import akka.dispatch.MessageDispatcher
 import akka.dispatch.sysmsg._
-import org.scalajs.dom.{ Worker, MessageChannel, MessageEvent }
+import org.scalajs.dom.{ Worker, MessageEvent }
 import java.lang.reflect.Array
 import scala.language.implicitConversions
 import scala.scalajs.js
@@ -15,48 +15,106 @@ import scala.scalajs.js.annotation.JSExport
 //import be.doeraene.spickling._
 //import be.doeraene.spickling.jsany._
 import prickle._
+import org.scalajs.dom.MessagePort
+import js.JSConverters._
 
 trait Transferable extends js.Any
 
 object Transferable {
   import scala.scalajs.js.typedarray.ArrayBuffer
-  import org.scalajs.dom.MessagePort
+
   
   implicit def ArrayBuffer2Transferable(a: ArrayBuffer) = a.asInstanceOf[Transferable]
   implicit def MessagePort2Transferable(p: MessagePort) = p.asInstanceOf[Transferable]
 }
 
-package object pm extends js.GlobalScope {
-  def postMessage(aMessage: Any, transferList: Seq[Transferable]): Unit = js.native
+class MessageChannel extends js.Object {
+  def port2: MessagePort = js.native
+
+  def port1: MessagePort = js.native
 }
 
+package object pm extends js.GlobalScope {
+  def postMessage(aMessage: Any, transferList: Seq[Transferable]): Unit = js.native
+  def postMessage(aMessage: Any): Unit = js.native
+}
+
+sealed trait WorkerMessage
 case class SendMessage(message: Any, receiver: ActorRef, sender: ActorRef)
+case class ChannelFor(port: Int) extends WorkerMessage
+
+object AkkaWorkerMaster {
+  import AkkaWorker.workerMessagePickler
+  
+  private val workers = new MutableList[Worker]()
+  
+  def getPortFor(w: Worker): Int = workers.indexOf(w) + 1
+
+  def apply(stringUrl: String): Int = {
+    val w = new Worker(stringUrl)
+    
+    workers += w
+    val port = getPortFor(w)
+    
+    // channel to main
+    val channel = new MessageChannel
+    w.postMessage(Pickle.intoString[WorkerMessage](ChannelFor(0)), Seq(channel.port2).toJSArray)
+    AkkaWorkerSlave.add(port, channel.port1)
+    
+    workers filter (_ != w) foreach { otherW =>
+      val otherPort = getPortFor(otherW)
+            
+      val channel = new MessageChannel
+      
+      w.postMessage(Pickle.intoString[WorkerMessage](ChannelFor(otherPort)), Seq(channel.port1).toJSArray)
+            
+      otherW.postMessage(Pickle.intoString[WorkerMessage](ChannelFor(port)), Seq(channel.port2).toJSArray)
+    }
+    
+    port
+  }
+  
+}
 
 object AkkaWorker {
+  def isWorker: Boolean = js.isUndefined(js.Dynamic.global.document) 
+  implicit val workerMessagePickler: PicklerPair[WorkerMessage] = CompositePickler[WorkerMessage].concreteType[ChannelFor]
+}
+
+object AkkaWorkerSlave {
+  import AkkaWorker.workerMessagePickler
+  
   import akka.worker.pm
   import js.Dynamic.global
   
-  def isWorker: Boolean = js.isUndefined(js.Dynamic.global.document) 
-  
-  private val network = new MutableList[Worker]()
   private val systems = new HashMap[String, ActorSystem]()
-  
-  def apply(stringUrl: String) = {
-    network += new Worker(stringUrl)
-    println(network)
-    println(network(0))
-  }
+  private val network = new HashMap[Int, MessagePort]()
   
   def addSystem(system: ActorSystem) = systems += system.name -> system
-
-  def get(i: Int) = network(i)
   
-  def handleEvent(e: MessageEvent) = {
-    //val res = e.data.asInstanceOf[(ActorPath, Any)]
-    val seq = Unpickle[Seq[String]].fromString(e.data.asInstanceOf[String]).get
-    val systemName = ActorPath.fromString(seq(0)).address.system
-    systems(systemName).actorFor(seq(0)) ! seq(1)
-  } 
+  val workerOnMessage: js.Function1[js.Any, _] = { (message: js.Any) =>
+    val event = message.asInstanceOf[MessageEvent]
+    
+    val data = Unpickle[WorkerMessage].fromString(event.data.asInstanceOf[String])
+    
+    data.get match {
+      case ChannelFor(w) =>
+        val port = event.ports.asInstanceOf[js.Array[MessagePort]](0)
+        add(w, port)
+    }
+    
+  }
+
+  def get(i: Int): MessagePort = network(i)
+  def add(i: Int, port: MessagePort) = {
+    network += i -> port
+    
+    port.onmessage = { (message: js.Any) =>
+      val seq = Unpickle[Seq[String]].fromString(message.asInstanceOf[MessageEvent].data.asInstanceOf[String]).get
+      val systemName = ActorPath.fromString(seq(0)).address.system
+      systems(systemName).actorFor(seq(0)) ! seq(1)
+    }
+  }
 }
 
 private[akka] trait WorkerRef extends ActorRefScope {
@@ -113,14 +171,15 @@ class WorkerActorRefProvider (
   
   def init(system: ActorSystemImpl): Unit = {
     import scala.scalajs.js.Dynamic.global
-    local.init(system)
-    AkkaWorker.addSystem(system)
+    import AkkaWorker.workerMessagePickler
     
-    if(AkkaWorker.isWorker && global.onmessage == null) {
-      val listener: js.Function1[MessageEvent, _] = { (msg: MessageEvent) =>
-        AkkaWorker.handleEvent(msg)
-      }
-      global.onmessage = listener
+    local.init(system)
+    AkkaWorkerSlave.addSystem(system)
+    
+    if(AkkaWorker.isWorker) {
+      if(global.onmessage == null) global.onmessage = AkkaWorkerSlave.workerOnMessage
+
+      //pm.postMessage(Pickle.intoString[WorkerMessage](HookActorSystem))
     }
   }
   
@@ -254,12 +313,16 @@ private[akka] class WorkerActorRef private[akka] (val localAddressToUse: Address
   def isTerminated: Boolean = { println("NOT IMPLEMENTED"); false }
 
   override def !(message: Any)(implicit sender: ActorRef = Actor.noSender): Unit = {
-    val worker = AkkaWorker.get(0)
+    val port = AkkaWorkerSlave.get(this.path.address.port.get)
+    js.Dynamic.global.console.log(port)
+    
     val localPath: String = (RootActorPath(this.path.address.copy(protocol = "akka", host = None, port = None)) / this.path.elements).toString()
-
+    
+    //implicit val anyPickler: PicklerPair[AnyRef] = CompositePickler[AnyRef].concreteType[String]
+    
     val pickle = Pickle.intoString(Seq(localPath, message.asInstanceOf[String]))
     
-    worker.postMessage(pickle.asInstanceOf[js.Any])
+    port.postMessage(pickle.asInstanceOf[js.Any])
   }
   
 }

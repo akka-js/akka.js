@@ -2,12 +2,23 @@ package akkaWorkerMainJS
 
 import scala.scalajs.js
 import akka.actor._
-import akka.worker.AkkaWorker
+import akka.worker.AkkaWorkerMaster
 import com.typesafe.config.ConfigFactory
 
 class A extends Actor {
+  import context.system
   def receive = {
-    case m => println(s"GOTCHA ${m}")
+    case m => 
+      println(s"GOTCHA ${m}")
+      val remoteActor2 = system.actorFor("akka.cm://worker@127.0.0.1:2/user/kartoffeln2")
+      remoteActor2 ! "LOL YO"
+  }
+}
+
+class B extends Actor {
+  def receive = {
+    case m => 
+      println(s"GOTCHA2 ${m}")
   }
 }
 
@@ -15,24 +26,24 @@ class A extends Actor {
 object WebApp extends js.JSApp {
   def main(): Unit = {
     val s = ActorSystem("main", ConfigFactory.parseString("{\"akka\":{\"actor\":{\"provider\":\"akka.worker.WorkerActorRefProvider\"}}}"))
-    AkkaWorker("worker.js")
+    AkkaWorkerMaster("worker.js")
+    AkkaWorkerMaster("worker2.js")
     
-    //s.actorOf(Props[A], "kartoffeln") ! "HELLO"
     val remoteActor = s.actorFor("akka.cm://worker@127.0.0.1:1/user/kartoffeln")
     
-    remoteActor ! "HEY YO"
-    
+    remoteActor ! "HEY YO"  
 
   }
   
   def worker(): Unit = {
-    //val s = ActorSystem("lol", ConfigFactory.parseString("{\"akka\":{\"actor\":{\"provider\":\"akka.worker.WorkerActorRefProvider\"}}}"))
-    //val remoteActor = s.actorFor("akka.cm://lol@127.0.0.1:1/user/kartoffeln")
-    
-    //remoteActor ! "LOLOLLOL"
     val s = ActorSystem("worker", ConfigFactory.parseString("{\"akka\":{\"actor\":{\"provider\":\"akka.worker.WorkerActorRefProvider\"}}}"))
     
     s.actorOf(Props[A], "kartoffeln")
-    //val remoteActor = s.actorFor("akka.cm://lol@127.0.0.1:1/user/kartoffeln")
+  }
+  
+  def worker2(): Unit = {
+    val s = ActorSystem("worker", ConfigFactory.parseString("{\"akka\":{\"actor\":{\"provider\":\"akka.worker.WorkerActorRefProvider\"}}}"))
+    
+    s.actorOf(Props[B], "kartoffeln2")
   }
 }

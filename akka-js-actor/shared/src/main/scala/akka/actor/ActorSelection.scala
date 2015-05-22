@@ -194,7 +194,6 @@ object ActorSelection {
     if (sel.elements.isEmpty)
       anchor.tell(sel.msg, sender)
     else {
-
       val iter = sel.elements.iterator
 
       @tailrec def rec(ref: InternalActorRef): Unit = {

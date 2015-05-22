@@ -10,7 +10,8 @@ val commonSettings = Seq(
         "-encoding", "utf8"
     ),
     resolvers += "Typesafe repository" at "http://repo.typesafe.com/typesafe/releases/",
-    resolvers += "sonatype-snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
+    resolvers += "sonatype-snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
+    scalaJSStage in Global := FastOptStage
 )
 
 lazy val akkaActor = crossProject.in(file("akka-js-actor"))

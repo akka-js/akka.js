@@ -24,7 +24,14 @@ object Helpers {
    val isWindows: Boolean = System.getProperty("os.name", "").toLowerCase(Locale.ROOT).indexOf("win") >= 0
    */
 
-  def makePattern(s: String): Pattern = Pattern.compile("^\\Q" + s.replace("?", "\\E.\\Q").replace("*", "\\E.*\\Q") + "\\E$")
+  //def makePattern(s: String): Pattern = Pattern.compile("^\\Q" + s.replace("?", "\\E.\\Q").replace("*", "\\E.*\\Q") + "\\E$")
+  def makePattern(s: String): Pattern = {
+    val chars = Seq('.', '\\', '[', ']', '^', '$', '(', ')'/*, '?', '*'*/, '+', '=', '|', '{', '}')
+    
+    
+    
+    Pattern.compile("^" + s.map { x => if(chars.contains(x)) s"\\${x}" else if(x == '*') s".*" else x }.mkString + "$")
+  }
 
   def compareIdentityHash(a: AnyRef, b: AnyRef): Int = {
     /*

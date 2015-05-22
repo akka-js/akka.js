@@ -371,6 +371,7 @@ private[akka] class WorkerActorRef private[akka] (val localAddressToUse: Address
         case f: jl.Float => AkkaWorker.Boxed(Float.unbox(f))
         case d: jl.Double => AkkaWorker.Boxed(Double.unbox(d))
         case a: AnyRef => a
+        case any => AkkaWorker.Boxed(any)
       }/* match {
         case a: AnyRef => a
         case b: Boolean => AkkaWorker.Boxed(b)

@@ -64,7 +64,7 @@ lazy val akkaWorkerMainJS = project.in(file("akka-js-worker/main"))
   )
   .dependsOn(akkaActor.js)
 
-lazy val akkaWorkerWorkerJS = project.in(file("akka-js-worker/worker"))
+lazy val akkaWorkerRaftJS = project.in(file("akka-js-worker/raft"))
   .enablePlugins(ScalaJSPlugin)
   .settings(commonSettings: _*)
   .settings(
@@ -79,4 +79,4 @@ lazy val akkaTestkitJS = akkaTestkit.js.dependsOn(akkaActorJS)
 lazy val akkaActorTestJS = akkaActorTest.js.dependsOn(akkaActorJS, akkaTestkitJS)
 
 lazy val root = project.in(file(".")).settings(commonSettings: _*)
-  .aggregate(akkaActorJS, akkaTestkitJS, akkaActorTestJS, akkaWorkerMainJS, akkaWorkerWorkerJS)
+  .aggregate(akkaActorJS, akkaTestkitJS, akkaActorTestJS, akkaWorkerMainJS, akkaWorkerRaftJS)

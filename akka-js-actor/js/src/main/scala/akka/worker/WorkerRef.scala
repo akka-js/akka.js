@@ -39,7 +39,7 @@ package object pm extends js.GlobalScope {
   def postMessage(aMessage: Any): Unit = js.native
 }
 
-case class SendMessage(message: String, receiver: String, sender: Option[String])
+case class SendMessage(message: AnyRef, receiver: String, sender: Option[String])
 
 sealed trait WorkerMessage
 case class ChannelFor(port: Int) extends WorkerMessage
@@ -86,10 +86,24 @@ object AkkaWorker {
     CompositePickler[WorkerMessage]
       .concreteType[ChannelFor]
       .concreteType[OwnPort]
+  
+  case class Boxed[T](value: T)
+  
+  implicit val anyPickler: PicklerPair[AnyRef] = 
+      CompositePickler[AnyRef]
+        .concreteType[String]
+        .concreteType[Boxed[Boolean]] 
+        .concreteType[Boxed[Byte]]
+        .concreteType[Boxed[Char]]
+        .concreteType[Boxed[Short]]
+        .concreteType[Boxed[Int]]
+        .concreteType[Boxed[Long]]
+        .concreteType[Boxed[Float]]
+        .concreteType[Boxed[Double]]
 }
 
 object AkkaWorkerSlave {
-  import AkkaWorker.workerMessagePickler
+  import AkkaWorker.{ workerMessagePickler, anyPickler }
   
   import akka.worker.pm
   import js.Dynamic.global
@@ -126,9 +140,14 @@ object AkkaWorkerSlave {
       
       val systemName = ActorPath.fromString(sendMessage.receiver).address.system
       
+      val m: Any = sendMessage.message match {
+        case AkkaWorker.Boxed(t) => t
+        case e => e
+      }
+      
       sendMessage match {
-        case SendMessage(m, r, None) => systems(systemName).actorFor(r) ! m
-        case SendMessage(m, r, Some(s)) => systems(systemName).actorFor(r).!(m)(systems(systemName).actorFor(s))
+        case SendMessage(_, r, None) => systems(systemName).actorFor(r) ! m
+        case SendMessage(_, r, Some(s)) => systems(systemName).actorFor(r).!(m)(systems(systemName).actorFor(s))
       }
     }
   }
@@ -336,15 +355,39 @@ private[akka] class WorkerActorRef private[akka] (val localAddressToUse: Address
   }
   
   override def !(message: Any)(implicit sender: ActorRef = Actor.noSender): Unit = {
+    import java.{ lang => jl }
     val port = AkkaWorkerSlave.get(this.path.address.port.get)
     
     val localPath: String = (RootActorPath(this.path.address.copy(protocol = "akka", host = None, port = None)) / this.path.elements).toString()
     
-    //implicit val anyPickler: PicklerPair[AnyRef] = CompositePickler[AnyRef].concreteType[String]  
+    val refdMessage: AnyRef =
+      message match {
+        case b: jl.Boolean => AkkaWorker.Boxed(Boolean.unbox(b))
+        case b: jl.Byte => AkkaWorker.Boxed(Byte.unbox(b))
+        case c: jl.Character => AkkaWorker.Boxed(Char.unbox(c))
+        case s: jl.Short => AkkaWorker.Boxed(Char.unbox(s))
+        case i: jl.Integer => AkkaWorker.Boxed(Int.unbox(i))
+        case l: jl.Long => AkkaWorker.Boxed(Long.unbox(l))
+        case f: jl.Float => AkkaWorker.Boxed(Float.unbox(f))
+        case d: jl.Double => AkkaWorker.Boxed(Double.unbox(d))
+        case a: AnyRef => a
+      }/* match {
+        case a: AnyRef => a
+        case b: Boolean => AkkaWorker.Boxed(b)
+        case b: Byte => AkkaWorker.Boxed(b)
+        case c: Char => AkkaWorker.Boxed(c)
+        case s: Short => AkkaWorker.Boxed(s)
+        case i: Int => AkkaWorker.Boxed(i)
+        case l: Long => AkkaWorker.Boxed(l)
+        case f: Float => AkkaWorker.Boxed(f)
+        case d: Double => AkkaWorker.Boxed(d)
+      })*/
+    
+    import AkkaWorker.anyPickler
     
     val pickle = Pickle.intoString(
         SendMessage(
-          message.asInstanceOf[String], 
+          refdMessage, 
           localPath, 
           if(sender == Actor.noSender) None else Some(remoteLocal(sender.path, "akka.cm", Some("127.0.0.1"), Some(AkkaWorkerSlave.getOwnPort)))  
         ))

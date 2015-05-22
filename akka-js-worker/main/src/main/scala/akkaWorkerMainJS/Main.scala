@@ -34,7 +34,7 @@ object WebApp extends js.JSApp {
     
     val remoteActor = s.actorFor("akka.cm://worker@127.0.0.1:1/user/kartoffeln")
     
-    remoteActor ! "HEY YO"  
+    remoteActor ! 2  
 
   }
   

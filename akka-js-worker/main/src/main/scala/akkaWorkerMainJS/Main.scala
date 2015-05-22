@@ -8,6 +8,8 @@ import com.typesafe.config.ConfigFactory
 class A extends Actor {
   import context.system
   def receive = {
+    case "back" =>
+      println("HEARD BACK")
     case m => 
       println(s"GOTCHA ${m}")
       val remoteActor2 = system.actorFor("akka.cm://worker@127.0.0.1:2/user/kartoffeln2")
@@ -19,6 +21,7 @@ class B extends Actor {
   def receive = {
     case m => 
       println(s"GOTCHA2 ${m}")
+      sender() ! "back"
   }
 }
 

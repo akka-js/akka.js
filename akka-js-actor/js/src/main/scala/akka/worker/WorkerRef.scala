@@ -45,6 +45,20 @@ sealed trait WorkerMessage
 case class ChannelFor(port: Int) extends WorkerMessage
 case class OwnPort(port: Int) extends WorkerMessage
 
+sealed trait RaftMessage
+
+
+/* states */
+sealed trait Role extends RaftMessage
+case object Leader extends Role 
+case object Follower extends Role
+case object Candidate extends Role
+case object Initialise extends Role
+
+case class UIHeartbeat(from: Int) extends RaftMessage
+case class UIState(from: Int, role: Role) extends RaftMessage
+case class UIMessage(from: Int) extends RaftMessage
+
 object AkkaWorkerMaster {
   import AkkaWorker.workerMessagePickler
   
@@ -63,6 +77,7 @@ object AkkaWorkerMaster {
     // channel to main
     val channel = new MessageChannel
     w.postMessage(Pickle.intoString[WorkerMessage](ChannelFor(0)), Seq(channel.port2).toJSArray)
+
     AkkaWorkerSlave.add(port, channel.port1)
     
     workers filter (_ != w) foreach { otherW =>
@@ -89,8 +104,22 @@ object AkkaWorker {
   
   case class Boxed[T](value: T)
   
+  implicit val raftPickler: PicklerPair[Role] = CompositePickler[Role]
+    .concreteType[Leader.type]
+    .concreteType[Follower.type]
+    .concreteType[Candidate.type]
+    .concreteType[Initialise.type]
+  
+  implicit val raftPickler2: PicklerPair[RaftMessage] = CompositePickler[RaftMessage]
+    .concreteType[Role]
+    .concreteType[UIHeartbeat]
+    .concreteType[UIMessage]
+    .concreteType[UIState]
+  
   implicit val anyPickler: PicklerPair[AnyRef] = 
       CompositePickler[AnyRef]
+        .concreteType[UIHeartbeat]
+        .concreteType[UIState]
         .concreteType[String]
         .concreteType[Boxed[Boolean]] 
         .concreteType[Boxed[Byte]]
@@ -104,7 +133,7 @@ object AkkaWorker {
 
 object AkkaWorkerSlave {
   import AkkaWorker.{ workerMessagePickler, anyPickler }
-  
+  import AkkaWorker.{ raftPickler, raftPickler2 }
   import akka.worker.pm
   import js.Dynamic.global
   
@@ -136,6 +165,7 @@ object AkkaWorkerSlave {
     network += i -> port
     
     port.onmessage = { (message: js.Any) =>
+      try {
       val sendMessage = Unpickle[SendMessage].fromString(message.asInstanceOf[MessageEvent].data.asInstanceOf[String]).get
       
       val systemName = ActorPath.fromString(sendMessage.receiver).address.system
@@ -148,7 +178,8 @@ object AkkaWorkerSlave {
       sendMessage match {
         case SendMessage(_, r, None) => systems(systemName).actorFor(r) ! m
         case SendMessage(_, r, Some(s)) => systems(systemName).actorFor(r).!(m)(systems(systemName).actorFor(s))
-      }
+      } 
+      } catch { case _ => }
     }
   }
 }
@@ -356,6 +387,8 @@ private[akka] class WorkerActorRef private[akka] (val localAddressToUse: Address
   
   override def !(message: Any)(implicit sender: ActorRef = Actor.noSender): Unit = {
     import java.{ lang => jl }
+    import scala.scalajs.js.timers
+    try {
     val port = AkkaWorkerSlave.get(this.path.address.port.get)
     
     val localPath: String = (RootActorPath(this.path.address.copy(protocol = "akka", host = None, port = None)) / this.path.elements).toString()
@@ -384,7 +417,7 @@ private[akka] class WorkerActorRef private[akka] (val localAddressToUse: Address
         case d: Double => AkkaWorker.Boxed(d)
       })*/
     
-    import AkkaWorker.anyPickler
+    import AkkaWorker.{raftPickler, raftPickler2, anyPickler}
     
     val pickle = Pickle.intoString(
         SendMessage(
@@ -392,8 +425,12 @@ private[akka] class WorkerActorRef private[akka] (val localAddressToUse: Address
           localPath, 
           if(sender == Actor.noSender) None else Some(remoteLocal(sender.path, "akka.cm", Some("127.0.0.1"), Some(AkkaWorkerSlave.getOwnPort)))  
         ))
-    
+
     port.postMessage(pickle.asInstanceOf[js.Any])
+    } catch {
+      case e => 
+        timers.setTimeout(100) { this.!(message)(sender) }
+    }
   }
   
 }

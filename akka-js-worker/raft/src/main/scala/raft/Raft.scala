@@ -7,6 +7,7 @@ import scala.concurrent.Promise
 import math.random
 import akka.actor.ActorSystem
 import akka.actor.Props
+import akka.worker._
 
 /* messages */
 sealed trait Message
@@ -38,15 +39,9 @@ case class AppendSuccess(term: Term, index: Int) extends AppendReply
 
 case class ClientRequest(cid: Int, command: String) extends Message
 
-/* states */
-sealed trait Role
-case object Leader extends Role
-case object Follower extends Role
-case object Candidate extends Role
-case object Initialise extends Role
 
 /* Consensus module */
-class Raft() extends Actor /*with LoggingFSM[Role, Meta]*/ {
+class Raft(val i: Int, val ui: ActorRef) extends Actor /*with LoggingFSM[Role, Meta]*/ {
   import scala.scalajs.js.timers._
   import scala.collection.mutable.HashMap
   
@@ -75,6 +70,7 @@ class Raft() extends Actor /*with LoggingFSM[Role, Meta]*/ {
       case _ => 
     }
     state = to
+    ui ! UIState(i, state)
     context.become(to match {
       case Follower => follower
       case Candidate => candidate
@@ -151,13 +147,14 @@ class Raft() extends Actor /*with LoggingFSM[Role, Meta]*/ {
     case rpc: AppendFailure =>
       if (rpc.term <= data.term) {
         data.log = data.log.decrementNextFor(sender)
-        //resendTo(sender, data) // let heartbeats do the catch up work
+        resendTo(sender, data) // let heartbeats do the catch up work
       } else {
         data.term = rpc.term
         data = preparedForFollower(data)
         switchState(Follower)
       }
     case Heartbeat =>
+      ui ! UIHeartbeat(i)
       sendEntries(data)
   }
   
@@ -438,9 +435,9 @@ class Raft() extends Actor /*with LoggingFSM[Role, Meta]*/ {
 }
 
 object Raft {
-  def apply(size: Int)(implicit system: ActorSystem): List[NodeId] = {
+  def apply(size: Int, ui: ActorRef)(implicit system: ActorSystem): List[NodeId] = {
     val members = for (i <- List.range(0, size))
-      yield system.actorOf(Props[Raft], "member" + i)
+      yield system.actorOf(Props(classOf[Raft], i, ui), "member" + i)
 
     members.foreach(m => m ! Init(members))
     members

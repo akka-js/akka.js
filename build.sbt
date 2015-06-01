@@ -25,7 +25,7 @@ lazy val akkaActor = crossProject.in(file("akka-js-actor"))
     libraryDependencies ++= Seq(
       "com.github.benhutchison" %%% "prickle" % "1.1.5",
       "be.doeraene" %%% "scalajs-pickling" % "0.4.0",
-      "org.scalatest" %%% "scalatestjs" % "2.3.0-SNAP2",
+      "org.scalatest" %%% "scalatestjs" % "2.3.0-SNAP2" % "test",
       "org.scala-js" %%% "scalajs-dom" % "0.8.0"
     )
   )
@@ -37,7 +37,7 @@ lazy val akkaTestkit = crossProject.in(file("akka-js-testkit"))
   )
   .jvmSettings()
   .jsSettings(
-    libraryDependencies += "org.scalatest" %%% "scalatestjs" % "2.3.0-SNAP2"
+    libraryDependencies += "org.scalatest" %%% "scalatestjs" % "2.3.0-SNAP2" % "test"
   )
 
 lazy val akkaActorTest = crossProject.in(file("akka-js-actor-tests"))
@@ -53,7 +53,7 @@ lazy val akkaActorTest = crossProject.in(file("akka-js-actor-tests"))
     postLinkJSEnv := NodeJSEnv().value.withSourceMap(true),
     libraryDependencies ++= Seq(
       "org.scalacheck" %%% "scalacheck" % "1.12.2" % "test",
-      "org.scalatest" %%% "scalatestjs" % "2.3.0-SNAP2"
+      "org.scalatest" %%% "scalatestjs" % "2.3.0-SNAP2" % "test"
    )
   )
 

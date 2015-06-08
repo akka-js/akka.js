@@ -1,5 +1,5 @@
 <p align="center">
-<img src="http://i.imgur.com/5O4AYa0.png">
+<img src="http://i.imgur.com/yItLkzU.png">
 </p>
 
 This project aims at providing an actor system for Scala.js, featuring:

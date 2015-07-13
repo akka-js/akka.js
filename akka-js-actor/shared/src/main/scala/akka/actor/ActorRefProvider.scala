@@ -5,14 +5,15 @@
 package akka.actor
 
 import akka.dispatch.sysmsg._
+
+import akka.dispatch.{ UnboundedMessageQueueSemantics, RequiresMessageQueue }
 /**
  * @note IMPLEMENT IN SCALA.JS
  *
- import akka.dispatch.{ UnboundedMessageQueueSemantics, RequiresMessageQueue }
- import akka.routing._
+import akka.routing._
  */
 import akka.event._
-import akka.util.{ /** @note IMPLEMENT IN SCALA.JS Switch,*/ Helpers }
+import akka.util.{ Switch, Helpers }
 /**
  * @note IMPLEMENT IN SCALA.JS
  *
@@ -162,11 +163,7 @@ trait ActorRefProvider {
    * Create actor reference for a specified path. If no such
    * actor exists, it will be (equivalent to) a dead letter reference.
    */
-/**
- * @note IMPLEMENT IN SCALA.JS
- *
-   def resolveActorRef(path: String): ActorRef
- */
+  def resolveActorRef(path: String): ActorRef
 
   /**
    * Create actor reference for a specified path. If no such
@@ -392,7 +389,7 @@ private[akka] object LocalActorRefProvider {
    * Root and user guardian
    */
   private class Guardian(override val supervisorStrategy: SupervisorStrategy) extends Actor
-  /** @note IMPLEMENT IN SCALA.JS with RequiresMessageQueue[UnboundedMessageQueueSemantics] */ {
+    with RequiresMessageQueue[UnboundedMessageQueueSemantics] {
 
     def receive = {
       case Terminated(_)    ⇒ context.stop(self)
@@ -408,7 +405,7 @@ private[akka] object LocalActorRefProvider {
    * System guardian
    */
   private class SystemGuardian(override val supervisorStrategy: SupervisorStrategy, val guardian: ActorRef)
-    extends Actor /** @note IMPLEMENT IN SCALA.JS with RequiresMessageQueue[UnboundedMessageQueueSemantics] */ {
+    extends Actor with RequiresMessageQueue[UnboundedMessageQueueSemantics] {
     import SystemGuardian._
 
     var terminationHooks = Set.empty[ActorRef]
@@ -445,11 +442,7 @@ private[akka] object LocalActorRefProvider {
 
     def stopWhenAllTerminationHooksDone(): Unit =
       if (terminationHooks.isEmpty) {
-        /**
-         * @note IMPLEMENT IN SCALA.JS
-         * Logging!
-         * context.system.eventStream.stopDefaultLoggers(context.system)
-         */
+        context.system.eventStream.stopDefaultLoggers(context.system)
         context.stop(self)
       }
 
@@ -500,13 +493,6 @@ private[akka] object LocalActorRefProvider {
 
 
   private[akka] val log: LoggingAdapter = Logging(eventStream, "LocalActorRefProvider(" + rootPath.address + ")")
-  
-  /*protected object log { // OH GOD, WHY
-    def error(msg: String): Unit = Console.err.println(msg)
-    def error(ex: Throwable, msg: String): Unit = error(s"$ex -- $msg")
-    def debug(msg: String): Unit = Console.err.println(msg)
-    def debug(ex: Throwable, msg: String): Unit = debug(s"$ex -- $msg")
-  }*/
 
   override val deadLetters: InternalActorRef =
     _deadLetters.getOrElse((p: ActorPath) ⇒ new DeadLetterActorRef(this, p, eventStream)).apply(rootPath / "deadLetters")
@@ -527,13 +513,8 @@ private[akka] object LocalActorRefProvider {
    * receive only Supervise/ChildTerminated system messages or Failure message.
    */
   private[akka] val theOneWhoWalksTheBubblesOfSpaceTime: InternalActorRef = new MinimalActorRef {
-    /**
-     * @note IMPLEMENT IN SCALA.JS
-     *
-     val stopped = new Switch(false)
-     */
-    private[this] var stopped: Boolean = false
-
+    val stopped = new Switch(false)
+    
     @volatile
     var causeOfTermination: Option[Throwable] = None
 
@@ -541,54 +522,23 @@ private[akka] object LocalActorRefProvider {
 
     def provider: ActorRefProvider = LocalActorRefProvider.this
 
-    /**
-     * @note IMPLEMENT IN SCALA.JS
-     *
-         override def stop(): Unit = stopped switchOn {
-     */
-    override def stop(): Unit = if(!stopped) {
-      stopped = true
-      terminationPromise.complete(causeOfTermination.map(Failure(_)).getOrElse(Success(())))
-    }
-    @deprecated("Use context.watch(actor) and receive Terminated(actor)", "2.2") override def isTerminated: Boolean =
-      /**
-       * @note IMPLEMENT IN SCALA.JS
-       *
-       stopped.isOn
-       */
-      stopped
+    override def stop(): Unit = stopped switchOn { terminationPromise.complete(causeOfTermination.map(Failure(_)).getOrElse(Success(()))) }
+    @deprecated("Use context.watch(actor) and receive Terminated(actor)", "2.2") override def isTerminated: Boolean = stopped.isOn
 
-    /**
-     * @note IMPLEMENT IN SCALA.JS
-     *
-     * override def !(message: Any)(implicit sender: ActorRef = Actor.noSender): Unit =
-         stopped.ifOff(message match {
-     */
-    override def !(message: Any)(implicit sender: ActorRef = Actor.noSender): Unit = {
-      if(!stopped) {
-        message match {
-          case null ⇒ throw new InvalidMessageException("Message is null")
-          case _ ⇒ log.error(s"$this received unexpected message [$message]")
-        }
-      }
-    }
+    override def !(message: Any)(implicit sender: ActorRef = Actor.noSender): Unit = stopped.ifOff(message match {
+      case null ⇒ throw new InvalidMessageException("Message is null")
+      case _    ⇒ log.error(s"$this received unexpected message [$message]")
+    })
 
-    /**
-     * @note IMPLEMENT IN SCALA.JS
-     *
-     override def sendSystemMessage(message: SystemMessage): Unit = stopped ifOff {
-     */
-    override def sendSystemMessage(message: SystemMessage): Unit = {
-      if(!stopped) {
-        message match {
-          case Failed(child, ex, _) ⇒
-            log.error(ex, s"guardian $child failed, shutting down!")
-            causeOfTermination = Some(ex)
-            child.asInstanceOf[InternalActorRef].stop()
-          case Supervise(_, _)           ⇒ // TODO register child in some map to keep track of it and enable shutdown after all dead
-          case _: DeathWatchNotification ⇒ stop()
-          case _                         ⇒ log.error(s"$this received unexpected system message [$message]")
-        }
+    override def sendSystemMessage(message: SystemMessage): Unit = stopped ifOff {
+      message match {
+        case Failed(child, ex, _) ⇒
+          log.error(ex, s"guardian $child failed, shutting down!")
+          causeOfTermination = Some(ex)
+          child.asInstanceOf[InternalActorRef].stop()
+        case Supervise(_, _)           ⇒ // TODO register child in some map to keep track of it and enable shutdown after all dead
+        case _: DeathWatchNotification ⇒ stop()
+        case _                         ⇒ log.error(s"$this received unexpected system message [$message]")
       }
     }
   }
@@ -715,12 +665,7 @@ private[akka] object LocalActorRefProvider {
     ref
   }
 
-  /**
-   * @note IMPLEMENT IN SCALA.JS
-   *
-   lazy val tempContainer = new VirtualPathContainer(system.provider, tempNode, rootGuardian, log)
-   */
-  lazy val tempContainer = new VirtualPathContainer(system.provider, tempNode, rootGuardian)
+  lazy val tempContainer = new VirtualPathContainer(system.provider, tempNode, rootGuardian, log)
 
   def registerTempActor(actorRef: InternalActorRef, path: ActorPath): Unit = {
     assert(path.parent eq tempNode, "cannot registerTempActor() with anything not obtained from tempPath()")

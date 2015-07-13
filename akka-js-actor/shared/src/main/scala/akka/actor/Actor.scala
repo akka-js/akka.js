@@ -8,11 +8,7 @@ import akka.AkkaException
 import scala.annotation.tailrec
 import scala.beans.BeanProperty
 import scala.util.control.NoStackTrace
-/**
- * @note IMPLEMENT IN SCALA.JS
- *
- import akka.event.LoggingAdapter
- */
+import akka.event.LoggingAdapter
 
 /**
  * INTERNAL API
@@ -281,20 +277,16 @@ object Status {
  * }
  * }}}
  */
-/**
- * @note IMPLEMENT IN SCALA.JS
- *
- * trait ActorLogging { this: Actor ⇒
- *   private var _log: LoggingAdapter = _
- *
- *   def log: LoggingAdapter = {
- *     // only used in Actor, i.e. thread safe
- *     if (_log eq null)
- *       _log = akka.event.Logging(context.system, this)
- *     _log
- *   }
- * }
- */
+trait ActorLogging { this: Actor ⇒
+  private var _log: LoggingAdapter = _
+ 
+  def log: LoggingAdapter = {
+    // only used in Actor, i.e. thread safe
+    if (_log eq null)
+      _log = akka.event.Logging(context.system, this)
+    _log
+  }
+}
 
 /**
  * Scala API: Mix in DiagnosticActorLogging into your Actor to easily obtain a reference to a logger with MDC support,
@@ -314,22 +306,18 @@ object Status {
  * }
  * }}}
  */
-/**
- * @note IMPLEMENT IN SCALA.JS
- *
- * trait DiagnosticActorLogging extends Actor {
- *   import akka.event.Logging._
- *   val log = akka.event.Logging(this)
- *   def mdc(currentMessage: Any): MDC = emptyMDC
- *
- *   override protected[akka] def aroundReceive(receive: Actor.Receive, msg: Any): Unit = try {
- *     log.mdc(mdc(msg))
- *     super.aroundReceive(receive, msg)
- *   } finally {
- *     log.clearMDC()
- *   }
- * }
- */
+trait DiagnosticActorLogging extends Actor {
+  import akka.event.Logging._
+  val log = akka.event.Logging(this)
+  def mdc(currentMessage: Any): MDC = emptyMDC
+ 
+  override protected[akka] def aroundReceive(receive: Actor.Receive, msg: Any): Unit = try {
+    log.mdc(mdc(msg))
+    super.aroundReceive(receive, msg)
+  } finally {
+    log.clearMDC()
+  }
+}
 
 object Actor {
   /**
@@ -429,25 +417,15 @@ trait Actor {
    * [[akka.actor.UntypedActorContext]], which is the Java API of the actor
    * context.
    */
-   @scala.scalajs.js.annotation.JSExport
-   implicit val context: ActorContext = {
-    /**
-     * @note IMPLEMENT IN SCALA.JS
-     *     
-     val contextStack = ActorCell.contextStack.get
-     */
-    val contextStack = ActorCell.contextStack
+  @scala.scalajs.js.annotation.JSExport
+  implicit val context: ActorContext = {   
+    val contextStack = ActorCell.contextStack.get
     if ((contextStack.isEmpty) || (contextStack.head eq null))
       throw ActorInitializationException(
         s"You cannot create an instance of [${getClass.getName}] explicitly using the constructor (new). " +
           "You have to use one of the 'actorOf' factory methods to create a new actor. See the documentation.")
     val c = contextStack.head
-    /**
-     * @note IMPLEMENT IN SCALA.JS
-     *
-     ActorCell.contextStack.set(null :: contextStack)
-     */
-    ActorCell.contextStack = null :: contextStack
+    ActorCell.contextStack.set(null :: contextStack)
     c
   }
 
@@ -461,16 +439,6 @@ trait Actor {
    */
   @scala.scalajs.js.annotation.JSExport
   implicit final val self = context.self //MUST BE A VAL, TRUST ME
-  // WE NEED THIS BECAUSE WE NEED TO SET THE FIELDS IN ACTOR CELL
-  //var _self = context.self
-  //implicit def context: ActorContext = _context
-  //implicit final def self: ActorRef = _self
-
-  /*private[akka] final def setActorFields(context: ActorContext,
-                                         self: ActorRef): Unit = {
-    this._context = context
-    this._self = self
-  }*/
 
   /**
    * The reference sender Actor of the last received message.

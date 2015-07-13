@@ -130,12 +130,7 @@ trait ActorContext extends ActorRefFactory {
    * Returns the dispatcher (MessageDispatcher) that is used for this Actor.
    * Importing this member will place an implicit ExecutionContext in scope.
    */
-  /**
-   * @note IMPLEMENT IN SCALA.JS
-   *
-   implicit def dispatcher: ExecutionContextExecutor
-   */
-  implicit def dispatcher: MessageDispatcher
+  implicit def dispatcher: ExecutionContextExecutor
 
   /**
    * The system that the actor belongs to.
@@ -350,15 +345,9 @@ private[akka] trait Cell {
  * for! (waves hand)
  */
 private[akka] object ActorCell {
- /**
-  * @note IMPLEMENT IN SCALA.JS
-  * JS is single threaded, no ThreadLocal
-  *
-  * val contextStack = new ThreadLocal[List[ActorContext]] {
-  *   override def initialValue: List[ActorContext] = Nil
-  * }
-  */
-  var contextStack: List[ActorContext] = Nil
+  val contextStack = new ThreadLocal[List[ActorContext]] {
+    override def initialValue: List[ActorContext] = Nil
+  }
 
   final val emptyCancellable: Cancellable = new Cancellable {
     def isCancelled: Boolean = false
@@ -440,37 +429,17 @@ private[akka] class ActorCell(
   protected def actor_=(a: Actor): Unit = _actor = a
   var currentMessage: Envelope = _
   private var behaviorStack: List[Actor.Receive] = emptyBehaviorStack
-  /**
-   * @note IMPLEMENT IN SCALA.JS
-   *
-   private[this] var sysmsgStash: LatestFirstSystemMessageList = SystemMessageList.LNil
-   */
-
-  private[this] var sysmsgStashLatestFirst: List[SystemMessage] = Nil
-
+  private[this] var sysmsgStash: LatestFirstSystemMessageList = SystemMessageList.LNil
 
   protected def stash(msg: SystemMessage): Unit = {
-    /**
-     * @note IMPLEMENT IN SCALA.JS
-     *
-      assert(msg.unlinked)
-      sysmsgStash ::= msg
-     */
-    sysmsgStashLatestFirst ::= msg
+    assert(msg.unlinked)
+    sysmsgStash ::= msg
   }
 
-  private def unstashAllLatestFirst(): List[SystemMessage] = {
-    /**
-     * @note IMPLEMENT IN SCALA.JS
-     *
-     *   private def unstashAll(): LatestFirstSystemMessageList = {
-             val unstashed = sysmsgStash
+  private def unstashAll(): LatestFirstSystemMessageList = {
+     val unstashed = sysmsgStash
      sysmsgStash = SystemMessageList.LNil
      unstashed
-     */
-    val unstashed = sysmsgStashLatestFirst
-    sysmsgStashLatestFirst = Nil
-    unstashed
   }
 
   /*
@@ -639,13 +608,7 @@ private[akka] class ActorCell(
 
   //This method is in charge of setting up the contextStack and create a new instance of the Actor
   protected def newActor(): Actor = {
-   /**
-    * @note IMPLEMENT IN SCALA.JS
-    * We're not using ThreadLocal anymore
-    *
     contextStack.set(this :: contextStack.get)
-    */
-    contextStack = this :: contextStack
     try {
       behaviorStack = emptyBehaviorStack
       val instance = props.newActor()
@@ -658,17 +621,9 @@ private[akka] class ActorCell(
 
       instance
     } finally {
-     /**
-      * @note IMPLEMENT IN SCALA.JS
-      * Again, contextStack is just a list
-      *
-      * val stackAfter = contextStack.get
-      * if (stackAfter.nonEmpty)
-      *   contextStack.set(if (stackAfter.head eq null) stackAfter.tail.tail else stackAfter.tail) // pop null marker plus our context
-      */
-      val stackAfter = contextStack
-      if(stackAfter.nonEmpty)
-        contextStack = if (stackAfter.head eq null) stackAfter.tail.tail else stackAfter.tail
+      val stackAfter = contextStack.get
+      if (stackAfter.nonEmpty)
+        contextStack.set(if (stackAfter.head eq null) stackAfter.tail.tail else stackAfter.tail) // pop null marker plus our context
     }
   }
 

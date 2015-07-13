@@ -704,7 +704,6 @@ private[akka] class ActorCell(
   }
 
   final protected def setActorFields(actorInstance: Actor, context: ActorContext, self: ActorRef): Unit = {
-    //actorInstance.setActorFields(context = context, self = self)
     
    /** XXX: FIX ME
     *  The issue is the following:

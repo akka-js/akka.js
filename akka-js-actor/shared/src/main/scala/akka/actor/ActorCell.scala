@@ -462,12 +462,7 @@ private[akka] class ActorCell(
       else if (mailbox.isSuspended) SuspendedState
       else DefaultState
 
-    /**
-     * @note IMPLEMENT IN SCALA.JS
-     *
     @tailrec def sendAllToDeadLetters(messages: EarliestFirstSystemMessageList): Unit =
-     */
-    @tailrec def sendAllToDeadLetters(messages: List[SystemMessage]): Unit =
       if (messages.nonEmpty) {
         val tail = messages.tail
         val msg = messages.head
@@ -484,12 +479,7 @@ private[akka] class ActorCell(
       }
 
     @tailrec
-/**
- * @note IMPLEMENT IN SCALA.JS
- *
-     def invokeAll(messages: EarliestFirstSystemMessageList, currentState: Int): Unit = {
- */
-    def invokeAll(messages: List[SystemMessage], currentState: Int): Unit = {
+    def invokeAll(messages: EarliestFirstSystemMessageList, currentState: Int): Unit = {
       val rest = messages.tail
       val message = messages.head
       message.unlink()
@@ -514,25 +504,13 @@ private[akka] class ActorCell(
       val newState = calculateState
       // As each state accepts a strict subset of another state, it is enough to unstash if we "walk up" the state
       // chain
-      /**
-       * @note IMPLEMENT IN SCALA.JS
-       *
-         val todo = if (newState < currentState) unstashAll() reverse_::: rest else rest
-       */
-      val todo =
-        if (newState < currentState) { unstashAllLatestFirst() reverse_::: rest }
-        else rest
+      val todo = if (newState < currentState) unstashAll() reverse_::: rest else rest
 
       if (isTerminated) sendAllToDeadLetters(todo)
       else if (todo.nonEmpty) invokeAll(todo, newState)
     }
 
-/**
- * @note IMPLEMENT IN SCALA.JS
- *
-     invokeAll(new EarliestFirstSystemMessageList(message), calculateState)
- */
-    invokeAll(List(message), calculateState)
+    invokeAll(new EarliestFirstSystemMessageList(message), calculateState)
   }
 
   //Memory consistency is handled by the Mailbox (reading mailbox status then processing messages, then writing mailbox status
@@ -710,7 +688,7 @@ private[akka] class ActorCell(
  */
 
   final protected def clearActorCellFields(cell: ActorCell): Unit = {
-    cell.unstashAllLatestFirst()
+    cell.unstashAll()
 /**
  * @note IMPLEMENT IN SCALA.JS
  *

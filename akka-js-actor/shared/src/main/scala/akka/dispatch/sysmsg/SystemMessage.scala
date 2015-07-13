@@ -75,11 +75,7 @@ private[akka] class LatestFirstSystemMessageList(val head: SystemMessage) extend
    * should be taken when passing the tail to other methods. [[akka.dispatch.sysmsg.SystemMessage#unlink]] should be
    * called on the head if one wants to detach the tail permanently.
    */
-  /**
-   * @note IMPLEMENT IN SCALA.JS
-   *
-   final def tail: LatestFirstSystemMessageList = new LatestFirstSystemMessageList(head.next)
-   */
+  final def tail: LatestFirstSystemMessageList = new LatestFirstSystemMessageList(head.next)
 
   /**
    * Reverses the list. This operation mutates the underlying list. The cost of the call to reverse is linear in the
@@ -147,11 +143,7 @@ private[akka] class EarliestFirstSystemMessageList(val head: SystemMessage) exte
    *
    * The type of the returned list is of the opposite order: [[akka.dispatch.sysmsg.LatestFirstSystemMessageList]]
    */
-/**
- * @note IMPLEMENT IN SCALA.JS
- *
-   final def reverse: LatestFirstSystemMessageList = new LatestFirstSystemMessageList(reverseInner(head, null))
- */
+  final def reverse: LatestFirstSystemMessageList = new LatestFirstSystemMessageList(reverseInner(head, null))
 
   /**
    * Attaches a message to the current head of the list. This operation has constant cost.
@@ -169,21 +161,16 @@ private[akka] class EarliestFirstSystemMessageList(val head: SystemMessage) exte
    *
    * The cost of this operation is linear in the size of the list that is to be prepended.
    */
-/**
- * @note IMPLEMENT IN SCALA.JS
- *
-   final def reverse_:::(other: LatestFirstSystemMessageList): EarliestFirstSystemMessageList = {
-     var remaining = other
-     var result = this
-     while (remaining.nonEmpty) {
-       val msg = remaining.head
-       remaining = remaining.tail
-       result ::= msg
-     }
-     result
-   }
- */
-
+  final def reverse_:::(other: LatestFirstSystemMessageList): EarliestFirstSystemMessageList = {
+    var remaining = other
+    var result = this
+    while (remaining.nonEmpty) {
+      val msg = remaining.head
+      remaining = remaining.tail
+      result ::= msg
+    }
+    result
+  }
 }
 
 /**

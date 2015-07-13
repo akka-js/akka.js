@@ -1,4 +1,6 @@
-# Akka.js
+<p align="center">
+<img src="logo/akkajs.png">
+</p>
 
 This project aims at providing an actor system for Scala.js, featuring:
 

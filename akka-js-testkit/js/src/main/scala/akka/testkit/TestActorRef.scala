@@ -51,7 +51,7 @@ class TestActorRef[T <: Actor](
     _system.asInstanceOf[ActorSystemImpl],
     _props,
     _system.dispatchers.lookup(_props.dispatcher),
-    /**@note IMPLEMENT IN SCALA.JS _system.mailboxes.getMailboxType(props, dispatcher.configurator.config), */
+    _system.mailboxes.getMailboxType(_props,_system.dispatchers.lookup(_props.dispatcher).configurator.config),
     _supervisor.asInstanceOf[InternalActorRef],
     _supervisor.path / name) {
 

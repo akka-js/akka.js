@@ -666,11 +666,7 @@ private[akka] object LocalActorRefProvider {
      */
       Props(new LocalActorRefProvider.Guardian(rootGuardianStrategy)),
       defaultDispatcher,
-      /**
-       * @note IMPLEMENT IN SCALA.JS
-       *
-       defaultMailbox,
-       */
+      defaultMailbox,
       theOneWhoWalksTheBubblesOfSpaceTime,
       rootPath) {
       override def getParent: InternalActorRef = this
@@ -695,7 +691,7 @@ private[akka] object LocalActorRefProvider {
            defaultDispatcher, defaultMailbox, rootGuardian, rootPath / "user")
      */
     val ref = new LocalActorRef(system, Props(new LocalActorRefProvider.Guardian(guardianStrategy)),
-      defaultDispatcher, rootGuardian, rootPath / "user")
+      defaultDispatcher, defaultMailbox, rootGuardian, rootPath / "user")
     cell.initChild(ref)
     ref.start()
     ref
@@ -713,7 +709,7 @@ private[akka] object LocalActorRefProvider {
      */
     val ref = new LocalActorRef(
       system, Props( new LocalActorRefProvider.SystemGuardian(systemGuardianStrategy, guardian)),
-      defaultDispatcher, rootGuardian, rootPath / "system")
+      defaultDispatcher, defaultMailbox, rootGuardian, rootPath / "system")
     cell.initChild(ref)
     ref.start()
     ref
@@ -820,19 +816,15 @@ private[akka] object LocalActorRefProvider {
 
   def actorOf(system: ActorSystemImpl, /** @note IMPLEMENT IN SCALA.JS props */ props2: Props, supervisor: InternalActorRef, path: ActorPath,
               systemService: Boolean, /** @note IMPLEMENT IN SCALA.JS deploy: Option[Deploy], lookupDeploy: Boolean, */ async: Boolean): InternalActorRef = {
-    /**
-     * @note IMPLEMENT IN SCALA.JS
-     *
          try {
-           val dispatcher = system.dispatchers.lookup(props2.dispatcher)
+           //  @note IMPLEMENT IN SCALA.JS val dispatcher = system.dispatchers.lookup(props2.dispatcher)
+           val dispatcher = system.dispatchers.lookup(akka.dispatch.Dispatchers.DefaultDispatcherId)
            val mailboxType = system.mailboxes.getMailboxType(props2, dispatcher.configurator.config)
 
            new LocalActorRef(system, props2, dispatcher, mailboxType, supervisor, path)
          } catch {
            case NonFatal(e) ⇒ throw new ConfigurationException(s"configuration problem while creating [$path] with dispatcher [${props2.dispatcher}] and mailbox [${props2.mailbox}]", e)
          }
-     */
-    new LocalActorRef(system, props2, system.dispatchers.lookup(akka.dispatch.Dispatchers.DefaultDispatcherId), supervisor, path)
   }
 
  /**

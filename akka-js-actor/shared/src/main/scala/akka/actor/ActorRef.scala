@@ -293,7 +293,7 @@ private[akka] class LocalActorRef private[akka] (
                                                   _system: ActorSystemImpl,
                                                   _props: Props,
                                                   _dispatcher: MessageDispatcher,
-                                                  /** @note IMPLEMENT IN SCALA.JS _mailboxType: MailboxType, */
+                                                  _mailboxType: MailboxType, 
                                                   _supervisor: InternalActorRef,
                                                   override val path: ActorPath)
   extends ActorRefWithCell with LocalRef {
@@ -309,12 +309,7 @@ private[akka] class LocalActorRef private[akka] (
    * object from another thread as soon as we run init.
    */
   private val actorCell: ActorCell = newActorCell(_system, this, _props, _dispatcher, _supervisor)
-  /**
-   * @note IMPLEMENT IN SCALA.JS
-   *
-   actorCell.init(sendSupervise = true, _mailboxType)
-   */
-  actorCell.init(sendSupervise = true)
+  actorCell.init(sendSupervise = true, _mailboxType)
 
   protected def newActorCell(system: ActorSystemImpl, ref: InternalActorRef, props: Props, dispatcher: MessageDispatcher, supervisor: InternalActorRef): ActorCell =
     new ActorCell(system, ref, props, dispatcher, supervisor)

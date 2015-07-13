@@ -236,9 +236,6 @@ import scala.annotation.tailrec
    }
 
    /**
-    * @note IMPLEMENT IN SCALA.JS
-    *
-   /**
     * Convenience method for extracting the mailbox information from the
     * contained [[Deploy]] instance.
     */
@@ -246,7 +243,9 @@ import scala.annotation.tailrec
      case NoMailboxGiven ⇒ Mailboxes.DefaultMailboxId
      case x              ⇒ x
    }
-
+   /**
+    * @note IMPLEMENT IN SCALA.JS
+    *
    /**
     * Convenience method for extracting the router configuration from the
     * contained [[Deploy]] instance.

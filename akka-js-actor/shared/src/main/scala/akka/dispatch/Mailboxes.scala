@@ -4,11 +4,10 @@
 
 package akka.dispatch
 
+import com.typesafe.config.{ ConfigFactory, Config }
 /**
  * @note IMPLEMENT IN SCALA.JS
- *
- import com.typesafe.config.{ ConfigFactory, Config }
- import akka.actor.{ Actor, /** DynamicAccess, */ActorSystem }
+ * import akka.actor.{ Actor, /** DynamicAccess, */ActorSystem }
  */
 import akka.actor.{ Actor, ActorSystem }
 import akka.event.EventStream
@@ -135,12 +134,15 @@ private[akka] class Mailboxes(
              s"no wildcard type allowed in ProducesMessageQueue argument (was [$x])")
          }
      }
-   }
+   }*/
 
    /**
     * Finds out the mailbox type for an actor based on configuration, props and requirements.
     */
    protected[akka] def getMailboxType(props: Props, dispatcherConfig: Config): MailboxType = {
+     akka.dispatch.UnboundedMailbox()
+   }
+     /*
      val id = dispatcherConfig.getString("id")
      val deploy = props.deploy
      val actorClass = props.actorClass

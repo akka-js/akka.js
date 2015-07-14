@@ -20,11 +20,7 @@ import akka.pattern.ask
  */
 import akka.util.Helpers
 import akka.util.Timeout
-/**
- * @note IMPLEMENT IN SCALA.JS
- *
- import akka.dispatch.ExecutionContexts
- */
+import akka.dispatch.ExecutionContexts
 
 /**
  * An ActorSelection is a logical view of a section of an ActorSystem's tree of Actors,
@@ -66,12 +62,7 @@ abstract class ActorSelection extends Serializable {
    * [[ActorRef]].
    */
   def resolveOne()(implicit timeout: Timeout): Future[ActorRef] = {
-    /**
-     * @note IMPLEMENT IN SCALA.JS
-     *
-     implicit val ec = ExecutionContexts.sameThreadExecutionContext
-     */
-    implicit val ec = scala.scalajs.concurrent.JSExecutionContext.queue
+    implicit val ec = ExecutionContexts.sameThreadExecutionContext
     val p = Promise[ActorRef]()
     this.ask(Identify(None)) onComplete {
       case Success(ActorIdentity(_, Some(ref))) ⇒ p.success(ref)

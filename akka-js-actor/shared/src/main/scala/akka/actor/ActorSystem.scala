@@ -5,6 +5,7 @@
 package akka.actor
 
 import java.io.Closeable
+import java.util.concurrent.ConcurrentHashMap
 /**
  * @note IMPLEMENT IN SCALA.JS
  *
@@ -661,9 +662,9 @@ private[akka] class ActorSystemImpl(val name: String, applicationConfig: ActorSy
   * @note IMPLEMENT IN SCALA.JS
   *
   *  protected def createDynamicAccess(): DynamicAccess = new ReflectiveDynamicAccess(classLoader)
-  *
-  *  def logConfiguration(): Unit = log.info(settings.toString)
   */
+  def logConfiguration(): Unit = log.info(settings.toString)
+
   protected def createDynamicAccess(): DynamicAccess = new JSDynamicAccess(/**@note IMPLEMENT IN SCALA.JS classLoader*/)
   
   private val _pm: DynamicAccess = createDynamicAccess()
@@ -692,17 +693,12 @@ private[akka] class ActorSystemImpl(val name: String, applicationConfig: ActorSy
 
   // this provides basic logging (to stdout) until .start() is called below
 
- val eventStream: EventStream = new EventStream(DebugEventStream)
- eventStream.startStdoutLogger(settings)
+  val eventStream: EventStream = new EventStream(DebugEventStream)
+  eventStream.startStdoutLogger(settings)
 
- val log: LoggingAdapter = new BusLogging(eventStream, "ActorSystem(" + name + ")", this.getClass)
+  val log: LoggingAdapter = new BusLogging(eventStream, "ActorSystem(" + name + ")", this.getClass)
 
- /**
-  * @note IMPLEMENT IN SCALA.JS
-  *
-  * val scheduler: Scheduler = createScheduler()
-  */
-  val scheduler: Scheduler = new EventLoopScheduler
+  val scheduler: Scheduler = createScheduler()
 
   val provider: ActorRefProvider = try { 
     val arguments = Vector(
@@ -810,10 +806,8 @@ private[akka] class ActorSystemImpl(val name: String, applicationConfig: ActorSy
    * cannot schedule a task. Once scheduled, the task MUST be executed. If
    * executed upon close(), the task may execute before its timeout.
    */
-  /**
-   * @note IMPLEMENT IN SCALA.JS
-   *
-   * protected def createScheduler(): Scheduler =
+   protected def createScheduler(): Scheduler = new EventLoopScheduler
+   /** @note IMPLEMENT IN SCALA.JS
    *   dynamicAccess.createInstanceFor[Scheduler](settings.SchedulerClass, immutable.Seq(
    *     classOf[Config] -> settings.config,
    *     classOf[LoggingAdapter] -> log,
@@ -831,69 +825,41 @@ private[akka] class ActorSystemImpl(val name: String, applicationConfig: ActorSy
     case _            ⇒
   }
 
-/**
- * @note IMPLEMENT IN SCALA.JS
- *
-   private val extensions = new ConcurrentHashMap[ExtensionId[_], AnyRef]
+  private val extensions = new ConcurrentHashMap[ExtensionId[_], AnyRef]
+
+  /**
+   * Returns any extension registered to the specified Extension or returns null if not registered
    */
-  private val extensions = new scala.collection.mutable.HashMap[ExtensionId[_], AnyRef]
-
-   /**
-    * Returns any extension registered to the specified Extension or returns null if not registered
+  // @note IMPLEMENT IN SCALA.JS @tailrec
+  private def findExtension[T <: Extension](ext: ExtensionId[T]): T = extensions.get(ext) match {
+    /** @note IMPLEMENT IN SCALA.JS
+    case c: CountDownLatch ⇒
+      c.await(); findExtension(ext) //Registration in process, await completion and retry
     */
-   //@note IMPLEMENT IN SCALA.JS @tailrec
-   private def findExtension[T <: Extension](ext: ExtensionId[T]): T = extensions.get(ext) match {
-     /** @note IMPLEMENT IN SCALA.JS
-     case c: CountDownLatch ⇒
-       c.await(); findExtension(ext) //Registration in process, await completion and retry */
-     case other ⇒
-       // @note IMPLEMENT IN SCALA.JS other.asInstanceOf[T]
-       if(other == None) null.asInstanceOf[T] 
-       else other.asInstanceOf[T] //could be a T or null, in which case we return the null as T
-   }
+    case other ⇒
+      other.asInstanceOf[T] //could be a T or null, in which case we return the null as T
+  }
 
-   //@note IMPLEMENT IN SCALA.JS @tailrec
-   final def registerExtension[T <: Extension](ext: ExtensionId[T]): T = {
-     findExtension(ext) match {
-       case null ⇒
-         ext.createExtension(this) match {
-           case instance ⇒  
-             extensions += ext -> instance
-             instance
-         }
-       case existing => existing.asInstanceOf[T]  
-     }
-     /** @note IMPLEMENT IN SCALA.JS
-     findExtension(ext) match {
-       case null ⇒ //Doesn't already exist, commence registration
-         val inProcessOfRegistration = new CountDownLatch(1)
-         extensions.putIfAbsent(ext, inProcessOfRegistration) match { // Signal that registration is in process
-           case null ⇒ try { // Signal was successfully sent
-             ext.createExtension(this) match { // Create and initialize the extension
-               case null ⇒ throw new IllegalStateException("Extension instance created as 'null' for extension [" + ext + "]")
-               case instance ⇒
-                 extensions.replace(ext, inProcessOfRegistration, instance) //Replace our in process signal with the initialized extension
-                 instance //Profit!
-             }
-           } catch {
-             case t: Throwable ⇒
-               extensions.remove(ext, inProcessOfRegistration) //In case shit hits the fan, remove the inProcess signal
-               throw t //Escalate to caller
-           } finally {
-             inProcessOfRegistration.countDown //Always notify listeners of the inProcess signal
-           }
-           case other ⇒ registerExtension(ext) //Someone else is in process of registering an extension for this Extension, retry
-         }
-       case existing ⇒ existing.asInstanceOf[T]
-     }*/
-   }
+  // @note IMPLEMENT IN SCALA.JS @tailrec
+  final def registerExtension[T <: Extension](ext: ExtensionId[T]): T = {
+    findExtension(ext) match {
+      case null ⇒ //Doesn't already exist, commence registration
+        ext.createExtension(this) match {
+          case null ⇒ throw new IllegalStateException("Extension instance created as 'null' for extension [" + ext + "]")
+          case instance ⇒ 
+            extensions.put(ext, instance)
+            instance
+        }
+      case existing ⇒ existing.asInstanceOf[T]     
+    }
+  }
 
-   def extension[T <: Extension](ext: ExtensionId[T]): T = findExtension(ext) match {
-     case null ⇒ throw new IllegalArgumentException("Trying to get non-registered extension [" + ext + "]")
-     case some ⇒ some.asInstanceOf[T]
-   }
+  def extension[T <: Extension](ext: ExtensionId[T]): T = findExtension(ext) match {
+    case null ⇒ throw new IllegalArgumentException("Trying to get non-registered extension [" + ext + "]")
+    case some ⇒ some.asInstanceOf[T]
+  }
 
-   def hasExtension(ext: ExtensionId[_ <: Extension]): Boolean = findExtension(ext) != null
+  def hasExtension(ext: ExtensionId[_ <: Extension]): Boolean = findExtension(ext) != null
 
    /** @note IMPLEMENT IN SCALA.JS
    private def loadExtensions() {

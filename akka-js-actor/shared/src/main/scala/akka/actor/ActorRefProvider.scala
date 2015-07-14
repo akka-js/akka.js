@@ -730,12 +730,7 @@ private[akka] object LocalActorRefProvider {
   def resolveActorRef(path: ActorPath): ActorRef = {
     if (path.root == rootPath) resolveActorRef(rootGuardian, path.elements)
     else {
-      /**
-       * @note IMPLEMENT IN SCALA.JS
-       *
-       log.debug("resolve of foreign ActorPath [{}] failed", path)
-       */
-      log.debug(s"resolve of foreign ActorPath [$path] failed")
+      log.debug("resolve of foreign ActorPath [{}] failed", path)
       deadLetters
     }
   }
@@ -749,12 +744,7 @@ private[akka] object LocalActorRefProvider {
       deadLetters
     } else ref.getChild(pathElements.iterator) match {
       case Nobody ⇒
-        /**
-         * @note IMPLEMENT IN SCALA.JS
-         *
-         log.debug("resolve of path sequence [/{}] failed", pathElements.mkString("/"))
-         */
-        log.debug(s"resolve of path sequence [/${pathElements.mkString("/")}] failed")
+        log.debug("resolve of path sequence [/{}] failed", pathElements.mkString("/"))
         new EmptyLocalActorRef(system.provider, ref.path / pathElements, eventStream)
       case x ⇒ x
     }

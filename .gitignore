@@ -1,3 +1,4 @@
+.cache-main
 *.sjsir
 node_modules
 target/

@@ -204,6 +204,7 @@ object ActorSystem {
       case null => "akka.actor.LocalActorRefProvider"
       case m => m
     }
+    final val UnstartedPushTimeout: Timeout = Timeout(config.getMillisDuration("akka.actor.unstarted-push-timeout"))
     
     final val LogDeadLetters: Int = 1
     final val LogDeadLettersDuringShutdown: Boolean = false

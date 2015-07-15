@@ -54,6 +54,8 @@ class Config(obj: js.Dynamic) {
   
   def getInt(path: String) = getNested[Int](path)
   
+  def getDouble(path: String) = getNested[Double](path)
+  
   def getNanosDuration(path: String) = {
     val res = getString(path)
     Duration(res.toInt, NANOSECONDS)
@@ -64,6 +66,6 @@ class Config(obj: js.Dynamic) {
     Duration(res.toInt, MILLISECONDS)
   }
   
-  def getStringList(path: String) = getNested[js.Array[String]](path)
+  def getStringList(path: String) = getNested[js.Array[String]](path).toArray
 
 }

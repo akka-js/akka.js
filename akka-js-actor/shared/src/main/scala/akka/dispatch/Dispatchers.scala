@@ -5,8 +5,9 @@
 package akka.dispatch
 
 import java.util.concurrent.TimeUnit
+
+import java.util.concurrent.{ ConcurrentHashMap/**@note IMPLEMENT IN SCALA.JS, TimeUnit, ThreadFactory */}
 /** @note IMPLEMENT IN SCALA.JS
-import java.util.concurrent.{ ConcurrentHashMap, TimeUnit, ThreadFactory }
 import com.typesafe.config.{ ConfigFactory, Config }
 import akka.actor.{ Scheduler, DynamicAccess, ActorSystem }
 */
@@ -77,12 +78,9 @@ class Dispatchers(val settings: ActorSystem.Settings, val prerequisites: Dispatc
   /**
    * The one and only default dispatcher.
    */
-  /** @note IMPLEMENT IN SCALA.JS
   def defaultGlobalDispatcher: MessageDispatcher = lookup(DefaultDispatcherId)
-  */
-  def defaultGlobalDispatcher: MessageDispatcher = new DispatcherConfigurator(new Config, prerequisites).dispatcher()
 
-  /**@note IMPLEMENT IN SCALA.JS private val dispatcherConfigurators = new ConcurrentHashMap[String, MessageDispatcherConfigurator] */
+  private val dispatcherConfigurators = new ConcurrentHashMap[String, MessageDispatcherConfigurator] 
 
   /**
    * Returns a dispatcher as specified in configuration. Please note that this

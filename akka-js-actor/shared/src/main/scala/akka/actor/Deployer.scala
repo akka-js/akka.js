@@ -4,13 +4,12 @@
 
 package akka.actor
 
-   
+import akka.routing._   
    /**
     * @note IMPLEMENT IN SCALA.JS
     *
 import java.util.concurrent.atomic.AtomicReference
 
-import akka.routing._
 import akka.util.WildcardTree
 import com.typesafe.config._
 * 
@@ -45,10 +44,9 @@ final case class Deploy(
     /**
     * @note IMPLEMENT IN SCALA.JS
     * 
-  config: Config = ConfigFactory.empty,
-  routerConfig: RouterConfig = NoRouter,
-  * 
+  config: Config = ConfigFactory.empty,  * 
   */
+  routerConfig: RouterConfig = NoRouter,
   scope: Scope = NoScopeGiven,
   dispatcher: String = Deploy.NoDispatcherGiven,
   mailbox: String = Deploy.NoMailboxGiven) {
@@ -84,10 +82,9 @@ final case class Deploy(
    /**
     * @note IMPLEMENT IN SCALA.JS
     * 
-      config.withFallback(other.config),
-      routerConfig.withFallback(other.routerConfig),
-    *
+      config.withFallback(other.config),    *
     */
+      routerConfig.withFallback(other.routerConfig),
       scope.withFallback(other.scope),
       if (dispatcher == Deploy.NoDispatcherGiven) other.dispatcher else dispatcher,
       if (mailbox == Deploy.NoMailboxGiven) other.mailbox else mailbox)

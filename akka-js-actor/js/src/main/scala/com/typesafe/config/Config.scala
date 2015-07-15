@@ -48,6 +48,10 @@ class Config(obj: js.Dynamic) {
     }
   }
   
+  def hasPath(path: String) = getNested[Any](path) != null
+  
+  def getConfig(path: String) = new Config(getNested[js.Dynamic](path))
+  
   def getString(path: String) = getNested[String](path)
   
   def getBoolean(path: String) = getNested[Boolean](path)

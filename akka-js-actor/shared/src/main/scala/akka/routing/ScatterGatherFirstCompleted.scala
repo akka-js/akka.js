@@ -2,7 +2,7 @@
  * Copyright (C) 2009-2014 Typesafe Inc. <http://www.typesafe.com>
  */
 package akka.routing
-
+/*
 import scala.collection.immutable
 import akka.actor.ActorContext
 import akka.actor.Props
@@ -189,3 +189,4 @@ final case class ScatterGatherFirstCompletedGroup(
   def withDispatcher(dispatcherId: String): ScatterGatherFirstCompletedGroup = copy(routerDispatcher = dispatcherId)
 
 }
+*/

@@ -2,7 +2,7 @@
  * Copyright (C) 2009-2014 Typesafe Inc. <http://www.typesafe.com>
  */
 package akka.routing
-
+/*
 import scala.collection.immutable
 import akka.actor.ActorContext
 import akka.actor.Props
@@ -569,3 +569,4 @@ private[akka] case class ConsistentActorRef(actorRef: ActorRef, selfAddress: Add
     }
   }
 }
+*/

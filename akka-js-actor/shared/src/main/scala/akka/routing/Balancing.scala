@@ -2,7 +2,7 @@
  * Copyright (C) 2009-2014 Typesafe Inc. <http://www.typesafe.com>
  */
 package akka.routing
-
+/*
 import scala.collection.immutable
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
@@ -147,3 +147,4 @@ final case class BalancingPool(
 
 }
 
+*/

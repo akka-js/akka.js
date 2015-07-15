@@ -12,7 +12,9 @@ import akka.actor.InternalActorRef
 import akka.actor.Props
 import akka.actor.RepointableActorRef
 import akka.actor.UnstartedCell
+/** @note IMPLEMENT IN SCALA.JS
 import akka.dispatch.BalancingDispatcher
+*/
 import akka.dispatch.MailboxType
 import akka.dispatch.MessageDispatcher
 
@@ -33,11 +35,12 @@ private[akka] class RoutedActorRef(
   extends RepointableActorRef(_system, _routerProps, _routerDispatcher, _routerMailbox, _supervisor, _path) {
 
   // verify that a BalancingDispatcher is not used with a Router
+  /** @note IMPLEMENT IN SCALA.JS
   if (_routerProps.routerConfig != NoRouter && _routerDispatcher.isInstanceOf[BalancingDispatcher]) {
     throw new ConfigurationException(
       "Configuration for " + this +
         " is invalid - you can not use a 'BalancingDispatcher' as a Router's dispatcher, you can however use it for the routees.")
-  } else _routerProps.routerConfig.verifyConfig(_path)
+  } else */ _routerProps.routerConfig.verifyConfig(_path)
 
   override def newCell(old: UnstartedCell): Cell = {
     val cell = props.routerConfig match {

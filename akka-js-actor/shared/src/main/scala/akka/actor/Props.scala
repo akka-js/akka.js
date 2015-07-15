@@ -7,10 +7,10 @@ package akka.actor
 import akka.dispatch._
 import akka.japi.Creator
 import scala.reflect.ClassTag
+import akka.routing._
 /**
  * @note IMPLEMENT IN SCALA.JS
  *
- import akka.routing._
  import akka.util.Reflect
  */
 import scala.annotation.varargs
@@ -47,13 +47,9 @@ import scala.annotation.tailrec
    final val defaultCreator: () ⇒ Actor = () ⇒ throw new UnsupportedOperationException("No actor creator specified!")
 
    /**
-    * @note IMPLEMENT IN SCALA.JS
-    *
-   /**
     * The defaultRoutedProps is NoRouter which is used when creating a Props
     */
    final val defaultRoutedProps: RouterConfig = NoRouter
-    */
 
    /**
     * The default Deploy instance which is used when creating a Props
@@ -243,31 +239,31 @@ import scala.annotation.tailrec
      case NoMailboxGiven ⇒ Mailboxes.DefaultMailboxId
      case x              ⇒ x
    }
-   /**
-    * @note IMPLEMENT IN SCALA.JS
-    *
+
    /**
     * Convenience method for extracting the router configuration from the
     * contained [[Deploy]] instance.
     */
    def routerConfig: RouterConfig = deploy.routerConfig
-   */
+   
    /**
     * Returns a new Props with the specified dispatcher set.
     */
    def withDispatcher(d: String): Props = copy(deploy = deploy.copy(dispatcher = d))
 
-   /**
+   /** @note IMPLEMENT IN SCALA.JS
    /**
     * Returns a new Props with the specified mailbox set.
     */
    def withMailbox(m: String): Props = copy(deploy = deploy.copy(mailbox = m))
+    */
 
    /**
     * Returns a new Props with the specified router config set.
     */
    def withRouter(r: RouterConfig): Props = copy(deploy = deploy.copy(routerConfig = r))
 
+   /**@note IMPLEMENT IN SCALA.JS
    /**
     * Returns a new Props with the specified deployment configuration.
     */

@@ -204,7 +204,12 @@ object ActorSystem {
       case null => "akka.actor.LocalActorRefProvider"
       case m => m
     }
-    final val UnstartedPushTimeout: Timeout = Timeout(config.getMillisDuration("akka.actor.unstarted-push-timeout"))
+    final val UnstartedPushTimeout: Timeout = {
+      if(config.getMillisDuration("akka.actor.unstarted-push-timeout") != null) 
+        Timeout(config.getMillisDuration("akka.actor.unstarted-push-timeout"))
+      else
+        null
+    }
     
     final val LogDeadLetters: Int = 1
     final val LogDeadLettersDuringShutdown: Boolean = false
@@ -214,6 +219,7 @@ object ActorSystem {
     final val DebugLifecycle: Boolean = true
     final val DebugEventStream: Boolean = false
     final val DebugUnhandledMessage: Boolean = false
+    final val DebugRouterMisconfiguration: Boolean = false
 
     final val Loggers: immutable.Seq[String] = cfg.getStringList("akka.loggers") match {
       case null => Nil

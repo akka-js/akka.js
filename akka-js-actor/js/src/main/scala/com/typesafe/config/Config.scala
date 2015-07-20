@@ -67,9 +67,15 @@ class Config(obj: js.Dynamic) {
   
   def getMillisDuration(path: String) = {
     val res = getString(path)
-    Duration(res.toInt, MILLISECONDS)
+    if(res != null)
+      Duration(res.toInt, MILLISECONDS)
+    else null.asInstanceOf[FiniteDuration]
   }
   
-  def getStringList(path: String) = getNested[js.Array[String]](path).toArray
+  def getStringList(path: String) = {
+    val res = getNested[js.Array[String]](path)
+    if(res == null) res.asInstanceOf[scala.Array[String]]
+    else res.toArray
+  }
 
 }

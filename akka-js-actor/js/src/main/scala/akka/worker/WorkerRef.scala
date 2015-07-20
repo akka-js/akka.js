@@ -350,7 +350,10 @@ class WorkerActorRefProvider (
                props: Props,
                supervisor: InternalActorRef,
                path: ActorPath,
-               systemService: Boolean, async: Boolean) = local.actorOf(system, props, supervisor, path, systemService, async)
+               systemService: Boolean, 
+               deploy: Option[Deploy],
+               lookupDeploy: Boolean,
+               async: Boolean) = local.actorOf(system, props, supervisor, path, systemService, deploy = None, lookupDeploy = true, async)
                
   def getDefaultAddress: akka.actor.Address = local.getDefaultAddress
   

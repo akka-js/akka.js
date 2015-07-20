@@ -237,7 +237,7 @@ private[akka] trait Children { this: ActorCell ⇒
         try {
           val childPath = new ChildActorPath(cell.self.path, name, ActorCell.newUid())
           cell.provider.actorOf(cell.systemImpl, props, cell.self, childPath,
-            systemService = systemService/** @note IMPLEMENT IN SCALA.JS , deploy = None, lookupDeploy = true */, async = async)
+            systemService = systemService, deploy = None, lookupDeploy = true, async = async)
         } catch {
           case e: InterruptedException ⇒
             unreserveChild(name)

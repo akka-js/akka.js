@@ -316,7 +316,7 @@ import scala.annotation.tailrec
    def actorClass: Class[_ <: Actor]
  }
 
- private[akka] object IndirectActorProducer {
+ private[akka] object IndirectActorProducer extends JsReflectable {
    /**
     * @note IMPLEMENT IN SCALA.JS
     *
@@ -354,7 +354,7 @@ import scala.annotation.tailrec
            Reflect.instantiate(clazz, args).asInstanceOf[IndirectActorProducer]
            * 
            */
-           throw new Exception("TBD in AKKA.js with supported reflection")
+           instantiate(clazz)(args: _*).asInstanceOf[IndirectActorProducer]
        }
      } else if (classOf[Actor].isAssignableFrom(clazz)) {
        if (args.isEmpty) new NoArgsReflectConstructor(clazz.asInstanceOf[Class[_ <: Actor]])

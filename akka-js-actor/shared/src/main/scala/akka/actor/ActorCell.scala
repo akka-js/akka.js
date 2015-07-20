@@ -656,11 +656,7 @@ private[akka] class ActorCell(
 
   // future extension point
   protected def handleSupervise(child: ActorRef, async: Boolean): Unit = child match {
-/**
- * @note IMPLEMENT IN SCALA.JS
- *
-     case r: RepointableActorRef if async ⇒ r.point()
- */
+    case r: RepointableActorRef if async ⇒ r.point()
     case _                               ⇒
   }
 

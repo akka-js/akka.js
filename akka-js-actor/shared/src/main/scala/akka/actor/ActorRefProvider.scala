@@ -756,8 +756,7 @@ private[akka] object LocalActorRefProvider {
   def actorOf(system: ActorSystemImpl, props: Props, supervisor: InternalActorRef, path: ActorPath,
               systemService: Boolean, deploy: Option[Deploy], lookupDeploy: Boolean, async: Boolean): InternalActorRef = {
     props.deploy.routerConfig match {
-      // @note IMPLEMENT IN SCALA.JS case NoRouter ⇒
-      case _ =>
+      case NoRouter ⇒
         if (settings.DebugRouterMisconfiguration) {
           /** @note IMPLEMENT IN SCALA.JS
           deployer.lookup(path) foreach { d ⇒
@@ -790,27 +789,27 @@ private[akka] object LocalActorRefProvider {
           val dispatcher = system.dispatchers.lookup(akka.dispatch.Dispatchers.DefaultDispatcherId)
           val mailboxType = system.mailboxes.getMailboxType(props2, dispatcher.configurator.config)
   
-          /** @note IMPLEMENT IN SCALA.JS if (async) new RepointableActorRef(system, props2, dispatcher, mailboxType, supervisor, path).initialize(async)
-          else */ new LocalActorRef(system, props2, dispatcher, mailboxType, supervisor, path)
+          if (async) new RepointableActorRef(system, props2, dispatcher, mailboxType, supervisor, path).initialize(async)
+          else new LocalActorRef(system, props2, dispatcher, mailboxType, supervisor, path)
         } catch {
           case NonFatal(e) ⇒ throw new ConfigurationException(
             s"configuration problem while creating [$path] with dispatcher [${props2.dispatcher}] and mailbox [${props2.mailbox}]", e)
         }
-  /*
+
         case router ⇒
           
-          val lookup = if (lookupDeploy) deployer.lookup(path) else None
+          val lookup = None // @note IMPLEMENT IN SCALA.JS if (lookupDeploy) deployer.lookup(path) else None
           val fromProps = Iterator(props.deploy.copy(routerConfig = props.deploy.routerConfig withFallback router))
           val d = fromProps ++ deploy.iterator ++ lookup.iterator reduce ((a, b) ⇒ b withFallback a)
           val p = props.withRouter(d.routerConfig)
   
-          if (!system.dispatchers.hasDispatcher(p.dispatcher))
+          /*if (!system.dispatchers.hasDispatcher(p.dispatcher))
             throw new ConfigurationException(s"Dispatcher [${p.dispatcher}] not configured for routees of $path")
           if (!system.dispatchers.hasDispatcher(d.routerConfig.routerDispatcher))
-            throw new ConfigurationException(s"Dispatcher [${p.dispatcher}] not configured for router of $path")
+            throw new ConfigurationException(s"Dispatcher [${p.dispatcher}] not configured for router of $path")*/
   
           val routerProps = Props(p.deploy.copy(dispatcher = p.routerConfig.routerDispatcher),
-            classOf[RoutedActorCell.RouterActorCreator], Vector(p.routerConfig))
+            classOf[/** @note IMPLEMENT IN SCALA.JS RoutedActorCell.*/RouterActorCreator], Vector(p.routerConfig))
           val routeeProps = p.withRouter(NoRouter)
   
           try {
@@ -827,7 +826,7 @@ private[akka] object LocalActorRefProvider {
             case NonFatal(e) ⇒ throw new ConfigurationException(
               s"configuration problem while creating [$path] with router dispatcher [${routerProps.dispatcher}] and mailbox [${routerProps.mailbox}] " +
                 s"and routee dispatcher [${routeeProps.dispatcher}] and mailbox [${routeeProps.mailbox}]", e)
-          }*/
+          }
       }
     }
 

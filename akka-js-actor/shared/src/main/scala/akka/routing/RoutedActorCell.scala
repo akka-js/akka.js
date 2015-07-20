@@ -27,13 +27,19 @@ import akka.actor.ActorIdentity
 /**
  * INTERNAL API
  */
+@scala.scalajs.js.annotation.JSExport
+class RouterActorCreator(routerConfig: RouterConfig) extends IndirectActorProducer {
+  override def actorClass = classOf[RouterActor]
+  override def produce() = routerConfig.createRouterActor()
+}
+/** @note IMPLEMENT IN SCALA.JS
 private[akka] object RoutedActorCell {
   class RouterActorCreator(routerConfig: RouterConfig) extends IndirectActorProducer {
     override def actorClass = classOf[RouterActor]
     override def produce() = routerConfig.createRouterActor()
   }
 
-}
+}*/
 
 /**
  * INTERNAL API

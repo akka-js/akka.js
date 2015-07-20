@@ -217,6 +217,7 @@ object ActorSystem {
     final val AddLoggingReceive: Boolean = true
     final val DebugAutoReceive: Boolean = false
     final val DebugLifecycle: Boolean = true
+    final val FsmDebugEvent: Boolean = true
     final val DebugEventStream: Boolean = false
     final val DebugUnhandledMessage: Boolean = false
     final val DebugRouterMisconfiguration: Boolean = false

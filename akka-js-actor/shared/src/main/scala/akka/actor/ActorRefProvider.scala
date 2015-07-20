@@ -740,7 +740,7 @@ private[akka] object LocalActorRefProvider {
       case x ⇒ x
     }
 
-  def actorOf(system: ActorSystemImpl, /** @note IMPLEMENT IN SCALA.JS props */ props2: Props, supervisor: InternalActorRef, path: ActorPath,
+  /*def actorOf(system: ActorSystemImpl, /** @note IMPLEMENT IN SCALA.JS props */ props2: Props, supervisor: InternalActorRef, path: ActorPath,
               systemService: Boolean, deploy: Option[Deploy], lookupDeploy: Boolean, async: Boolean): InternalActorRef = {
          try {
            //  @note IMPLEMENT IN SCALA.JS val dispatcher = system.dispatchers.lookup(props2.dispatcher)
@@ -751,9 +751,9 @@ private[akka] object LocalActorRefProvider {
          } catch {
            case NonFatal(e) ⇒ throw new ConfigurationException(s"configuration problem while creating [$path] with dispatcher [${props2.dispatcher}] and mailbox [${props2.mailbox}]", e)
          }
-  }
+  }*/
 
-  /*def actorOf(system: ActorSystemImpl, props: Props, supervisor: InternalActorRef, path: ActorPath,
+  def actorOf(system: ActorSystemImpl, props: Props, supervisor: InternalActorRef, path: ActorPath,
               systemService: Boolean, deploy: Option[Deploy], lookupDeploy: Boolean, async: Boolean): InternalActorRef = {
     props.deploy.routerConfig match {
       // @note IMPLEMENT IN SCALA.JS case NoRouter ⇒
@@ -790,13 +790,13 @@ private[akka] object LocalActorRefProvider {
           val dispatcher = system.dispatchers.lookup(akka.dispatch.Dispatchers.DefaultDispatcherId)
           val mailboxType = system.mailboxes.getMailboxType(props2, dispatcher.configurator.config)
   
-          if (async) new RepointableActorRef(system, props2, dispatcher, mailboxType, supervisor, path).initialize(async)
-          else new LocalActorRef(system, props2, dispatcher, mailboxType, supervisor, path)
+          /** @note IMPLEMENT IN SCALA.JS if (async) new RepointableActorRef(system, props2, dispatcher, mailboxType, supervisor, path).initialize(async)
+          else */ new LocalActorRef(system, props2, dispatcher, mailboxType, supervisor, path)
         } catch {
           case NonFatal(e) ⇒ throw new ConfigurationException(
             s"configuration problem while creating [$path] with dispatcher [${props2.dispatcher}] and mailbox [${props2.mailbox}]", e)
         }
-  
+  /*
         case router ⇒
           
           val lookup = if (lookupDeploy) deployer.lookup(path) else None
@@ -827,9 +827,9 @@ private[akka] object LocalActorRefProvider {
             case NonFatal(e) ⇒ throw new ConfigurationException(
               s"configuration problem while creating [$path] with router dispatcher [${routerProps.dispatcher}] and mailbox [${routerProps.mailbox}] " +
                 s"and routee dispatcher [${routeeProps.dispatcher}] and mailbox [${routeeProps.mailbox}]", e)
-          }
+          }*/
       }
-    }*/
+    }
 
   def getExternalAddressFor(addr: Address): Option[Address] = if (addr == rootPath.address) Some(addr) else None
 

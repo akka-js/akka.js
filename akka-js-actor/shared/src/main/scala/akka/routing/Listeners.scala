@@ -5,7 +5,10 @@
 package akka.routing
 
 import akka.actor.{ Actor, ActorRef }
+/** @note IMPLEMENT IN SCALA.JS
 import java.util.{ Set, TreeSet }
+*/
+import scala.collection.mutable.{ Set, TreeSet }
 
 sealed trait ListenerMessage
 case class Listen(listener: ActorRef) extends ListenerMessage

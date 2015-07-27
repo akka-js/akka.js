@@ -1,6 +1,4 @@
 val commonSettings = Seq(
-    EclipseKeys.useProjectId := true,
-    EclipseKeys.skipParents in ThisBuild := false,
     scalaVersion := "2.11.7",
     organization := "akka.js",
     scalacOptions ++= Seq(

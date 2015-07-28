@@ -1,15 +1,8 @@
 <p align="center">
-<img src="logo/akkajs.png">
+<img width="400" src="logo/akkajs.png">
 </p>
 
-This project aims at providing an actor system for Scala.js, featuring:
-
-*   Supervision
-*   (Almost) transparent collaboration with actors in an Akka-based backend
-*   Transparent collaboration with actors in several Web Workers
-
-It is currently a prototype, working well but still in a rough shape. Hence,
-it is not published anywhere yet.
+This repository contains an ongoing effort to port Akka to the JavaScript runtime, thanks to [Scala.js](http://scalajs.org)
 
 ## Build it and try the examples
 
@@ -23,8 +16,9 @@ Then download the examples and follow the README.md available [here](https://git
 
 ## Design documentation
 
-The best source of documentation for the design at large is
-[this report](http://lampwww.epfl.ch/~doeraene/scalajs-actors-design.pdf).
+The BSc thesis detailing most of the work and the approach taken can be found [here](pdf/thesis.pdf)
+
+The original codebase derives from Sébastien Doeraene's `scala-js-actors`, you can find his original report [here](http://lampwww.epfl.ch/~doeraene/scalajs-actors-design.pdf).
 
 ## Akka version
 

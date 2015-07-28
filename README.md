@@ -2,7 +2,7 @@
 <img width="400" src="logo/akkajs.png">
 </p>
 
-This repository contains an ongoing effort to port Akka to the JavaScript runtime, thanks to [Scala.js](http://scalajs.org)
+This repository contains an ongoing effort to port Akka to the JavaScript runtime, thanks to [Scala.js](http://scala-js.org)
 
 ## Build it and try the examples
 

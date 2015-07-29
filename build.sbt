@@ -17,7 +17,9 @@ lazy val akkaActor = crossProject.in(file("akka-js-actor"))
   .settings(
     version := "0.2-SNAPSHOT"
   )
-  .jvmSettings()
+  .jvmSettings(
+    libraryDependencies += "com.typesafe" % "config" % "1.3.0" 
+  )
   .jsSettings( 
     unmanagedSourceDirectories in Compile += baseDirectory.value / "../../akka-js-testkit/js/src",
     libraryDependencies ++= Seq(
@@ -73,9 +75,11 @@ lazy val akkaWorkerRaftJS = project.in(file("akka-js-worker/raft"))
 
 lazy val akkaActorJS = akkaActor.js
 
+lazy val akkaActorJVM = akkaActor.jvm
+
 lazy val akkaTestkitJS = akkaTestkit.js.dependsOn(akkaActorJS)
 
 lazy val akkaActorTestJS = akkaActorTest.js.dependsOn(akkaActorJS, akkaTestkitJS)
 
 lazy val root = project.in(file(".")).settings(commonSettings: _*)
-  .aggregate(akkaActorJS, akkaTestkitJS, akkaActorTestJS, akkaWorkerMainJS, akkaWorkerRaftJS)
+  .aggregate(akkaActorJS, akkaActorJVM, akkaTestkitJS, akkaActorTestJS, akkaWorkerMainJS, akkaWorkerRaftJS)

@@ -1,15 +1,11 @@
 /**
- * Copyright (C) 2009-2014 Typesafe Inc. <http://www.typesafe.com>
+ * Copyright (C) 2009-2015 Typesafe Inc. <http://www.typesafe.com>
  */
 
 package akka
 
 /**
- * Akka base Exception. Each Exception gets:
- * <ul>
- *   <li>a uuid for tracking purposes</li>
- *   <li>toString that includes exception name, message and uuid</li>
- * </ul>
+ * Akka base Exception.
  */
 @SerialVersionUID(1L)
 class AkkaException(message: String, cause: Throwable) extends RuntimeException(message, cause) with Serializable {

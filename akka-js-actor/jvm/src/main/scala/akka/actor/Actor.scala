@@ -4,8 +4,6 @@
 
 package akka.actor
 
-import scala.scalajs.js.annotation.{JSExport, JSExportDescendentClasses}
-
 object Actor {
   /**
    * Type alias representing a Receive-expression for Akka Actors.
@@ -92,7 +90,6 @@ object Actor {
  * direct access to `actorOf`, `stop` etc. This is not default in order to keep
  * the name-space clean.
  */
-@JSExportDescendentClasses(ignoreInvalidDescendants = true)
 trait Actor {
 
   // to make type Receive known in subclasses without import
@@ -109,7 +106,6 @@ trait Actor {
    * [[akka.actor.UntypedActorContext]], which is the Java API of the actor
    * context.
    */
-  @JSExport
   implicit val context: ActorContext = {
     val contextStack = ActorCell.contextStack.get
     if ((contextStack.isEmpty) || (contextStack.head eq null))
@@ -129,7 +125,6 @@ trait Actor {
    * self ! message
    * </pre>
    */
-  @JSExport
   implicit final val self = context.self //MUST BE A VAL, TRUST ME
 
   /**

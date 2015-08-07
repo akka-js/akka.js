@@ -20,7 +20,7 @@ lazy val akkaActor = crossProject.in(file("akka-js-actor"))
   .jvmSettings(
     libraryDependencies += "com.typesafe" % "config" % "1.3.0" 
   )
-  .jsSettings( 
+  .jsSettings(
     unmanagedSourceDirectories in Compile += baseDirectory.value / "../../akka-js-testkit/js/src",
     libraryDependencies ++= Seq(
       "com.github.benhutchison" %%% "prickle" % "1.1.5",
@@ -28,7 +28,7 @@ lazy val akkaActor = crossProject.in(file("akka-js-actor"))
       "org.scalatest" %%% "scalatest" % "3.0.0-M1",
       "org.scala-js" %%% "scalajs-dom" % "0.8.0"
     )
-  )
+  ).jsSettings(useAnnotationAdderPluginSettings : _*)
 
 lazy val akkaTestkit = crossProject.in(file("akka-js-testkit"))
   .settings(commonSettings: _*)
@@ -80,6 +80,22 @@ lazy val akkaActorJVM = akkaActor.jvm
 lazy val akkaTestkitJS = akkaTestkit.js.dependsOn(akkaActorJS)
 
 lazy val akkaActorTestJS = akkaActorTest.js.dependsOn(akkaActorJS, akkaTestkitJS)
+
+//COMPILER PLUGINS SECTION
+lazy val annotationAdderPlugin = Project(
+    id   = "annotationAdderPlugin",
+    base = file("annotation-adder-plugin")
+  ) settings (
+    libraryDependencies <+= (scalaVersion)("org.scala-lang" % "scala-compiler" % _),
+    publishArtifact in Compile := false
+  ) settings (commonSettings : _*)
+
+lazy val useAnnotationAdderPluginSettings = Seq(
+    scalacOptions in Compile <++= (Keys.`package` in (annotationAdderPlugin, Compile)) map { (jar: File) =>
+       Seq("-Xplugin:" + jar.getAbsolutePath)
+    }
+  )
+
 
 lazy val root = project.in(file(".")).settings(commonSettings: _*)
   .aggregate(akkaActorJS, akkaActorJVM, akkaTestkitJS, akkaActorTestJS, akkaWorkerMainJS, akkaWorkerRaftJS)

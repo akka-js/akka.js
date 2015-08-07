@@ -45,3 +45,6 @@ out/
 # Mac
 .DS_Store
 *.swp
+
+target
+bin

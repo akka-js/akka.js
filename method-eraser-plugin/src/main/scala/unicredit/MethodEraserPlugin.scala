@@ -40,7 +40,7 @@ class MethodEraserPlugin(val global: Global) extends Plugin {
     override def newPhase(prev: Phase): StdPhase = new StdPhase(prev) {
       override def apply(unit: CompilationUnit) {
         config.foreach(m =>
-          unit.warning(null, "METHOD ERASER ERROR: method "+m+" not found in compilation unit "+unit)
+          ()//unit.warning(null, "METHOD ERASER ERROR: method "+m+" not found in compilation unit "+unit)
         )
       }
     }

@@ -55,22 +55,22 @@ abstract class DynamicAccess {
    * This is the class loader to be used in those special cases where the
    * other factory method are not applicable (e.g. when constructing a ClassLoaderBinaryInputStream).
    */
-  /** @note IMPLEMENT IN SCALA.JS def classLoader: ClassLoader */
+  def classLoader: ClassLoader
 }
 @annotation.JSExportDescendentClasses
 class JSDynamicAccess(/**val classLoader: ClassLoader*/) extends DynamicAccess {
 	import scala.scalajs.js
 
   def classLoader: ClassLoader = ???
-  
+
 	def getRuntimeClass[A](name: String): js.Dynamic = {
-    
+
      val ctor =
        name.split("\\.").foldLeft(scala.scalajs.runtime.environmentInfo.exportsNamespace){
          (prev, part) =>
             prev.selectDynamic(part)
          }
-     
+
      ctor// @note IMPLEMENT IN SCALA.JS.asInstanceOf[Class[A]]
   	}
 
@@ -82,7 +82,7 @@ class JSDynamicAccess(/**val classLoader: ClassLoader*/) extends DynamicAccess {
        case err: Exception => err.printStackTrace()
          throw err
      }
-  }  
+  }
   private val map = scala.collection.mutable.HashMap(
     "akka.testkit.TestEventListener" -> classOf[akka.testkit.TestEventListener],
     "akka.actor.LocalActorRefProvider" -> classOf[akka.actor.LocalActorRefProvider],

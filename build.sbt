@@ -18,17 +18,21 @@ lazy val akkaActor = crossProject.in(file("akka-js-actor"))
     version := "0.2-SNAPSHOT"
   )
   .jvmSettings(
-    libraryDependencies += "com.typesafe" % "config" % "1.3.0" 
+    libraryDependencies += "com.typesafe" % "config" % "1.3.0"
   )
   .jsSettings(
     unmanagedSourceDirectories in Compile += baseDirectory.value / "../../akka-js-testkit/js/src",
     libraryDependencies ++= Seq(
+      "eu.unicredit" %%% "shocon" % "0.0.1-SNAPSHOT",
       "com.github.benhutchison" %%% "prickle" % "1.1.5",
       "be.doeraene" %%% "scalajs-pickling" % "0.4.0",
       "org.scalatest" %%% "scalatest" % "3.0.0-M1",
       "org.scala-js" %%% "scalajs-dom" % "0.8.0"
     )
-  ).jsSettings(useAnnotationAdderPluginSettings : _*)
+  ).jsSettings(
+    useAnnotationAdderPluginSettings ++
+    useMethodEraserPluginSettings : _*
+  )
 
 lazy val akkaTestkit = crossProject.in(file("akka-js-testkit"))
   .settings(commonSettings: _*)
@@ -47,7 +51,7 @@ lazy val akkaActorTest = crossProject.in(file("akka-js-actor-tests"))
   )
   .jvmSettings(
   )
-  .jsSettings(  
+  .jsSettings(
     scalaJSOptimizerOptions ~= { _.withBypassLinkingErrors(true) },
     preLinkJSEnv := NodeJSEnv().value,
     postLinkJSEnv := NodeJSEnv().value.withSourceMap(true),
@@ -96,6 +100,19 @@ lazy val useAnnotationAdderPluginSettings = Seq(
     }
   )
 
+lazy val methodEraserPlugin = Project(
+    id   = "methodEraserPlugin",
+    base = file("method-eraser-plugin")
+  ) settings (
+    libraryDependencies <+= (scalaVersion)("org.scala-lang" % "scala-compiler" % _),
+    publishArtifact in Compile := false
+  ) settings (commonSettings : _*)
+
+lazy val useMethodEraserPluginSettings = Seq(
+  scalacOptions in Compile <++= (Keys.`package` in (methodEraserPlugin, Compile)) map { (jar: File) =>
+     Seq("-Xplugin:" + jar.getAbsolutePath)
+  }
+)
 
 lazy val root = project.in(file(".")).settings(commonSettings: _*)
   .aggregate(akkaActorJS, akkaActorJVM, akkaTestkitJS, akkaActorTestJS, akkaWorkerMainJS, akkaWorkerRaftJS)

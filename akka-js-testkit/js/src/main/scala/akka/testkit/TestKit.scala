@@ -117,32 +117,32 @@ trait TestKitBase {
   val testKitSettings = TestKitSettings //@note IMPLEMENT IN SCALA.JS TestKitExtension(system)
 
   // @note IMPLEMENT IN SCALA.JS private val queue = new LinkedBlockingDeque[Message]()
-  private val queue = new scala.collection.mutable.Queue[Message]() 
+  private val queue = new scala.collection.mutable.Queue[Message]()
 
   private def pollFirst(max: Duration): AnyRef = {
       val stop = System.nanoTime().nanos + max
-      
+
       import scala.scalajs.js
       val f = scala.concurrent.Promise[AnyRef]
 
       lazy val fn: js.Function0[Any] = { () =>
         try {
           val res = queue.dequeue()
-          f.success(res)  
+          f.success(res)
         } catch {
           case e: Throwable =>
             val toSleep = stop - now
             if (toSleep <= Duration.Zero) f.failure(new AssertionError("timeout " + max + " expired"))
             else js.Dynamic.global.setTimeout(fn, 0)
-        }      
+        }
       }
       js.Dynamic.global.setTimeout(fn, 0)
-    
+
       try {
         akka.concurrent.Await.result(f.future, max)
       } catch { case _: Throwable=> null.asInstanceOf[AnyRef] }
   }
-    
+
   private[akka] var lastMessage: Message = NullMessage
 
   def lastSender = lastMessage.sender
@@ -155,7 +155,7 @@ trait TestKitBase {
     import akka.concurrent._
     // Need to switch into blocking mode, otherwise anything that extends TestKitBase will fail due to `awaitCond`
     val wasBlocking = BlockingEventLoop.isBlocking
-    if(!wasBlocking) BlockingEventLoop.blockingOn 
+    if(!wasBlocking) BlockingEventLoop.blockingOn
     val impl = system.asInstanceOf[ExtendedActorSystem]
     val ref = impl.systemActorOf(TestActor.props(queue)
       // @note IMPLEMENT IN SCALA.JS .withDispatcher(CallingThreadDispatcher.Id),
@@ -257,7 +257,7 @@ trait TestKitBase {
   def awaitCond(p: ⇒ Boolean, max: Duration = Duration.Undefined, interval: Duration = 100.millis, message: String = "") {
     val _max = remainingOrDilated(max)
     val stop = now + _max
-    /** @note IMPLEMENT IN SCALA.JS 
+    /** @note IMPLEMENT IN SCALA.JS
     @tailrec
     def poll(t: Duration) {
       if (!p) {
@@ -268,18 +268,18 @@ trait TestKitBase {
     }
 
     poll(_max min interval)*/
-    
+
     import scala.scalajs.js
     val f = scala.concurrent.Promise[Boolean]
     lazy val fn: js.Function0[Any] = { () =>
       if (!p) {
         assert(now < stop, "timeout " + _max + " expired: " + message)
         js.Dynamic.global.setTimeout(fn, ((stop - now) min interval).toMillis.asInstanceOf[js.Any])
-      } else f.success(true)        
+      } else f.success(true)
     }
-    
+
     js.Dynamic.global.setTimeout(fn, 100)
-    
+
     akka.concurrent.Await.result(f.future)
   }
 
@@ -294,7 +294,7 @@ trait TestKitBase {
    * Note that the timeout is scaled using Duration.dilated,
    * which uses the configuration entry "akka.test.timefactor".
    */
-  def awaitAssert(a: ⇒ Any, max: Duration = Duration.Undefined, interval: Duration = 800.millis) { 
+  def awaitAssert(a: ⇒ Any, max: Duration = Duration.Undefined, interval: Duration = 800.millis) {
     val _max = remainingOrDilated(max)
     val stop = now + _max
     /** @note IMPLEMENT IN SCALA.JS
@@ -323,11 +323,11 @@ trait TestKitBase {
             true
         }
         if(!failed) f.success(true)
-        else js.Dynamic.global.setTimeout(fn, ((stop - now) min interval).toMillis)     
+        else js.Dynamic.global.setTimeout(fn, ((stop - now) min interval).toMillis)
     }
-    
+
     js.Dynamic.global.setTimeout(fn, (_max min interval).toMillis)
-    
+
     akka.concurrent.Await.result(f.future)
   }
 
@@ -796,7 +796,7 @@ object TestKit {
    */
   def awaitCond(p: ⇒ Boolean, max: Duration, interval: Duration = 100.millis, noThrow: Boolean = false): Boolean = {
     val stop = now + max
-    
+
     /** @note IMPLEMENT IN SCALA.JS
     @tailrec
     def poll(): Boolean = {
@@ -824,11 +824,11 @@ object TestKit {
         } else {
           js.Dynamic.global.setTimeout(fn, (toSleep min interval).toMillis.asInstanceOf[js.Any])
         }
-      } else f.success(true)        
+      } else f.success(true)
     }
-    
+
     js.Dynamic.global.setTimeout(fn, 100)
-    
+
     akka.concurrent.Await.result(f.future)
   }
 

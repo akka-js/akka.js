@@ -16,6 +16,7 @@ import akka.dispatch.Dispatchers
 import akka.testkit.TestEvent._
 
 object AkkaSpec {
+  /*
   val testConf: Config = ConfigFactory.parseString("""
     {
       "akka": {
@@ -26,7 +27,7 @@ object AkkaSpec {
         "stdout-loglevel": "WARNING"
       }
     }""")
-  /** @note IMPLEMENT IN SCALA.JS
+    */
   val testConf: Config = ConfigFactory.parseString("""
       akka {
         loggers = ["akka.testkit.TestEventListener"]
@@ -44,7 +45,7 @@ object AkkaSpec {
         }
       }
                                                     """)
-
+/*
   def mapToConfig(map: Map[String, Any]): Config = {
     import scala.collection.JavaConverters._
     ConfigFactory.parseMap(map.asJava)

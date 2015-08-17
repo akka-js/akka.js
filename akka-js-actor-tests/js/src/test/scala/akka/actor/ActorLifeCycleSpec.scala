@@ -125,7 +125,7 @@ class ActorLifeCycleSpec extends AkkaSpec(/*"akka.actor.serialize-messages=off"*
       system.stop(supervisor)
       BlockingEventLoop.blockingOff
     }
-
+/*
     "log failues in postStop" in {
       BlockingEventLoop.blockingOn
       val a = system.actorOf(Props(new Actor {
@@ -137,7 +137,7 @@ class ActorLifeCycleSpec extends AkkaSpec(/*"akka.actor.serialize-messages=off"*
       }
       BlockingEventLoop.blockingOff
     }
-
+*/
     "clear the behavior stack upon restart" in {
       BlockingEventLoop.blockingOn
       case class Become(recv: ActorContext ⇒ Receive)

@@ -333,7 +333,7 @@ trait ActorRefFactory {
     case _ ⇒
       ActorSelection(provider.deadLetters, "")
   }
-  
+
 
   /**
    * Construct an [[akka.actor.ActorSelection]] from the given path, which is
@@ -342,7 +342,7 @@ trait ActorRefFactory {
    * the supplied path, it is recommended to send a message and gather the
    * replies in order to resolve the matching set of actors.
    */
-  def actorSelection(path: ActorPath): ActorSelection = 
+  def actorSelection(path: ActorPath): ActorSelection =
     ActorSelection(provider.rootGuardianAt(path.address), path.elements)
 
   /**
@@ -505,7 +505,7 @@ private[akka] object LocalActorRefProvider {
    */
   private[akka] val theOneWhoWalksTheBubblesOfSpaceTime: InternalActorRef = new MinimalActorRef {
     val stopped = new Switch(false)
-    
+
     @volatile
     var causeOfTermination: Option[Throwable] = None
 
@@ -591,10 +591,10 @@ private[akka] object LocalActorRefProvider {
   protected def systemGuardianStrategy: SupervisorStrategy = SupervisorStrategy.defaultStrategy
 
 
-  
+
   private lazy val defaultDispatcher = system.dispatchers.defaultGlobalDispatcher
   private lazy val defaultMailbox = system.mailboxes.lookup(Mailboxes.DefaultMailboxId)
-  
+
   //val mailboxes: Mailboxes = new Mailboxes(deadLetters)
 
   override lazy val rootGuardian: LocalActorRef =
@@ -765,7 +765,7 @@ private[akka] object LocalActorRefProvider {
           }
           */
         }
-  
+
         val props2 = props
         /** @note IMPLEMENT IN SCALA.JS
         val props2 =
@@ -780,7 +780,7 @@ private[akka] object LocalActorRefProvider {
               }
             case _ ⇒ props // no deployment config found
           }
-  
+
         if (!system.dispatchers.hasDispatcher(props2.dispatcher))
           throw new ConfigurationException(s"Dispatcher [${props2.dispatcher}] not configured for path $path")
         */
@@ -788,39 +788,40 @@ private[akka] object LocalActorRefProvider {
           // @note IMPLEMENT IN SCALA.JS val dispatcher = system.dispatchers.lookup(props2.dispatcher)
           val dispatcher = system.dispatchers.lookup(akka.dispatch.Dispatchers.DefaultDispatcherId)
           val mailboxType = system.mailboxes.getMailboxType(props2, dispatcher.configurator.config)
-  
+
           if (async) new RepointableActorRef(system, props2, dispatcher, mailboxType, supervisor, path).initialize(async)
           else new LocalActorRef(system, props2, dispatcher, mailboxType, supervisor, path)
         } catch {
-          case NonFatal(e) ⇒ throw new ConfigurationException(
-            s"configuration problem while creating [$path] with dispatcher [${props2.dispatcher}] and mailbox [${props2.mailbox}]", e)
+          case NonFatal(e) ⇒
+            throw new ConfigurationException(
+              s"configuration problem while creating [$path] with dispatcher [${props2.dispatcher}] and mailbox [${props2.mailbox}]", e)
         }
 
         case router ⇒
-          
+
           val lookup = None // @note IMPLEMENT IN SCALA.JS if (lookupDeploy) deployer.lookup(path) else None
           val fromProps = Iterator(props.deploy.copy(routerConfig = props.deploy.routerConfig withFallback router))
           val d = fromProps ++ deploy.iterator ++ lookup.iterator reduce ((a, b) ⇒ b withFallback a)
           val p = props.withRouter(d.routerConfig)
-  
+
           /*if (!system.dispatchers.hasDispatcher(p.dispatcher))
             throw new ConfigurationException(s"Dispatcher [${p.dispatcher}] not configured for routees of $path")
           if (!system.dispatchers.hasDispatcher(d.routerConfig.routerDispatcher))
             throw new ConfigurationException(s"Dispatcher [${p.dispatcher}] not configured for router of $path")*/
-  
+
           val routerProps = Props(p.deploy.copy(dispatcher = p.routerConfig.routerDispatcher),
             classOf[/** @note IMPLEMENT IN SCALA.JS RoutedActorCell.*/RouterActorCreator], Vector(p.routerConfig))
           val routeeProps = p.withRouter(NoRouter)
-  
+
           try {
             val routerDispatcher = system.dispatchers.lookup(p.routerConfig.routerDispatcher)
             val routerMailbox = system.mailboxes.getMailboxType(routerProps, routerDispatcher.configurator.config)
-  
+
             // routers use context.actorOf() to create the routees, which does not allow us to pass
             // these through, but obtain them here for early verification
             val routeeDispatcher = system.dispatchers.lookup(p.dispatcher)
             val routeeMailbox = system.mailboxes.getMailboxType(routeeProps, routeeDispatcher.configurator.config)
-  
+
             new RoutedActorRef(system, routerProps, routerDispatcher, routerMailbox, routeeProps, supervisor, path).initialize(async)
           } catch {
             case NonFatal(e) ⇒ throw new ConfigurationException(

@@ -52,14 +52,15 @@ lazy val akkaActorTest = crossProject.in(file("akka-js-actor-tests"))
   .jvmSettings(
   )
   .jsSettings(
-    scalaJSOptimizerOptions ~= { _.withBypassLinkingErrors(true) },
+    //unmanagedSourceDirectories in Compile += baseDirectory.value / "../../akka-js-testkit/js/src",
+    //scalaJSOptimizerOptions ~= { _.withBypassLinkingErrors(true) },
     preLinkJSEnv := NodeJSEnv().value,
     postLinkJSEnv := NodeJSEnv().value.withSourceMap(true),
     libraryDependencies ++= Seq(
       "org.scalacheck" %%% "scalacheck" % "1.12.2" % "test",
       "org.scalatest" %%% "scalatest" % "3.0.0-M1"
    )
-  )
+ ).dependsOn(akkaTestkit)
 
 lazy val akkaWorkerMainJS = project.in(file("akka-js-worker/main"))
   .enablePlugins(ScalaJSPlugin)

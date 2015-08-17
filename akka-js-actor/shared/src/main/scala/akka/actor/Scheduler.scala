@@ -1,16 +1,18 @@
+/**
+ * Copyright (C) 2009-2015 Typesafe Inc. <http://www.typesafe.com>
+ */
+
 package akka.actor
 
-import akka.util.{JSTimeoutTask, JSTimeoutThenIntervalTask}
-
 import scala.concurrent.ExecutionContext
-import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.duration._
 import scala.util.control.NoStackTrace
 
 /**
  * This exception is thrown by Scheduler.schedule* when scheduling is not
  * possible, e.g. after shutting down the Scheduler.
  */
-private case class SchedulerException(msg: String) extends akka.AkkaException(msg) with NoStackTrace
+private final case class SchedulerException(msg: String) extends akka.AkkaException(msg) with NoStackTrace
 
 // The Scheduler trait is included in the documentation. KEEP THE LINES SHORT!!!
 //#scheduler
@@ -39,11 +41,11 @@ trait Scheduler {
    * Java & Scala API
    */
   final def schedule(
-                      initialDelay: FiniteDuration,
-                      interval: FiniteDuration,
-                      receiver: ActorRef,
-                      message: Any)(implicit executor: ExecutionContext,
-                                    sender: ActorRef = Actor.noSender): Cancellable =
+    initialDelay: FiniteDuration,
+    interval: FiniteDuration,
+    receiver: ActorRef,
+    message: Any)(implicit executor: ExecutionContext,
+                  sender: ActorRef = Actor.noSender): Cancellable =
     schedule(initialDelay, interval, new Runnable {
       def run = {
         receiver ! message
@@ -56,34 +58,38 @@ trait Scheduler {
    * Schedules a function to be run repeatedly with an initial delay and a
    * frequency. E.g. if you would like the function to be run after 2 seconds
    * and thereafter every 100ms you would set delay = Duration(2, TimeUnit.SECONDS)
-   * and interval = Duration(100, TimeUnit.MILLISECONDS)
+   * and interval = Duration(100, TimeUnit.MILLISECONDS). If the execution of
+   * the function takes longer than the interval, the subsequent execution will
+   * start immediately after the prior one completes (there will be no overlap
+   * of the function executions). In such cases, the actual execution interval
+   * will differ from the interval passed to this method.
    *
    * Scala API
    */
-/**
- * @note IMPLEMENT IN SCALA.JS
- *
-   final def schedule(
- */
-  def schedule(
-
-                       initialDelay: FiniteDuration,
-                       interval: FiniteDuration)(f: ⇒ Unit)(
-                       implicit executor: ExecutionContext): Cancellable =
-     schedule(initialDelay, interval, new Runnable { override def run = f })
+  final def schedule(
+    initialDelay: FiniteDuration,
+    interval: FiniteDuration)(f: ⇒ Unit)(
+      implicit executor: ExecutionContext): Cancellable =
+    schedule(initialDelay, interval, new Runnable { override def run = f })
 
   /**
    * Schedules a function to be run repeatedly with an initial delay and
    * a frequency. E.g. if you would like the function to be run after 2
    * seconds and thereafter every 100ms you would set delay = Duration(2,
-   * TimeUnit.SECONDS) and interval = Duration(100, TimeUnit.MILLISECONDS)
+   * TimeUnit.SECONDS) and interval = Duration(100, TimeUnit.MILLISECONDS). If
+   * the execution of the runnable takes longer than the interval, the
+   * subsequent execution will start immediately after the prior one completes
+   * (there will be no overlap of executions of the runnable). In such cases,
+   * the actual execution interval will differ from the interval passed to this
+   * method.
+   *
    *
    * Java API
    */
   def schedule(
-                initialDelay: FiniteDuration,
-                interval: FiniteDuration,
-                runnable: Runnable)(implicit executor: ExecutionContext): Cancellable
+    initialDelay: FiniteDuration,
+    interval: FiniteDuration,
+    runnable: Runnable)(implicit executor: ExecutionContext): Cancellable
 
   /**
    * Schedules a message to be sent once with a delay, i.e. a time period that has
@@ -92,10 +98,10 @@ trait Scheduler {
    * Java & Scala API
    */
   final def scheduleOnce(
-                          delay: FiniteDuration,
-                          receiver: ActorRef,
-                          message: Any)(implicit executor: ExecutionContext,
-                                        sender: ActorRef = Actor.noSender): Cancellable =
+    delay: FiniteDuration,
+    receiver: ActorRef,
+    message: Any)(implicit executor: ExecutionContext,
+                  sender: ActorRef = Actor.noSender): Cancellable =
     scheduleOnce(delay, new Runnable {
       override def run = receiver ! message
     })
@@ -106,12 +112,7 @@ trait Scheduler {
    *
    * Scala API
    */
-/**
- * @note IMPLEMENT IN SCALA.JS
- *
-   final def scheduleOnce(delay: FiniteDuration)(f: ⇒ Unit)(
- */
-def scheduleOnce(delay: FiniteDuration)(f: ⇒ Unit)(
+  final def scheduleOnce(delay: FiniteDuration)(f: ⇒ Unit)(
     implicit executor: ExecutionContext): Cancellable =
     scheduleOnce(delay, new Runnable { override def run = f })
 
@@ -122,8 +123,8 @@ def scheduleOnce(delay: FiniteDuration)(f: ⇒ Unit)(
    * Java & Scala API
    */
   def scheduleOnce(
-                    delay: FiniteDuration,
-                    runnable: Runnable)(implicit executor: ExecutionContext): Cancellable
+    delay: FiniteDuration,
+    runnable: Runnable)(implicit executor: ExecutionContext): Cancellable
 
   /**
    * The maximum supported task frequency of this scheduler, i.e. the inverse

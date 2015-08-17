@@ -17,4 +17,9 @@ trait AbstractProps {
 
   def isAbstract(clazz: Class[_]) = ()
 
+  /**
+   * Java API: create a Props given a class and its constructor arguments.
+   */
+  def create(clazz: Class[_], args: AnyRef*): Props = Props(clazz = clazz, args = args.toSeq)
+
 }

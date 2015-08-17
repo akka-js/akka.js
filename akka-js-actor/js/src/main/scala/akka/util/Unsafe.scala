@@ -4,15 +4,15 @@ import scala.collection.mutable
 
 object Unsafe {
 
-    val unsafeVars: mutable.HashMap[Long, Any] = mutable.HashMap()
+    val unsafeVars: mutable.HashMap[(Long,Long), Any] = mutable.HashMap()
 
     final val instance = new {
 
       def getObjectVolatile(o: Any, offset: Long) =
-        unsafeVars.get(offset).getOrElse(null)
+        unsafeVars.get((o.hashCode,offset)).getOrElse(null)
 
       def compareAndSwapObject(o: Any, offset: Long, old: Any, next: Any) = {
-        unsafeVars(offset) = next
+        unsafeVars((o.hashCode,offset)) = next
         true
       }
 

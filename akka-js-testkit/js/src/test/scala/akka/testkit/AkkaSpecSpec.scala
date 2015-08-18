@@ -9,7 +9,7 @@ import language.postfixOps
 import org.scalatest.WordSpec
 import org.scalatest.Matchers
 import akka.actor._
-// @note IMPLEMENT IN SCALA.JS import com.typesafe.config.ConfigFactory 
+// @note IMPLEMENT IN SCALA.JS import com.typesafe.config.ConfigFactory
 // @note IMPLEMENT IN SCALA.JS import scala.concurrent.Await
 import akka.concurrent.Await
 import scala.concurrent.duration._
@@ -35,7 +35,7 @@ class AkkaSpecSpec extends WordSpec with Matchers {
       }
       akka.concurrent.BlockingEventLoop.reset
     }
-    
+
     "terminate all actors" in {
       // verbose config just for demonstration purposes, please leave in in case of debugging
       /*import scala.collection.JavaConverters._
@@ -44,7 +44,11 @@ class AkkaSpecSpec extends WordSpec with Matchers {
         "akka.loglevel" -> "DEBUG", "akka.stdout-loglevel" -> "DEBUG")*/
       akka.concurrent.BlockingEventLoop.switch
       val system = ActorSystem("AkkaSpec1" , AkkaSpec.testConf)// @note IMPLEMENT IN SCALA.JS , ConfigFactory.parseMap(conf.asJava).withFallback(AkkaSpec.testConf))
-      val spec = new AkkaSpec(system) { 
+
+      class EmptyActor extends Actor {
+        def receive = Actor.emptyBehavior
+      }
+      val spec = new AkkaSpec(system) {
         val ref = Seq(testActor, system.actorOf(Props.empty, "name"))
       }
       spec.ref foreach (_.isTerminated should not be true)
@@ -52,7 +56,7 @@ class AkkaSpecSpec extends WordSpec with Matchers {
       spec.awaitCond(spec.ref forall (_.isTerminated), 2 seconds)
       akka.concurrent.BlockingEventLoop.reset
     }
-    
+
     "stop correctly when sending PoisonPill to rootGuardian" in {
       akka.concurrent.BlockingEventLoop.switch
       val system = ActorSystem("AkkaSpec2" , AkkaSpec.testConf)
@@ -61,11 +65,11 @@ class AkkaSpecSpec extends WordSpec with Matchers {
       system.registerOnTermination(latch.countDown())
 
       system.actorSelection("/") ! PoisonPill
-     
+
       Await.ready(latch, 2 seconds)
       akka.concurrent.BlockingEventLoop.reset
     }
-    
+
     "enqueue unread messages from testActor to deadLetters" in {
       akka.concurrent.BlockingEventLoop.switch
       val system, otherSystem = ActorSystem("AkkaSpec3", AkkaSpec.testConf)
@@ -97,7 +101,7 @@ class AkkaSpecSpec extends WordSpec with Matchers {
         system.registerOnTermination(latch.countDown())
         TestKit.shutdownActorSystem(system)
         Await.ready(latch, 2 seconds)
-        
+
         Await.result(davyJones ? "Die!", timeout.duration) should be("finally gone")
 
         // this will typically also contain log messages which were sent after the logger shutdown

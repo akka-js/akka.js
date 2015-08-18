@@ -21,11 +21,7 @@ import com.typesafe.config.Config
 import akka.event._
 import akka.dispatch._
 import akka.dispatch.sysmsg.{ SystemMessageList, EarliestFirstSystemMessageList, LatestFirstSystemMessageList, SystemMessage }
-/**
- * @note IMPLEMENT IN SCALA.JS
- *
- import akka.japi.Util.immutableSeq
- */
+import akka.japi.Util.immutableSeq
 import akka.actor.dungeon.ChildrenContainer
 import akka.util._
 import scala.annotation.tailrec
@@ -182,7 +178,7 @@ object ActorSystem {
   def apply(name: String): ActorSystem = {
     new ActorSystemImpl(name, new Settings(new Config, name)).start()
   }
-  
+
   def apply(name: String, config: Option[Config]): ActorSystem = {
     new ActorSystemImpl(name, new Settings(config.get, name)).start()
   }
@@ -196,21 +192,21 @@ object ActorSystem {
    * @see <a href="http://typesafehub.github.io/config/v1.2.0/" target="_blank">The Typesafe Config Library API Documentation</a>
    */
   class Settings(cfg: Config, final val name: String) {
-    
+
     final val config: Config = cfg
-    
-    
+
+
     final val ProviderClass: String = cfg.getString("akka.actor.provider") match {
       case null => "akka.actor.LocalActorRefProvider"
       case m => m
     }
     final val UnstartedPushTimeout: Timeout = {
-      if(config.getMillisDuration("akka.actor.unstarted-push-timeout") != null) 
+      if(config.getMillisDuration("akka.actor.unstarted-push-timeout") != null)
         Timeout(config.getMillisDuration("akka.actor.unstarted-push-timeout"))
       else
         null
     }
-    
+
     final val LogDeadLetters: Int = 1
     final val LogDeadLettersDuringShutdown: Boolean = false
 
@@ -222,11 +218,8 @@ object ActorSystem {
     final val DebugUnhandledMessage: Boolean = false
     final val DebugRouterMisconfiguration: Boolean = false
 
-    final val Loggers: immutable.Seq[String] = cfg.getStringList("akka.loggers") match {
-      case null => Nil
-      case m => Vector(m: _*)
-    }
-    
+    final val Loggers: immutable.Seq[String] = immutableSeq(cfg.getStringList("akka.loggers"))
+
     override def toString: String = s"Settings($name)"
 
   }
@@ -438,7 +431,7 @@ abstract class ActorSystem extends ActorRefFactory {
   /**
    * Helper object for looking up configured dispatchers.
    */
-  def dispatchers: Dispatchers  
+  def dispatchers: Dispatchers
 
   /**
    * Default dispatcher as configured. This dispatcher is used for all actors
@@ -465,7 +458,7 @@ abstract class ActorSystem extends ActorRefFactory {
    * Scala API
    */
    def registerOnTermination[T](code: ⇒ T): Unit
- 
+
 
   /**
    * Java API: Register a block of code (callback) to run after ActorSystem.shutdown has been issued and
@@ -666,10 +659,10 @@ private[akka] class ActorSystemImpl(val name: String, applicationConfig: ActorSy
   def logConfiguration(): Unit = log.info(settings.toString)
 
   protected def createDynamicAccess(): DynamicAccess = new JSDynamicAccess(/**@note IMPLEMENT IN SCALA.JS classLoader*/)
-  
+
   private val _pm: DynamicAccess = createDynamicAccess()
   def dynamicAccess: DynamicAccess = _pm
-  
+
   protected def systemImpl: ActorSystemImpl = this
 
   def systemActorOf(props: Props, name: String): ActorRef = systemGuardian.underlying.attachChild(props, name, systemService = true)
@@ -700,7 +693,7 @@ private[akka] class ActorSystemImpl(val name: String, applicationConfig: ActorSy
 
   val scheduler: Scheduler = createScheduler()
 
-  val provider: ActorRefProvider = try { 
+  val provider: ActorRefProvider = try {
     val arguments = Vector(
       classOf[String] -> name,
       classOf[Settings] -> settings,
@@ -744,7 +737,7 @@ private[akka] class ActorSystemImpl(val name: String, applicationConfig: ActorSy
   def /(path: Iterable[String]): ActorPath = guardian.path / path
 
   private lazy val _start: this.type = try {
-    registerOnTermination(stopScheduler()) 
+    registerOnTermination(stopScheduler())
     // the provider is expected to start default loggers, LocalActorRefProvider does this
     provider.init(this)
 
@@ -752,7 +745,7 @@ private[akka] class ActorSystemImpl(val name: String, applicationConfig: ActorSy
       logDeadLetterListener = Some(systemActorOf(Props[DeadLetterListener], "deadLetterListener"))
     //loadExtensions()
     //if (LogConfigOnStart) logConfiguration()
-    
+
     this
   } catch {
     case NonFatal(e) ⇒
@@ -776,7 +769,7 @@ private[akka] class ActorSystemImpl(val name: String, applicationConfig: ActorSy
   // @note IMPLEMENT IN SCALA.JS def awaitTermination(timeout: Duration) { Await.ready(terminationCallbacks, timeout) }
   // @note IMPLEMENT IN SCALA.JS def awaitTermination() = awaitTermination(Duration.Inf)
   def isTerminated = terminationCallbacks.isTerminated
- 
+
 
   def shutdown(): Unit = {
     if (!settings.LogDeadLettersDuringShutdown) logDeadLetterListener foreach stop
@@ -846,11 +839,11 @@ private[akka] class ActorSystemImpl(val name: String, applicationConfig: ActorSy
       case null ⇒ //Doesn't already exist, commence registration
         ext.createExtension(this) match {
           case null ⇒ throw new IllegalStateException("Extension instance created as 'null' for extension [" + ext + "]")
-          case instance ⇒ 
+          case instance ⇒
             extensions.put(ext, instance)
             instance
         }
-      case existing ⇒ existing.asInstanceOf[T]     
+      case existing ⇒ existing.asInstanceOf[T]
     }
   }
 
@@ -872,7 +865,7 @@ private[akka] class ActorSystemImpl(val name: String, applicationConfig: ActorSy
        }
      }
    }*/
- 
+
 
   override def toString: String = lookupRoot.path.root.address.toString
 
@@ -934,14 +927,14 @@ private[akka] class ActorSystemImpl(val name: String, applicationConfig: ActorSy
       }*/
       latch match {
         case 0 ⇒ throw new RuntimeException("Must be called prior to system shutdown.")
-        case _ ⇒ callbacks ::= callback 
+        case _ ⇒ callbacks ::= callback
       }
     }
 
     final def run(): Unit = { // @note IMPLEMENT IN SCALA.JS lock withGuard {
       @tailrec def runNext(c: List[Runnable]): List[Runnable] = c match {
         case Nil ⇒ Nil
-        case callback :: rest ⇒ 
+        case callback :: rest ⇒
           try callback.run() catch { case NonFatal(e) ⇒ log.error(e, "Failed to run termination callback, due to [{}]", e.getMessage) }
           runNext(rest)
       }

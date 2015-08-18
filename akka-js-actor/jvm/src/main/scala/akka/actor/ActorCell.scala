@@ -17,6 +17,7 @@ import scala.concurrent.duration.Duration
 import scala.concurrent.forkjoin.ThreadLocalRandom
 import scala.util.control.NonFatal
 import akka.dispatch.MessageDispatcher
+import akka.util.Reflect.lookupAndSetField
 
 /**
  * The actor context - the view of the actor cell from the actor.
@@ -615,25 +616,6 @@ private[akka] class ActorCell(
     case _                               ⇒
   }
 
-  @tailrec private final def lookupAndSetField(clazz: Class[_], instance: AnyRef, name: String, value: Any): Boolean = {
-    @tailrec def clearFirst(fields: Array[java.lang.reflect.Field], idx: Int): Boolean =
-      if (idx < fields.length) {
-        val field = fields(idx)
-        if (field.getName == name) {
-          field.setAccessible(true)
-          field.set(instance, value)
-          true
-        } else clearFirst(fields, idx + 1)
-      } else false
-
-    clearFirst(clazz.getDeclaredFields, 0) || {
-      clazz.getSuperclass match {
-        case null ⇒ false // clazz == classOf[AnyRef]
-        case sc   ⇒ lookupAndSetField(sc, instance, name, value)
-      }
-    }
-  }
-
   final protected def clearActorCellFields(cell: ActorCell): Unit = {
     cell.unstashAll()
     if (!lookupAndSetField(classOf[ActorCell], cell, "props", ActorCell.terminatedProps))
@@ -658,4 +640,3 @@ private[akka] class ActorCell(
 
   protected final def clazz(o: AnyRef): Class[_] = if (o eq null) this.getClass else o.getClass
 }
-

@@ -3,8 +3,6 @@
  */
 package akka.dispatch.sysmsg
 
-import akka.util.JSQueue
-
 import scala.annotation.tailrec
 import akka.actor.{ ActorInitializationException, InternalActorRef, ActorRef, PossiblyHarmful }
 

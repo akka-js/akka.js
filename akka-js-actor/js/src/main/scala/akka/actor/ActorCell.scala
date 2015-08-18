@@ -8,21 +8,16 @@ import akka.actor.dungeon.ChildrenContainer
 import akka.dispatch.Envelope
 import akka.dispatch.sysmsg._
 import akka.event.Logging.{ LogEvent, Debug, Error }
-/**
- * @note IMPLEMENT IN SCALA.JS
- * No Java
- * import akka.japi.Procedure
- * import java.io.{ ObjectOutputStream, NotSerializableException }
- */
+import akka.japi.Procedure
+import java.io.{ ObjectOutputStream, NotSerializableException }
 import scala.annotation.{ switch, tailrec }
 import scala.collection.immutable
 import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.duration.Duration
 /**
- * @note IMPLEMENT IN SCALA.JS
- * No threads in JS, so it's useless
+ * @note IMPLEMENT in Scala.js
  *
- * import scala.concurrent.forkjoin.ThreadLocalRandom
+import scala.concurrent.forkjoin.ThreadLocalRandom
  */
 import scala.util.control.NonFatal
 import akka.dispatch.MessageDispatcher
@@ -277,7 +272,7 @@ private[akka] trait Cell {
    * Returns “true” if the actor is locally known to be terminated, “false” if
    * alive or uncertain.
    */
-  def isTerminated: Boolean
+  private[akka] def isTerminated: Boolean
   /**
    * The supervisor of this actor.
    */
@@ -309,7 +304,7 @@ private[akka] trait Cell {
    * schedule the actor to run, depending on which type of cell it is.
    * Is only allowed to throw Fatal Throwables.
    */
-  final def sendMessage(message: Any, sender: ActorRef): Unit = 
+  final def sendMessage(message: Any, sender: ActorRef): Unit =
     sendMessage(Envelope(message, sender, system))
 
   /**
@@ -365,13 +360,11 @@ private[akka] object ActorCell {
   @tailrec final def newUid(): Int = {
     // Note that this uid is also used as hashCode in ActorRef, so be careful
     // to not break hashing if you change the way uid is generated
-   /**
-    * @note IMPLEMENT IN SCALA.JS
-    * Again, no need for ThreadLocal
-    *
-    * val uid = ThreadLocalRandom.current.nextInt()
-    */
     val uid = scala.util.Random.nextInt()
+    /**
+      * @note Implement in Scala.js
+    //ThreadLocalRandom.current.nextInt()
+    */
     if (uid == undefinedUid) newUid
     else uid
   }
@@ -700,35 +693,35 @@ private[akka] class ActorCell(
   }
 
   final protected def setActorFields(actorInstance: Actor, context: ActorContext, self: ActorRef): Unit = {
-    
+
    /** XXX: FIX ME
     *  The issue is the following:
     *  `context` and `self` need to be `val`s inside Actor, otherwise you cannot `import` them.
     *  Being `val`s they cannot be overwritten, so Akka/JVM uses `java.lang.reflect.Field` which
     *  is not available in JS environments (of course).
-    *  What I'm doing at the moment is mimicking the behaviour, by recursively following up the 
+    *  What I'm doing at the moment is mimicking the behaviour, by recursively following up the
     *  function chain of `context` and `self` (starting from the property getter) to find out
-    *  the *hidden* name, which is then overwritten. This results in the correct result being 
-    *  returned when accessing the properties, but relies heavily on undefined behaviour subject 
+    *  the *hidden* name, which is then overwritten. This results in the correct result being
+    *  returned when accessing the properties, but relies heavily on undefined behaviour subject
     *  to changes, so we should really find a more reliable solution. @sjrd mentioned a scalac
     *  plugin or an IR manipulator as possible alternatives.
     */
-    
+
     import scala.scalajs.js
-    
+
     def getProto(a: Any) = js.Object.getPrototypeOf(a.asInstanceOf[js.Object])
     def getGetter(a: js.Object, s: String) = {
       @tailrec
-      def getG(p: js.Object): (js.Object, String) = { 
+      def getG(p: js.Object): (js.Object, String) = {
         val desc = js.Object.getOwnPropertyDescriptor(p, s)
         if(desc.toString() != "undefined")
           (p, desc.get.toString())
         else getG(getProto(p))
       }
-      
+
       getG(getProto(a))
     }
-  
+
     def setField(instance: AnyRef, f: String, v: Any) = {
       try {
         val (proto, str) = getGetter(instance.asInstanceOf[js.Object], f)
@@ -759,4 +752,3 @@ private[akka] class ActorCell(
 
   protected final def clazz(o: AnyRef): Class[_] = if (o eq null) this.getClass else o.getClass
 }
-

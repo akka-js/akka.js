@@ -8,21 +8,16 @@ import akka.actor.dungeon.ChildrenContainer
 import akka.dispatch.Envelope
 import akka.dispatch.sysmsg._
 import akka.event.Logging.{ LogEvent, Debug, Error }
-/**
- * @note IMPLEMENT IN SCALA.JS
- * No Java
- * import akka.japi.Procedure
- * import java.io.{ ObjectOutputStream, NotSerializableException }
- */
+import akka.japi.Procedure
+import java.io.{ ObjectOutputStream, NotSerializableException }
 import scala.annotation.{ switch, tailrec }
 import scala.collection.immutable
 import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.duration.Duration
 /**
- * @note IMPLEMENT IN SCALA.JS
- * No threads in JS, so it's useless
+ * @note IMPLEMENT in Scala.js
  *
- * import scala.concurrent.forkjoin.ThreadLocalRandom
+import scala.concurrent.forkjoin.ThreadLocalRandom
  */
 import scala.util.control.NonFatal
 import akka.dispatch.MessageDispatcher
@@ -365,13 +360,11 @@ private[akka] object ActorCell {
   @tailrec final def newUid(): Int = {
     // Note that this uid is also used as hashCode in ActorRef, so be careful
     // to not break hashing if you change the way uid is generated
-   /**
-    * @note IMPLEMENT IN SCALA.JS
-    * Again, no need for ThreadLocal
-    *
-    * val uid = ThreadLocalRandom.current.nextInt()
-    */
     val uid = scala.util.Random.nextInt()
+    /**
+      * @note Implement in Scala.js
+    //ThreadLocalRandom.current.nextInt()
+    */
     if (uid == undefinedUid) newUid
     else uid
   }

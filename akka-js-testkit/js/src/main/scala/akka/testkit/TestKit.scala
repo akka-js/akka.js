@@ -20,8 +20,10 @@ import akka.actor.DeadLetter
 import akka.actor.Terminated
 import akka.event.LoggingReceive
 import akka.concurrent.BlockingEventLoop
+import akka.concurrent.ManagedEventLoop
 
 object TestActor {
+  ManagedEventLoop
   type Ignore = Option[PartialFunction[Any, Boolean]]
 
   abstract class AutoPilot {
@@ -126,6 +128,7 @@ trait TestKitBase {
       val f = scala.concurrent.Promise[AnyRef]
 
       lazy val fn: js.Function0[Any] = { () =>
+        println("CIAONE")
         try {
           val res = queue.dequeue()
           f.success(res)
@@ -136,6 +139,7 @@ trait TestKitBase {
             else js.Dynamic.global.setTimeout(fn, 0)
         }
       }
+
       js.Dynamic.global.setTimeout(fn, 0)
 
       try {
@@ -161,10 +165,12 @@ trait TestKitBase {
       // @note IMPLEMENT IN SCALA.JS .withDispatcher(CallingThreadDispatcher.Id),
       .withDispatcher("akka.actor.default-dispatcher"),
       "testActor" + TestKit.testActorId.incrementAndGet)
-    awaitCond(ref match {
+    awaitCond(
+      try {
+      ref match {
       case r: RepointableRef ⇒ r.isStarted
       case _                 ⇒ true
-    }, 1 second, 10 millis)
+    }} catch {case e: Exception => println("ERROR");e.printStackTrace;false}, 1 second, 10 millis)
     if(!wasBlocking) BlockingEventLoop.blockingOff
     ref
   }
@@ -272,9 +278,14 @@ trait TestKitBase {
     import scala.scalajs.js
     val f = scala.concurrent.Promise[Boolean]
     lazy val fn: js.Function0[Any] = { () =>
+      println("CIAONE 123")
       if (!p) {
+      try {
         assert(now < stop, "timeout " + _max + " expired: " + message)
         js.Dynamic.global.setTimeout(fn, ((stop - now) min interval).toMillis.asInstanceOf[js.Any])
+      } catch {
+        case e : Throwable => f.failure(new AssertionError("sticazzi"))
+      }
       } else f.success(true)
     }
 
@@ -316,6 +327,7 @@ trait TestKitBase {
     import scala.scalajs.js
     val f = scala.concurrent.Promise[Boolean]
     lazy val fn: js.Function0[Any] = { () =>
+      println("ciaoawaitassert")
       val failed =
         try { a; false } catch {
           case NonFatal(e) ⇒
@@ -326,8 +338,9 @@ trait TestKitBase {
         else js.Dynamic.global.setTimeout(fn, ((stop - now) min interval).toMillis)
     }
 
+    println((_max min interval).toMillis)
     js.Dynamic.global.setTimeout(fn, (_max min interval).toMillis)
-
+    println("before await")
     akka.concurrent.Await.result(f.future)
   }
 
@@ -816,6 +829,7 @@ object TestKit {
     import scala.scalajs.js
     val f = scala.concurrent.Promise[Boolean]
     lazy val fn: js.Function0[Any] = { () =>
+      println("ambarabaciccicooco")
       if (!p) {
         val toSleep = stop - now
         if (toSleep <= Duration.Zero) {

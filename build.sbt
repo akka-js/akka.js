@@ -42,7 +42,7 @@ lazy val akkaTestkit = crossProject.in(file("akka-js-testkit"))
   .jvmSettings()
   .jsSettings(
     libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.0-M1"
-  )
+  ).dependsOn(akkaActor)
 
 lazy val akkaActorTest = crossProject.in(file("akka-js-actor-tests"))
   .settings(commonSettings: _*)

@@ -13,6 +13,15 @@ import scala.collection.immutable
 import scala.language.existentials
 import scala.reflect.ClassTag
 
+/** TO BE FIXED...
+ * INTERNAL API
+ *
+ * (Not because it is so immensely complicated, only because we might remove it if no longer needed internally)
+ */
+/*private[akka]*/ class EmptyActor extends Actor {
+  def receive = Actor.emptyBehavior
+}
+
 /**
  * Factory for Props instances.
  *
@@ -46,15 +55,6 @@ object Props extends AbstractProps {
    * The default Props instance, uses the settings from the Props object starting with default*.
    */
   final val default = Props(defaultDeploy, classOf[CreatorFunctionConsumer], List(defaultCreator))
-
-  /**
-   * INTERNAL API
-   *
-   * (Not because it is so immensely complicated, only because we might remove it if no longer needed internally)
-   */
-  private[akka] class EmptyActor extends Actor {
-    def receive = Actor.emptyBehavior
-  }
 
   /**
    * Scala API: Returns a Props that has default values except for "creator" which will be a function that creates an instance

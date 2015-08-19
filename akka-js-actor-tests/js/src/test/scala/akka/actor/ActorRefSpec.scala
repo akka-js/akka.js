@@ -9,7 +9,7 @@ import language.postfixOps
 import akka.testkit._
 import akka.util.Timeout
 import scala.concurrent.duration._
-// @note IMPLEMENT IN SCALA.JS 
+// @note IMPLEMENT IN SCALA.JS
 import akka.concurrent.{ Await, BlockingEventLoop }
 import java.lang.IllegalStateException
 import scala.concurrent.Promise
@@ -64,7 +64,7 @@ class SenderActor(replyActor: ActorRef, latch: TestLatch) extends Actor {
     }
   }
 }
- 
+
 @JSExport
 class WorkerActor() extends Actor {
   import context.system
@@ -159,7 +159,7 @@ class ActorRefSpec extends AkkaSpec with DefaultTimeout {
         new Actor { def receive = { case _ ⇒ } }
       }
 
-      def contextStackMustBeEmpty(): Unit = ActorCell.contextStack./* @note IMPLEMENT IN SCALA.JS get.*/headOption should be(None)
+      def contextStackMustBeEmpty(): Unit = ActorCell.contextStack.get.headOption should be(None)
 
       EventFilter[ActorInitializationException](occurrences = 1) intercept {
         intercept[akka.actor.ActorInitializationException] {
@@ -434,11 +434,11 @@ class ActorRefSpec extends AkkaSpec with DefaultTimeout {
       Await.result(fnull, timeout.duration).asInstanceOf[String] should be("null")
 
       verifyActorTermination(ref)
-      
+
       BlockingEventLoop.blockingOff
     }
 
-    
+
     "restart when Kill:ed" in {
       BlockingEventLoop.blockingOn
       filterException[ActorKilledException] {

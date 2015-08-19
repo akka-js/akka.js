@@ -1,5 +1,9 @@
 /**
- * Copyright (C) 2009-2014 Typesafe Inc. <http://www.typesafe.com>
+ * Copyright (C) 2009-2015 Typesafe Inc. <http://www.typesafe.com>
+ */
+
+ /*
+ THIS FILE DIVERGE
  */
 
 package akka.actor.dungeon
@@ -8,12 +12,7 @@ import scala.annotation.tailrec
 import scala.util.control.NonFatal
 import scala.collection.immutable
 import akka.actor._
-/**
- * @note IMPLEMENT IN SCALA.JS
- *
- import akka.serialization.SerializationExtension
- */
-import akka.util.{ /** @note IMPLEMENT IN SCALA.JS Unsafe, */ Helpers }
+import akka.util.Helpers
 
 private[akka] trait Children { this: ActorCell ⇒
 
@@ -23,12 +22,7 @@ private[akka] trait Children { this: ActorCell ⇒
   private var _childrenRefsDoNotCallMeDirectly: ChildrenContainer = EmptyChildrenContainer
 
   def childrenRefs: ChildrenContainer =
-    /**
-     * @note IMPLEMENT IN SCALA.JS
-     *
-         Unsafe.instance.getObjectVolatile(this, AbstractActorCell.childrenOffset).asInstanceOf[ChildrenContainer]
-     */
-    _childrenRefsDoNotCallMeDirectly
+  	_childrenRefsDoNotCallMeDirectly
 
   final def children: immutable.Iterable[ActorRef] = childrenRefs.children
   final def getChildren(): java.lang.Iterable[ActorRef] =
@@ -51,16 +45,9 @@ private[akka] trait Children { this: ActorCell ⇒
 
   @volatile private var _nextNameDoNotCallMeDirectly = 0L
   final protected def randomName(): String = {
-    /** @note IMPLEMENT IN SCALA.JS @tailrec */ def inc(): Long = {
+    def inc(): Long = {
       _nextNameDoNotCallMeDirectly += 1
       _nextNameDoNotCallMeDirectly
-      /**
-       * @note IMPLEMENT IN SCALA.JS
-       *
-             val current = Unsafe.instance.getLongVolatile(this, AbstractActorCell.nextNameOffset)
-             if (Unsafe.instance.compareAndSwapLong(this, AbstractActorCell.nextNameOffset, current, current + 1)) current
-             else inc()
-       */
     }
     Helpers.base64(inc())
   }
@@ -84,16 +71,9 @@ private[akka] trait Children { this: ActorCell ⇒
    * low level CAS helpers
    */
   @inline private final def swapChildrenRefs(oldChildren: ChildrenContainer, newChildren: ChildrenContainer): Boolean = {
-    /**
-     * @note IMPLEMENT IN SCALA.JS
-     *
-             Unsafe.instance.compareAndSwapObject(this, AbstractActorCell.childrenOffset, oldChildren, newChildren)
-     */
     _childrenRefsDoNotCallMeDirectly = newChildren
     true
   }
-
-
 
   @tailrec final def reserveChild(name: String): Boolean = {
     val c = childrenRefs
@@ -125,11 +105,6 @@ private[akka] trait Children { this: ActorCell ⇒
     }
   }
 
-  /**
-   * @note IMPLEMENT IN SCALA.JS
-   *
-   final protected def setTerminated(): Unit = Unsafe.instance.putObjectVolatile(this, AbstractActorCell.childrenOffset, TerminatedChildrenContainer)
-   */
   final protected def setTerminated(): Unit = _childrenRefsDoNotCallMeDirectly = TerminatedChildrenContainer
 
   /*
@@ -204,27 +179,15 @@ private[akka] trait Children { this: ActorCell ⇒
 
   private def checkName(name: String): String = {
     name match {
-      case null                                    ⇒ throw new InvalidActorNameException("actor name must not be null")
-      case ""                                      ⇒ throw new InvalidActorNameException("actor name must not be empty")
-      case _ if ActorPath.isValidPathElement(name) ⇒ name
-      case _                                       ⇒ throw new InvalidActorNameException(s"Illegal actor name [$name]. Actor paths MUST: not start with `$$`, include only ASCII letters and can only contain these special characters: ${ActorPath.ValidSymbols}.")
+      case null ⇒ throw new InvalidActorNameException("actor name must not be null")
+      case ""   ⇒ throw new InvalidActorNameException("actor name must not be empty")
+      case _ ⇒
+        ActorPath.validatePathElement(name)
+        name
     }
   }
 
   private def makeChild(cell: ActorCell, props: Props, name: String, async: Boolean, systemService: Boolean): ActorRef = {
-/**
- * @note IMPLEMENT IN SCALA.JS
- *
-     if (cell.system.settings.SerializeAllCreators && !systemService && props.deploy.scope != LocalScope)
-       try {
-         val ser = SerializationExtension(cell.system)
-         props.args forall (arg ⇒
-           arg.isInstanceOf[NoSerializationVerificationNeeded] ||
-             ser.deserialize(ser.serialize(arg.asInstanceOf[AnyRef]).get, arg.getClass).get != null)
-       } catch {
-         case NonFatal(e) ⇒ throw new IllegalArgumentException(s"pre-creation serialization check failed at [${cell.self.path}/$name]", e)
-       }
- */
     /*
      * in case we are currently terminating, fail external attachChild requests
      * (internal calls cannot happen anyway because we are suspended)
@@ -241,11 +204,7 @@ private[akka] trait Children { this: ActorCell ⇒
         } catch {
           case e: InterruptedException ⇒
             unreserveChild(name)
-            /**
-             * @note IMPLEMENT IN SCALA.JS
-             *
-             Thread.interrupted() // clear interrupted flag before throwing according to java convention
-             */
+            
             throw e
           case NonFatal(e) ⇒
             unreserveChild(name)

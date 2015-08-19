@@ -5,7 +5,10 @@ package akka.routing
 
 import scala.annotation.tailrec
 import scala.collection.immutable
+/**
+ * @note: IMPLEMENT IN SCALA.JS
 import scala.concurrent.forkjoin.ThreadLocalRandom
+ */
 import com.typesafe.config.Config
 import akka.actor.ActorCell
 import akka.actor.ActorRefWithCell
@@ -56,7 +59,9 @@ class SmallestMailboxRoutingLogic extends RoutingLogic {
       NoRoutee
     else if (at >= targets.size) {
       if (deep) {
-        if (isTerminated(proposedTarget)) targets(ThreadLocalRandom.current.nextInt(targets.size)) else proposedTarget
+        if (isTerminated(proposedTarget)) targets(/*
+          @note: IMPLEMENT IN SCALA.JS
+          ThreadLocalRandom.current.nextInt(targets.size)*/scala.util.Random.nextInt(targets.size)) else proposedTarget
       } else selectNext(targets, proposedTarget, currentScore, 0, deep = true)
     } else {
       val target = targets(at)

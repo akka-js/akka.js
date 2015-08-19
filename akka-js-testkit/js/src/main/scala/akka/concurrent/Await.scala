@@ -157,7 +157,7 @@ object BlockingEventLoop {
 */
   var isBlocking = false
 
-  def wait(max: Duration): Unit = {/*
+  def wait(max: Duration): Unit = {
     import scala.scalajs.js
     val p = scala.concurrent.Promise[Int]
 
@@ -166,7 +166,7 @@ object BlockingEventLoop {
     }
     js.Dynamic.global.setTimeout(fn, max.toMillis)
     Await.result(p.future)
-  */}
+  }
 
   def aWhile(cond: => Boolean)(b: => Unit) = {
     import scala.scalajs.js
@@ -327,8 +327,12 @@ object Await {
     ManagedEventLoop.resetBlocking
     ret match {
       case Success(m) => m
-      case Failure(e) =>
-        throw e.getCause()
+      // if it's a wrapped execution (something coming from inside a promise)
+      // we need to unwrap it, otherwise just return the regular throwable
+      case Failure(e) => throw (e match {
+        case _: scala.concurrent.ExecutionException => e.getCause()
+        case _ => e
+      })
     }
   }
 /*

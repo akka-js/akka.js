@@ -327,7 +327,8 @@ object Await {
     ManagedEventLoop.resetBlocking
     ret match {
       case Success(m) => m
-      case Failure(e) => throw e
+      case Failure(e) =>
+        throw e.getCause()
     }
   }
 /*

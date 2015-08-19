@@ -128,7 +128,6 @@ trait TestKitBase {
       val f = scala.concurrent.Promise[AnyRef]
 
       lazy val fn: js.Function0[Any] = { () =>
-        println("CIAONE")
         try {
           val res = queue.dequeue()
           f.success(res)
@@ -278,13 +277,12 @@ trait TestKitBase {
     import scala.scalajs.js
     val f = scala.concurrent.Promise[Boolean]
     lazy val fn: js.Function0[Any] = { () =>
-      println("CIAONE 123")
       if (!p) {
       try {
         assert(now < stop, "timeout " + _max + " expired: " + message)
         js.Dynamic.global.setTimeout(fn, ((stop - now) min interval).toMillis.asInstanceOf[js.Any])
       } catch {
-        case e : Throwable => f.failure(new AssertionError("sticazzi"))
+        case e : Throwable => f.failure(e)
       }
       } else f.success(true)
     }
@@ -327,7 +325,6 @@ trait TestKitBase {
     import scala.scalajs.js
     val f = scala.concurrent.Promise[Boolean]
     lazy val fn: js.Function0[Any] = { () =>
-      println("ciaoawaitassert")
       val failed =
         try { a; false } catch {
           case NonFatal(e) ⇒
@@ -338,9 +335,8 @@ trait TestKitBase {
         else js.Dynamic.global.setTimeout(fn, ((stop - now) min interval).toMillis)
     }
 
-    println((_max min interval).toMillis)
     js.Dynamic.global.setTimeout(fn, (_max min interval).toMillis)
-    println("before await")
+
     akka.concurrent.Await.result(f.future)
   }
 

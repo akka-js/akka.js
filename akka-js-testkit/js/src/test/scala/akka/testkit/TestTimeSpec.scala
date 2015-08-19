@@ -25,9 +25,7 @@ class TestTimeSpec extends AkkaSpec {// @note IMPLEMENT IN SCALA.JS Map("akka.te
 
    "awaitAssert must throw correctly" in {
       BlockingEventLoop.switch
-      println("hello")
       awaitAssert("foo" should be("foo"))
-      println("awaited")
       within(300.millis, 2.seconds) {
         intercept[TestFailedException] {
           awaitAssert("foo" should be("bar"), 500.millis, 300.millis)

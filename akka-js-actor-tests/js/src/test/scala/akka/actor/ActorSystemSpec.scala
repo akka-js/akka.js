@@ -56,7 +56,7 @@ class Waves extends Actor {
     context stop self
   }
 }
-  
+
 @JSExport
 class Terminater extends Actor {
   def receive = {
@@ -191,7 +191,7 @@ class ActorSystemSpec extends AkkaSpec(/*ActorSystemSpec.config*/) with Implicit
     "run termination callbacks in order" in {
       BlockingEventLoop.blockingOn
       val system2 = ActorSystem("TerminationCallbacks", AkkaSpec.testConf)
-      val result = scala.collection.mutable.Queue[Int]() 
+      val result = scala.collection.mutable.Queue[Int]()
       val count = 10
       val latch = TestLatch(count)
 
@@ -230,12 +230,12 @@ class ActorSystemSpec extends AkkaSpec(/*ActorSystemSpec.config*/) with Implicit
       BlockingEventLoop.wait(1 seconds)
       callbackWasRun should be(true)
       BlockingEventLoop.blockingOff
-    } 
+    }
 
     "return isTerminated status correctly" in {
       BlockingEventLoop.blockingOn
       val system = ActorSystem()
-      
+
       system.isTerminated should be(false)
       system.shutdown()
      // system.awaitTermination(10 seconds)
@@ -262,7 +262,7 @@ class ActorSystemSpec extends AkkaSpec(/*ActorSystemSpec.config*/) with Implicit
       import system.dispatcher
       implicit val timeout = Timeout((20 seconds).dilated)
       val waves = for (i ← 1 to 3) yield system.actorOf(Props[/*ActorSystemSpec.*/Waves]) ? 20000
-      Await.result(Future.sequence(waves), timeout.duration + 5.seconds) should be(Seq("done", "done", "done"))
+      Await.result(Future.sequence(waves), timeout.duration + 10.seconds) should be(Seq("done", "done", "done"))
       BlockingEventLoop.blockingOff
     }
 

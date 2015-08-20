@@ -261,7 +261,7 @@ class ActorSystemSpec extends AkkaSpec(/*ActorSystemSpec.config*/) with Implicit
       BlockingEventLoop.blockingOn
       import system.dispatcher
       implicit val timeout = Timeout((20 seconds).dilated)
-      val waves = for (i ← 1 to 3) yield system.actorOf(Props[/*ActorSystemSpec.*/Waves]) ? 20000
+      val waves = for (i ← 1 to 3) yield system.actorOf(Props[/*ActorSystemSpec.*/Waves]) ? 10000
       Await.result(Future.sequence(waves), timeout.duration + 10.seconds) should be(Seq("done", "done", "done"))
       BlockingEventLoop.blockingOff
     }

@@ -13,15 +13,6 @@ import scala.collection.immutable
 import scala.language.existentials
 import scala.reflect.ClassTag
 
-/** TO BE FIXED...
- * INTERNAL API
- *
- * (Not because it is so immensely complicated, only because we might remove it if no longer needed internally)
- */
-/*private[akka]*/ class EmptyActor extends Actor {
-  def receive = Actor.emptyBehavior
-}
-
 /**
  * Factory for Props instances.
  *
@@ -30,6 +21,16 @@ import scala.reflect.ClassTag
  * Used when creating new actors through <code>ActorSystem.actorOf</code> and <code>ActorContext.actorOf</code>.
  */
 object Props extends AbstractProps {
+
+
+  /** TO BE FIXED...
+   * INTERNAL API
+   *
+   * (Not because it is so immensely complicated, only because we might remove it if no longer needed internally)
+   */
+  private[akka] class EmptyActor extends Actor {
+    def receive = Actor.emptyBehavior
+  }
 
   /**
    * The defaultCreator, simply throws an UnsupportedOperationException when applied, which is used when creating a Props

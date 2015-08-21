@@ -75,10 +75,22 @@ class MethodEraserPlugin(val global: Global) extends Plugin {
         }
         method match {
           case Success(methodSym) =>
-            Seq(new EraserTransformer(unit, m, methodSym))
+            Seq(new MethodEraserTransformer(unit, m, methodSym))
           case Failure(e) =>
-            println(s"method '$m' does not exist")
-            Seq()
+            val field = STry { // create method symbol from `m`
+              val i = m.lastIndexOf('.')
+              val className = m.substring(0, i)
+              val fieldName = m.substring(i + 1)
+              // TODO: we might select a method of an object
+              val cl = rootMirror.getClassByName((className: TypeName))
+              (fieldName, cl)
+            }
+            field match {
+              case Success((fieldName, clsSymbol)) =>
+                Seq(new FieldEraserTransformer(unit, fieldName, clsSymbol))
+              case Failure(e) =>
+                Seq()
+            }
         }
       }
 
@@ -88,14 +100,21 @@ class MethodEraserPlugin(val global: Global) extends Plugin {
         while(iter.hasNext && !iter.next.check(tree)) {
           count += 1
         }
-        if (count == erasers.size)
+
+        if (count == erasers.size) {
           super.transform(tree)
-        else
+        } else {
+          unit.warning(tree.pos, "\n\nERASED\n\n")
           Literal(Constant(())) setType UnitTpe
+        }
       }
     }
 
-    class EraserTransformer(unit: CompilationUnit, initMethodName: String, methodSym: TermSymbol) {
+    trait Checker {
+      def check(tree: Tree): Boolean
+    }
+
+    class MethodEraserTransformer(unit: CompilationUnit, initMethodName: String, methodSym: TermSymbol) extends Checker {
 
       def check(tree: Tree): Boolean = {
         tree match {
@@ -103,6 +122,23 @@ class MethodEraserPlugin(val global: Global) extends Plugin {
             if (methodSym == dd.symbol) =>
             //unit.warning(tree.pos, "METHOD ERASED")
             config -= initMethodName
+            true
+          case any =>
+            false
+        }
+      }
+
+    }
+
+    class FieldEraserTransformer(unit: CompilationUnit, fieldName: String, clsSymbol: Symbol) extends Checker {
+
+      def check(tree: Tree): Boolean = {
+        tree match {
+          case vd @ ValDef(mods, name, tpt, rhs)
+            if ((fieldName + " " : TermName) == vd.symbol.name &&
+              vd.symbol.owner.name == clsSymbol.name) =>
+            //unit.warning(tree.pos, "\n\nField to be erased\n\n"+vd.symbol.owner.name+"\n\n")
+            config -= fieldName
             true
           case any =>
             false

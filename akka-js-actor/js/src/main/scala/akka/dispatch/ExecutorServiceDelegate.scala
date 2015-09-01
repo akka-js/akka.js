@@ -13,7 +13,7 @@ class EventLoopExecutor extends ExecutorServiceDelegate {
   // XXX: DO NOT CHANGE THIS TO USE scaaljs.js.timers.setTimeout
   // We need to access global because otherwise the overridden setTimeout
   // in `akka-js-testkit` fails to execute
-  override def execute(command: Runnable) = if (!_isShutdown) global.setTimeout({
+  override def execute(command: Runnable) = if (!_isShutdown) global.setTimeout({ () =>
     command.run()
   }, 0) 
   

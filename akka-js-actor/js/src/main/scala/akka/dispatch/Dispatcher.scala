@@ -139,6 +139,7 @@ class Dispatcher(
         }
         */
         executorService execute mbox
+        mbox.setAsIdle()
         true
       } else false
     } else false

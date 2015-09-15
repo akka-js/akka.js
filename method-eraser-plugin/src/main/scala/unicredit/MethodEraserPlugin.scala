@@ -82,17 +82,18 @@ class MethodEraserPlugin(val global: Global) extends Plugin {
               val className = m.substring(0, i)
               val fieldName = m.substring(i + 1)
               // TODO: we might select a method of an object
-              val cl = rootMirror.getClassByName((className: TypeName))
-              (fieldName, cl)
+              val cl = rootMirror.staticModule(className)//.getClassByName((className: TypeName))
+              getMemberValue(cl, (fieldName: TermName))
             }
+
             field match {
-              case Success((fieldName, clsSymbol)) =>
-                Seq(new FieldEraserTransformer(unit, fieldName, clsSymbol))
-              case Failure(e) =>
+              case Success(fieldSym) =>
+                Seq(new FieldEraserTransformer(unit, m, fieldSym))
+              case _ =>
                 Seq()
             }
+          }
         }
-      }
 
       override def transform(tree: Tree): Tree = {
         val iter = erasers.iterator
@@ -130,21 +131,19 @@ class MethodEraserPlugin(val global: Global) extends Plugin {
 
     }
 
-    class FieldEraserTransformer(unit: CompilationUnit, fieldName: String, clsSymbol: Symbol) extends Checker {
+    class FieldEraserTransformer(unit: CompilationUnit, initFieldName: String, fieldSym: TermSymbol) extends Checker {
 
       def check(tree: Tree): Boolean = {
         tree match {
           case vd @ ValDef(mods, name, tpt, rhs)
-            if ((fieldName + " " : TermName) == vd.symbol.name &&
-              vd.symbol.owner.name == clsSymbol.name) =>
-            //unit.warning(tree.pos, "\n\nField to be erased\n\n"+vd.symbol.owner.name+"\n\n")
-            config -= fieldName
-            true
-          case any =>
-            false
+            if (fieldSym.owner == vd.symbol.owner && (fieldSym.nameString+" " : TermName) == vd.symbol.name) =>
+              //unit.warning(tree.pos, "FIELD ERASED")
+              config -= initFieldName
+              true
+            case any =>
+              false
         }
       }
-
     }
   }
 }

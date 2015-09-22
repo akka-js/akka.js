@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2009-2014 Typesafe Inc. <http://www.typesafe.com>
+ * Copyright (C) 2009-2015 Typesafe Inc. <http://www.typesafe.com>
  */
 
 package akka.actor.dungeon
@@ -69,7 +69,7 @@ private[akka] trait FaultHandling { this: ActorCell ⇒
           val ex = new PreRestartException(self, e, cause, optionalMessage)
           publish(Error(ex, self.path.toString, clazz(failedActor), e.getMessage))
         } finally {
-          clearActorFields(failedActor)
+          clearActorFields(failedActor, recreate = true)
         }
       }
       assert(mailbox.isSuspended, "mailbox must be suspended during restart, status=" + mailbox.currentStatus)
@@ -158,6 +158,7 @@ private[akka] trait FaultHandling { this: ActorCell ⇒
     }
 
     val wasTerminating = isTerminating
+
     if (setChildrenTerminationReason(ChildrenContainer.Termination)) {
       if (!wasTerminating) {
         // do not process normal messages while waiting for all children to terminate
@@ -192,12 +193,8 @@ private[akka] trait FaultHandling { this: ActorCell ⇒
           parent.sendSystemMessage(Failed(self, t, uid))
       }
     } catch handleNonFatalOrInterruptedException { e ⇒
-      /**
-       * @note IMPLEMENT IN SCALA.JS
-       *
-       publish(Error(e, self.path.toString, clazz(actor),
-         "emergency stop: exception in failure handling for " + t.getClass + Logging.stackTraceFor(t)))
-       */
+      publish(Error(e, self.path.toString, clazz(actor),
+        "emergency stop: exception in failure handling for " + t.getClass + Logging.stackTraceFor(t)))
       try children foreach stop
       finally finishTerminate()
     }
@@ -220,7 +217,7 @@ private[akka] trait FaultHandling { this: ActorCell ⇒
       if (system.settings.DebugLifecycle)
         publish(Debug(self.path.toString, clazz(a), "stopped"))
 
-      clearActorFields(a)
+      clearActorFields(a, recreate = false)
       clearActorCellFields(this)
       actor = null
     }
@@ -248,7 +245,7 @@ private[akka] trait FaultHandling { this: ActorCell ⇒
           publish(Error(e, self.path.toString, clazz(freshActor), "restarting " + child))
         })
     } catch handleNonFatalOrInterruptedException { e ⇒
-      clearActorFields(actor) // in order to prevent preRestart() from happening again
+      clearActorFields(actor, recreate = false) // in order to prevent preRestart() from happening again
       handleInvokeFailure(survivors, new PostRestartException(self, e, cause))
     }
   }
@@ -300,10 +297,12 @@ private[akka] trait FaultHandling { this: ActorCell ⇒
   final protected def handleNonFatalOrInterruptedException(thunk: (Throwable) ⇒ Unit): Catcher[Unit] = {
     case e: InterruptedException ⇒
       thunk(e)
+
       /**
-       * @note IMPLEMENT IN SCALA.JS
-       *
-       Thread.currentThread().interrupt()
+        * IMPLEMENT IN SCALA:JS
+        *
+
+      Thread.currentThread().interrupt()
        */
     case NonFatal(e) ⇒
       thunk(e)

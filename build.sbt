@@ -28,7 +28,16 @@ lazy val akkaActor = crossProject.in(file("akka-js-actor"))
       "be.doeraene" %%% "scalajs-pickling" % "0.4.0",
       "org.scalatest" %%% "scalatest" % "3.0.0-M1",
       "org.scala-js" %%% "scalajs-dom" % "0.8.0"
-    )
+    ),
+    compile in Compile := {
+      val analysis = (compile in Compile).value
+      val classDir = (classDirectory in Compile).value
+      val configFile = (baseDirectory in Compile).value / ".." / ".." / "ir_patch.config"
+
+      unicredit.IrPatcherPlugin.patchThis(classDir, configFile)
+
+      analysis
+    }
   ).jsSettings(
     useAnnotationAdderPluginSettings ++
     useMethodEraserPluginSettings : _*
@@ -114,6 +123,29 @@ lazy val useMethodEraserPluginSettings = Seq(
      Seq("-Xplugin:" + jar.getAbsolutePath)
   }
 )
+
+//SCALAJS IR PATCHER SECTION
+
+//core patches project
+lazy val akkaJsActorIrPatches = Project(
+    id   = "akkaJsActorIrPatches",
+    base = file("akka-js-actor-ir-patches")
+  ) settings (
+    compile in Compile := {
+      val analysis = (compile in Compile).value
+      val classDir = (classDirectory in Compile).value
+      val base = (baseDirectory in Compile).value
+
+      val writer = new java.io.PrintWriter(base / ".." / "ir_patch.config", "UTF-8")
+      writer.print(classDir)
+      writer.flush
+      writer.close
+      analysis
+    },
+    publishArtifact in Compile := true
+  ) settings (commonSettings : _*
+  ) enablePlugins (ScalaJSPlugin)
+
 
 lazy val root = project.in(file(".")).settings(commonSettings: _*)
   .aggregate(akkaActorJS, akkaActorJVM, akkaTestkitJS, akkaActorTestJS, akkaWorkerMainJS, akkaWorkerRaftJS)

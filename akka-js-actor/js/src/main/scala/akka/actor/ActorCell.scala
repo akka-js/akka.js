@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2009-2014 Typesafe Inc. <http://www.typesafe.com>
+ * Copyright (C) 2009-2015 Typesafe Inc. <http://www.typesafe.com>
  */
 
 package akka.actor
@@ -14,13 +14,11 @@ import scala.annotation.{ switch, tailrec }
 import scala.collection.immutable
 import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.duration.Duration
-/**
- * @note IMPLEMENT in Scala.js
- *
-import scala.concurrent.forkjoin.ThreadLocalRandom
- */
+//waiting scala.js 0.6.6
+//import scala.concurrent.forkjoin.ThreadLocalRandom
 import scala.util.control.NonFatal
 import akka.dispatch.MessageDispatcher
+import akka.util.Reflect.lookupAndSetField
 
 /**
  * The actor context - the view of the actor cell from the actor.
@@ -155,81 +153,67 @@ trait ActorContext extends ActorRefFactory {
   /**
    * ActorContexts shouldn't be Serializable
    */
-  /**
-   * @note IMPLEMENT IN SCALA.JS (how?)
-   *
-   *  final protected def writeObject(o: ObjectOutputStream): Unit =
-   *    throw new NotSerializableException("ActorContext is not serializable!")
-   */
+  final protected def writeObject(o: ObjectOutputStream): Unit =
+    throw new NotSerializableException("ActorContext is not serializable!")
 }
 
 /**
  * AbstractActorContext is the AbstractActor equivalent of ActorContext,
  * containing the Java API
  */
-/**
- * @note IMPLEMENT IN SCALA.JS
- * We shouldn't really need this, it's just Java API
- *
- * trait AbstractActorContext extends ActorContext {
- *
- *  /**
- *   * Returns an unmodifiable Java Collection containing the linked actors,
- *   * please note that the backing map is thread-safe but not immutable
- *   */
- *  def getChildren(): java.lang.Iterable[ActorRef]
- *
- *  /**
- *   * Returns a reference to the named child or null if no child with
- *   * that name exists.
- *   */
- *  def getChild(name: String): ActorRef
- * }
- */
+trait AbstractActorContext extends ActorContext {
+
+  /**
+   * Returns an unmodifiable Java Collection containing the linked actors,
+   * please note that the backing map is thread-safe but not immutable
+   */
+  def getChildren(): java.lang.Iterable[ActorRef]
+
+  /**
+   * Returns a reference to the named child or null if no child with
+   * that name exists.
+   */
+  def getChild(name: String): ActorRef
+}
 
 /**
  * UntypedActorContext is the UntypedActor equivalent of ActorContext,
  * containing the Java API
  */
-/**
- * @note IMPLEMENT IN SCALA.JS
- * Same as above
- *
- * trait UntypedActorContext extends ActorContext {
- *
- *  /**
- *   * Returns an unmodifiable Java Collection containing the linked actors,
- *   * please note that the backing map is thread-safe but not immutable
- *   */
- *  def getChildren(): java.lang.Iterable[ActorRef]
- *
- *  /**
- *   * Returns a reference to the named child or null if no child with
- *   * that name exists.
- *   */
- *  def getChild(name: String): ActorRef
- *
- *  /**
- *   * Changes the Actor's behavior to become the new 'Procedure' handler.
- *   * Replaces the current behavior on the top of the behavior stack.
- *   */
- *  def become(behavior: Procedure[Any]): Unit
- *
- *  /**
- *   * Changes the Actor's behavior to become the new 'Procedure' handler.
- *   * This method acts upon the behavior stack as follows:
- *   *
- *   *  - if `discardOld = true` it will replace the top element (i.e. the current behavior)
- *   *  - if `discardOld = false` it will keep the current behavior and push the given one atop
- *   *
- *   * The default of replacing the current behavior on the stack has been chosen to avoid memory
- *   * leaks in case client code is written without consulting this documentation first (i.e.
- *   * always pushing new behaviors and never issuing an `unbecome()`)
- *   */
- *  def become(behavior: Procedure[Any], discardOld: Boolean): Unit
- * }
- */
+trait UntypedActorContext extends ActorContext {
 
+  /**
+   * Returns an unmodifiable Java Collection containing the linked actors,
+   * please note that the backing map is thread-safe but not immutable
+   */
+  def getChildren(): java.lang.Iterable[ActorRef]
+
+  /**
+   * Returns a reference to the named child or null if no child with
+   * that name exists.
+   */
+  def getChild(name: String): ActorRef
+
+  /**
+   * Changes the Actor's behavior to become the new 'Procedure' handler.
+   * Replaces the current behavior on the top of the behavior stack.
+   */
+  def become(behavior: Procedure[Any]): Unit
+
+  /**
+   * Changes the Actor's behavior to become the new 'Procedure' handler.
+   * This method acts upon the behavior stack as follows:
+   *
+   *  - if `discardOld = true` it will replace the top element (i.e. the current behavior)
+   *  - if `discardOld = false` it will keep the current behavior and push the given one atop
+   *
+   * The default of replacing the current behavior on the stack has been chosen to avoid memory
+   * leaks in case client code is written without consulting this documentation first (i.e.
+   * always pushing new behaviors and never issuing an `unbecome()`)
+   */
+  def become(behavior: Procedure[Any], discardOld: Boolean): Unit
+
+}
 
 /**
  * INTERNAL API
@@ -360,11 +344,7 @@ private[akka] object ActorCell {
   @tailrec final def newUid(): Int = {
     // Note that this uid is also used as hashCode in ActorRef, so be careful
     // to not break hashing if you change the way uid is generated
-    val uid = scala.util.Random.nextInt()
-    /**
-      * @note Implement in Scala.js
-    //ThreadLocalRandom.current.nextInt()
-    */
+    val uid = scala.util.Random.nextInt()//ThreadLocalRandom.current.nextInt()
     if (uid == undefinedUid) newUid
     else uid
   }
@@ -380,7 +360,7 @@ private[akka] object ActorCell {
   final val SuspendedWaitForChildrenState = 2
 }
 
-//ACTORCELL IS 64bytes and should stay that way unless very good reason not to (machine sympathy, cache line fit)
+//ACTORCELL is NOT 64 bytes aligned, unless it is demonstrated to have a large improvement on performance
 //vars don't need volatile since it's protected with the mailbox status
 //Make sure that they are not read/written outside of a message processing (systemInvoke/invoke)
 /**
@@ -389,18 +369,12 @@ private[akka] object ActorCell {
  * for! (waves hand)
  */
 private[akka] class ActorCell(
-                               val system: ActorSystemImpl,
-                               val self: InternalActorRef,
-                               final val props: Props, // Must be final so that it can be properly cleared in clearActorCellFields
-                               val dispatcher: MessageDispatcher,
-                               val parent: InternalActorRef)
-  /**
-   * @note IMPLEMENT IN SCALA.JS
-   * We don't need Java API so we're just extending vanilla ActorContext
-   *
-   * extends UntypedActorContext with AbstractActorContext with Cell
-   */
-  extends ActorContext with Cell
+  val system: ActorSystemImpl,
+  val self: InternalActorRef,
+  final val props: Props, // Must be final so that it can be properly cleared in clearActorCellFields
+  val dispatcher: MessageDispatcher,
+  val parent: InternalActorRef)
+  extends UntypedActorContext with AbstractActorContext with Cell
   with dungeon.ReceiveTimeout
   with dungeon.Children
   with dungeon.Dispatch
@@ -430,9 +404,9 @@ private[akka] class ActorCell(
   }
 
   private def unstashAll(): LatestFirstSystemMessageList = {
-     val unstashed = sysmsgStash
-     sysmsgStash = SystemMessageList.LNil
-     unstashed
+    val unstashed = sysmsgStash
+    sysmsgStash = SystemMessageList.LNil
+    unstashed
   }
 
   /*
@@ -556,15 +530,10 @@ private[akka] class ActorCell(
   def become(behavior: Actor.Receive, discardOld: Boolean = true): Unit =
     behaviorStack = behavior :: (if (discardOld && behaviorStack.nonEmpty) behaviorStack.tail else behaviorStack)
 
- /**
-  * @note IMPLEMENT IN SCALA.JS
-  * Java API // XXX: CHECK
-  *
-  * def become(behavior: Procedure[Any]): Unit = become(behavior, discardOld = true)
-  *
-  * def become(behavior: Procedure[Any], discardOld: Boolean): Unit =
-  *   become({ case msg ⇒ behavior.apply(msg) }: Actor.Receive, discardOld)
-  */
+  def become(behavior: Procedure[Any]): Unit = become(behavior, discardOld = true)
+
+  def become(behavior: Procedure[Any], discardOld: Boolean): Unit =
+    become({ case msg ⇒ behavior.apply(msg) }: Actor.Receive, discardOld)
 
   def unbecome(): Unit = {
     val original = behaviorStack
@@ -589,7 +558,6 @@ private[akka] class ActorCell(
 
       // If no becomes were issued, the actors behavior is its receive method
       behaviorStack = if (behaviorStack.isEmpty) instance.receive :: behaviorStack else behaviorStack
-
       instance
     } finally {
       val stackAfter = contextStack.get
@@ -601,7 +569,7 @@ private[akka] class ActorCell(
   protected def create(failure: Option[ActorInitializationException]): Unit = {
     def clearOutActorIfNonNull(): Unit = {
       if (actor != null) {
-        clearActorFields(actor)
+        clearActorFields(actor, recreate = false)
         actor = null // ensure that we know that we failed during creation
       }
     }
@@ -617,20 +585,16 @@ private[akka] class ActorCell(
     } catch {
       case e: InterruptedException ⇒
         clearOutActorIfNonNull()
-      /**
-       * @note IMPLEMENT IN SCALA.JS
-       *
-               Thread.currentThread().interrupt()
-         throw ActorInitializationException(self, "interruption during creation", e)
-       */
+        //Thread.currentThread().interrupt()
+        throw ActorInitializationException(self, "interruption during creation", e)
       case NonFatal(e) ⇒
         clearOutActorIfNonNull()
         e match {
           case i: InstantiationException ⇒ throw ActorInitializationException(self,
             """exception during creation, this problem is likely to occur because the class of the Actor you tried to create is either,
-               a non-static inner class (in which case make it a static inner class or use Props(new ...) or Props( new UntypedActorFactory ... )
+               a non-static inner class (in which case make it a static inner class or use Props(new ...) or Props( new Creator ... )
                or is missing an appropriate, reachable no-args constructor.
-            """, i.getCause)
+              """, i.getCause)
           case x ⇒ throw ActorInitializationException(self, "exception during creation", x)
         }
     }
@@ -653,99 +617,24 @@ private[akka] class ActorCell(
     case _                               ⇒
   }
 
-/**
- * @note IMPLEMENT IN SCALA.JS
- *
-   @tailrec private final def lookupAndSetField(clazz: Class[_], instance: AnyRef, name: String, value: Any): Boolean = {
-     @tailrec def clearFirst(fields: Array[java.lang.reflect.Field], idx: Int): Boolean =
-       if (idx < fields.length) {
-         val field = fields(idx)
-         if (field.getName == name) {
-           field.setAccessible(true)
-           field.set(instance, value)
-           true
-         } else clearFirst(fields, idx + 1)
-       } else false
-
-     clearFirst(clazz.getDeclaredFields, 0) || {
-       clazz.getSuperclass match {
-         case null ⇒ false // clazz == classOf[AnyRef]
-         case sc   ⇒ lookupAndSetField(sc, instance, name, value)
-       }
-     }
-   }
- */
-
   final protected def clearActorCellFields(cell: ActorCell): Unit = {
     cell.unstashAll()
-/**
- * @note IMPLEMENT IN SCALA.JS
- *
-     if (!lookupAndSetField(classOf[ActorCell], cell, "props", ActorCell.terminatedProps))
-       throw new IllegalArgumentException("ActorCell has no props field")
- */
+    if (!lookupAndSetField(classOf[ActorCell], cell, "props", ActorCell.terminatedProps))
+      throw new IllegalArgumentException("ActorCell has no props field")
   }
 
-  final protected def clearActorFields(actorInstance: Actor): Unit = {
-    setActorFields(actorInstance, context = null, self = system.deadLetters)
+  final protected def clearActorFields(actorInstance: Actor, recreate: Boolean): Unit = {
+    setActorFields(actorInstance, context = null, self = if (recreate) self else system.deadLetters)
     currentMessage = null
     behaviorStack = emptyBehaviorStack
   }
 
-  final protected def setActorFields(actorInstance: Actor, context: ActorContext, self: ActorRef): Unit = {
-
-   /** XXX: FIX ME
-    *  The issue is the following:
-    *  `context` and `self` need to be `val`s inside Actor, otherwise you cannot `import` them.
-    *  Being `val`s they cannot be overwritten, so Akka/JVM uses `java.lang.reflect.Field` which
-    *  is not available in JS environments (of course).
-    *  What I'm doing at the moment is mimicking the behaviour, by recursively following up the
-    *  function chain of `context` and `self` (starting from the property getter) to find out
-    *  the *hidden* name, which is then overwritten. This results in the correct result being
-    *  returned when accessing the properties, but relies heavily on undefined behaviour subject
-    *  to changes, so we should really find a more reliable solution. @sjrd mentioned a scalac
-    *  plugin or an IR manipulator as possible alternatives.
-    */
-
-    import scala.scalajs.js
-
-    def getProto(a: Any) = js.Object.getPrototypeOf(a.asInstanceOf[js.Object])
-    def getGetter(a: js.Object, s: String) = {
-      @tailrec
-      def getG(p: js.Object): (js.Object, String) = {
-        val desc = js.Object.getOwnPropertyDescriptor(p, s)
-        if(desc.toString() != "undefined")
-          (p, desc.get.toString())
-        else getG(getProto(p))
-      }
-
-      getG(getProto(a))
+  final protected def setActorFields(actorInstance: Actor, context: ActorContext, self: ActorRef): Unit =
+    if (actorInstance ne null) {
+      if (!lookupAndSetField(actorInstance.getClass, actorInstance, "context", context)
+        || !lookupAndSetField(actorInstance.getClass, actorInstance, "self", self))
+        throw new IllegalActorStateException(actorInstance.getClass + " is not an Actor since it have not mixed in the 'Actor' trait")
     }
-
-    def setField(instance: AnyRef, f: String, v: Any) = {
-      try {
-        val (proto, str) = getGetter(instance.asInstanceOf[js.Object], f)
-        val getter = str.split("this\\.")(1).split("\\(")(0)
-        val otherstring = proto.asInstanceOf[js.Dictionary[_]](getter).toString()
-        val fin = otherstring.split("this\\.")(1).split("}")(0).trim()
-
-        instance.asInstanceOf[js.Dictionary[js.Any]](fin) = v.asInstanceOf[js.Any]
-      } catch { case e: Throwable => e.printStackTrace(); throw e }
-    }
-    if(actorInstance ne null) {
-      setField(actorInstance, "context", context)
-      setField(actorInstance, "self", self)
-      assert(actorInstance.context eq context)
-      assert(actorInstance.self eq self)
-    /**
-     * @note IMPLEMENT IN SCALA.JS
-     *
-           if (!lookupAndSetField(actorInstance.getClass, actorInstance, "context", context)
-             || !lookupAndSetField(actorInstance.getClass, actorInstance, "self", self))
-             throw new IllegalActorStateException(actorInstance.getClass + " is not an Actor since it have not mixed in the 'Actor' trait")
-     */
-    }
-  }
 
   // logging is not the main purpose, and if it fails there’s nothing we can do
   protected final def publish(e: LogEvent): Unit = try system.eventStream.publish(e) catch { case NonFatal(_) ⇒ }

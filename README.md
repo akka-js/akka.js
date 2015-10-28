@@ -10,11 +10,40 @@ This repository contains an ongoing effort to port Akka to the JavaScript runtim
 
 ## Build it and try the examples
 
-To build the libraries, use
-
-    > package
-
-in an sbt console.
+If you are brave and you wanna compile this bleeding edge version you need to:
+```
+$ git clone https://github.com/sirthias/parboiled2.git
+$ cd parboiled2/
+$ git checkout release-2.1-js
+$ sbt publishLocal  // StackOverflowException if try fastOptJS
+$ # the above published to $HOME/.ivy2/local/org.parboiled/parboiled_sjs0.6_2.11/2.1.1-SNAPSHOT/
+$ cd ..
+ 
+$ git clone https://github.com/unicredit/scalajs-ir-patcher
+$ cd scalajs-ir-patcher
+$ sbt publishLocal
+$ # publishes to $HOME/.ivy2/local/eu.unicredit/irpatchplugin/scala_2.10/sbt_0.13/0.0.1-SNAPSHOT
+$ cd ..
+ 
+$ git clone https://github.com/evacchi/shocon
+$ cd shocon
+$ sbt publishLocal
+$ # publishes to $HOME/.ivy2/local/eu.unicredit/shocon_2.11/0.0.1-SNAPSHOT
+$ #              $HOME/.ivy2/local/eu.unicredit/shocon_sjs0.6_2.11/0.0.1-SNAPSHOT
+$ cd ..
+ 
+$ git clone https://github.com/unicredit/akka.js
+$ cd akka.js #-> place us in merge.js branch
+$ git checkout merge-js
+$ sbt
+> project akkaJsActorIrPatches
+> compile
+> publishLocal
+> // publishes to $HOME/.ivy2/local/akka.js/akkajsactorirpatches_sjs0.6_2.11/0.1-SNAPSHOT
+> project akkaActorJS
+> publishLocal 
+> //published to $HOME/.ivy2/local/akka.js/akkaactor_sjs0.6_2.11/0.2-SNAPSHOT/
+```
 
 Then download the examples and follow the README.md available [here](https://github.com/unicredit/akka.js-examples)
 

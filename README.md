@@ -57,7 +57,7 @@ The original codebase derives from Sébastien Doeraene's `scala-js-actors`, you 
 
 ## Akka version
 
-As of now, code is taken from Akka 2.3.9 
+As of now, code is taken from Akka MASTER
 
 ## License
 

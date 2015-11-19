@@ -1,0 +1,3 @@
+[submodule "akka"]
+	path = akka
+	url = https://github.com/akka/akka.git

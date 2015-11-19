@@ -1,0 +1,4 @@
+<plugin>
+  <name>method-eraser-plugin</name>
+  <classname>unicredit.MethodEraserPlugin</classname>
+</plugin>

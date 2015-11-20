@@ -1,8 +1,4 @@
-## Warning: unstable branch, compilation might be broken. If you want a stable version, please check out [master](https://github.com/unicredit/akka.js/tree/master)
-
-<p align="center">
-<img width="400" src="logo/akkajs.png">
-</p>
+## Warning: VERY unstable branch, compilation IS most of the time BROKEN. If you want a stable version, please check out [master](https://github.com/unicredit/akka.js/tree/master)
 
 This repository contains an ongoing effort to port Akka to the JavaScript runtime, thanks to [Scala.js](http://scala-js.org)
 

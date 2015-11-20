@@ -6,6 +6,7 @@ import scala.util.control.NonFatal
 import scala.collection.immutable
 import scala.annotation.tailrec
 import scala.util.Try
+import scala.scalajs.js
 
 /**
  *
@@ -39,5 +40,50 @@ private[akka] object Reflect {
   	  case _ =>
   	  	false
   	}  
+  }
+
+  /**
+   * INTERNAL API
+   * @param clazz the class which to instantiate an instance of
+   * @return a new instance from the default constructor of the given class
+   */
+  private[akka] def instantiate[T](clazz: Class[T]): T = 
+    try instantiate[T](findConstructor(clazz, immutable.Seq[Any]()), immutable.Seq[Any]())
+    catch {
+      case iae: IllegalAccessException ⇒
+        throw new IllegalArgumentException(s"cannot instantiate actor", iae)
+    }
+
+  /**
+   * INTERNAL API
+   * Calls findConstructor and invokes it with the given arguments.
+   */
+  private[akka] def instantiate[T](clazz: Class[T], args: immutable.Seq[Any]): T = {
+    instantiate(findConstructor(clazz, args), args)
+  }
+
+  /**
+   * INTERNAL API
+   * Invokes the constructor with the given arguments.
+   */
+  private[akka] def instantiate[T](constructor: js.Dynamic, args: immutable.Seq[Any]): T = {
+    try js.Dynamic.newInstance(constructor)(args.map(_.asInstanceOf[js.Any]): _*).asInstanceOf[T]
+    catch {
+      case e: IllegalArgumentException ⇒
+        val argString = args mkString ("[", ", ", "]")
+        throw new IllegalArgumentException(s"constructor $constructor is incompatible with arguments $argString", e)
+    }
+  }  
+
+  /**
+   * INTERNAL API
+   * Implements a primitive form of overload resolution a.k.a. finding the
+   * right constructor.
+   */
+  private[akka] def findConstructor[T](clazz: Class[T], args: immutable.Seq[Any]): js.Dynamic = {
+    clazz.getName.split("\\.").foldLeft(scala.scalajs.runtime.environmentInfo.exportsNamespace){
+      (prev, part) =>
+        prev.selectDynamic(part)
+      }
   }
 }

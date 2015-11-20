@@ -16,7 +16,7 @@ val commonSettings = Seq(
 lazy val akkaActor = crossProject.in(file("akka-js-actor"))
   .settings(commonSettings: _*)
   .settings(
-    version := "0.1.0-SNAPSHOT"
+    version := "0.1.1-SNAPSHOT"
   ).jsSettings(
     libraryDependencies ++= Seq(
       "eu.unicredit" %%% "shocon" % "0.0.1-SNAPSHOT"

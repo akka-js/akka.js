@@ -204,7 +204,7 @@ object ActorSystem {
       if(config.getMillisDuration("akka.actor.unstarted-push-timeout") != null)
         Timeout(config.getMillisDuration("akka.actor.unstarted-push-timeout"))
       else
-        Timeout(1000)
+        Timeout(1000, MILLISECONDS)
     }
 
     final val LogDeadLetters: Int = 1

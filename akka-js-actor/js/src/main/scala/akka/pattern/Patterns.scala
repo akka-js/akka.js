@@ -7,6 +7,7 @@ import akka.actor.{ ActorSelection, Scheduler }
 import scala.concurrent.ExecutionContext
 import java.util.concurrent.Callable
 import scala.concurrent.duration.FiniteDuration
+import java.util.concurrent.TimeUnit.MILLISECONDS
 
 object Patterns {
   import akka.actor.{ ActorRef, ActorSystem }
@@ -76,7 +77,7 @@ object Patterns {
    * }}}
    */
   def ask(actor: ActorRef, message: Any, timeoutMillis: Long): Future[AnyRef] =
-    scalaAsk(actor, message)(new Timeout(timeoutMillis)).asInstanceOf[Future[AnyRef]]
+    scalaAsk(actor, message)(new Timeout(timeoutMillis, MILLISECONDS)).asInstanceOf[Future[AnyRef]]
 
   /**
    * <i>Java API for `akka.pattern.ask`:</i>

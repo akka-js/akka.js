@@ -310,8 +310,8 @@ private[akka] abstract class Mailbox(val messageQueue: MessageQueue)
       if (debug) println(actor.self + " processing system message " + msg + " with " + actor.childrenRefs)
       // we know here that systemInvoke ensures that only "fatal" exceptions get rethrown
       actor systemInvoke msg
-      /**if (Thread.interrupted())
-        interruption = new InterruptedException("Interrupted while processing system messages")*/
+      if (Thread.interrupted())
+        interruption = new InterruptedException("Interrupted while processing system messages")
       // don’t ever execute normal message when system message present!
       if ((messageList.isEmpty) && !isClosed) messageList = systemDrain(SystemMessageList.LNil)
     }
@@ -326,15 +326,14 @@ private[akka] abstract class Mailbox(val messageQueue: MessageQueue)
       msg.unlink()
       try dlm.systemEnqueue(actor.self, msg)
       catch {
-        /**case e: InterruptedException ⇒ interruption = e
-        case NonFatal(e) ⇒ actor.system.eventStream.publish(*/
-        case e: Exception ⇒ actor.system.eventStream.publish(
+        case e: InterruptedException ⇒ interruption = e
+        case NonFatal(e) ⇒ actor.system.eventStream.publish(
           Error(e, actor.self.path.toString, this.getClass, "error while enqueuing " + msg + " to deadLetters: " + e.getMessage))
       }
     }
     // if we got an interrupted exception while handling system messages, then rethrow it
     if (interruption ne null) {
-      /**Thread.interrupted()*/ // clear interrupted flag before throwing according to java convention
+      Thread.interrupted() // clear interrupted flag before throwing according to java convention
       throw interruption
     }
   }

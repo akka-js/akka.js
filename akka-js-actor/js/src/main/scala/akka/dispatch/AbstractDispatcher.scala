@@ -118,6 +118,7 @@ abstract class MessageDispatcher(val configurator: MessageDispatcherConfigurator
 	/** @note IMPLEMENT IN SCALA.JS @tailrec */ private final def addInhabitants(add: Long): Long = {
 		val c = inhabitants
 		val r = c + add
+    
     if (r < 0) {
 		  // We haven't succeeded in decreasing the inhabitants yet but the simple fact that we're trying to
 		  // go below zero means that there is an imbalance and we might as well throw the exception

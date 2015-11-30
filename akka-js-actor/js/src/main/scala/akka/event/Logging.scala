@@ -29,6 +29,38 @@ import scala.reflect.ClassTag
  * system services and managed by this trait, i.e. subscribed/unsubscribed in
  * response to changes of LoggingBus.logLevel.
  */
+/*
+@note IMPLEMENT IN SCALA.JS 
+TO BE PATCHED....
+**/
+protected[akka] class LoggingBusActor(name: String,
+      logName: String,
+      lb: LoggingBus,
+      actor: ActorRef,
+      level: Logging.LogLevel) extends Actor {
+  import lb._
+
+  val timeout = 5 seconds
+  implicit def ec = scala.scalajs.concurrent.JSExecutionContext.queue
+    
+  def receive = operative(context.system.scheduler.scheduleOnce(timeout)(self ! new TimeoutException))
+      
+  override def preStart = actor ! Logging.InitializeLogger(lb)
+      
+  def operative(canc: Cancellable): Receive = {
+    case _: TimeoutException ⇒ 
+      publish(Logging.Warning(logName, this.getClass, "Logger " + name + " did not respond within " + timeout + " to InitializeLogger(bus)"))
+            //"[TIMEOUT]"
+    case Logging.LoggerInitialized ⇒ 
+      Logging.AllLogLevels filter (level >= _) foreach (l ⇒ subscribe(actor, Logging.classFor(l)))
+      publish(Logging.Debug(logName, this.getClass, "logger " + name + " started"))
+      context.stop(self); canc.cancel()
+    case response ⇒ 
+      throw new Logging.LoggerInitializationException("Logger " + name + " did not respond with LoggerInitialized, sent instead " + response)
+      context.stop(self); canc.cancel()
+  }
+}
+
 trait LoggingBus extends ActorEventBus {
   me => 
 
@@ -186,26 +218,9 @@ trait LoggingBus extends ActorEventBus {
   private def addLogger(system: ActorSystemImpl, clazz: Class[_ <: Actor], level: LogLevel, logName: String): ActorRef = {
     val name = "log" + Extension(system).id() + "-" + simpleName(clazz)
     val actor = system.systemActorOf(Props(clazz), name)
-    val senderActor = system.systemActorOf(Props(new Actor {
-      val timeout = 5 seconds
-      implicit def ec = scala.scalajs.concurrent.JSExecutionContext.queue
-      def receive = operative(context.system.scheduler.scheduleOnce(timeout)(self ! new TimeoutException))
-      
-      override def preStart = actor ! InitializeLogger(me)
-      
-      def operative(canc: Cancellable): Receive = {
-        case _: TimeoutException ⇒ 
-          publish(Warning(logName, this.getClass, "Logger " + name + " did not respond within " + timeout + " to InitializeLogger(bus)"))
-            //"[TIMEOUT]"
-        case LoggerInitialized ⇒ 
-          AllLogLevels filter (level >= _) foreach (l ⇒ subscribe(actor, classFor(l)))
-          publish(Debug(logName, this.getClass, "logger " + name + " started"))
-          context.stop(self); canc.cancel()
-        case response ⇒ 
-          throw new LoggerInitializationException("Logger " + name + " did not respond with LoggerInitialized, sent instead " + response)
-          context.stop(self); canc.cancel()
-      }
-    }), "loggerChecker")
+    val senderActor = system.systemActorOf(Props(
+      //@note IMPLEMENT IN SCALA.JS <<<
+      new LoggingBusActor(name, logName, me, actor, level)), "loggerChecker")
     
     /** @note IMPLEMENT IN SCALA.JS
     implicit def timeout = system.settings.LoggerStartTimeout

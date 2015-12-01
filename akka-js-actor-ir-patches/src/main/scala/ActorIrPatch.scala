@@ -16,3 +16,16 @@ trait Props {}
 private[akka] class ActorCell {
   final var props: Props = null
 }
+
+private[akka] object LocalActorRefProvider {
+
+  private class Guardian {
+    implicit var context: ActorContext = null
+    implicit final var self: ActorRef = null
+  }
+
+  private class SystemGuardian {
+    implicit var context: ActorContext = null
+    implicit final var self: ActorRef = null
+  }
+}

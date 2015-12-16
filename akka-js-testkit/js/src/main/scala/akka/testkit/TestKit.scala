@@ -19,11 +19,8 @@ import akka.actor.IllegalActorStateException
 import akka.actor.DeadLetter
 import akka.actor.Terminated
 import akka.event.LoggingReceive
-import akka.concurrent.BlockingEventLoop
-import akka.concurrent.ManagedEventLoop
 
 object TestActor {
-  ManagedEventLoop
   type Ignore = Option[PartialFunction[Any, Boolean]]
 
   abstract class AutoPilot {
@@ -157,8 +154,6 @@ trait TestKitBase {
   val testActor: ActorRef = {
     import akka.concurrent._
     // Need to switch into blocking mode, otherwise anything that extends TestKitBase will fail due to `awaitCond`
-    val wasBlocking = BlockingEventLoop.isBlocking
-    if(!wasBlocking) BlockingEventLoop.blockingOn
     val impl = system.asInstanceOf[ExtendedActorSystem]
     val ref = impl.systemActorOf(TestActor.props(queue)
       // @note IMPLEMENT IN SCALA.JS .withDispatcher(CallingThreadDispatcher.Id),
@@ -170,7 +165,6 @@ trait TestKitBase {
       case r: RepointableRef ⇒ r.isStarted
       case _                 ⇒ true
     }} catch {case e: Exception => println("ERROR");e.printStackTrace;false}, 1 second, 10 millis)
-    if(!wasBlocking) BlockingEventLoop.blockingOff
     ref
   }
 

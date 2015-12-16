@@ -8,7 +8,6 @@ import akka.actor.{ Props, Actor }
 /**
  * A collection of common actor patterns used in tests.
  */
-@scala.scalajs.js.annotation.JSExport
 class EchoActor extends Actor {
   override def receive = {
     case message ⇒ sender() ! message

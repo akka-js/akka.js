@@ -16,16 +16,20 @@ import scala.concurrent.duration._
 import akka.actor.DeadLetter
 import akka.pattern.ask
 
+import akka.concurrent.ManagedEventLoop
+
 // @note IMPLEMENT IN SCALA.JS @org.junit.runner.RunWith(classOf[org.scalatest.junit.JUnitRunner])
 class AkkaSpecSpec extends WordSpec with Matchers {
 
   "An AkkaSpec" must {
 
     "warn about unhandled messages" in {
-      akka.concurrent.BlockingEventLoop.switch
+      ManagedEventLoop.manage
       implicit val system = ActorSystem("AkkaSpec0", AkkaSpec.testConf)
       try {
-        val a = system.actorOf(Props.empty)
+        val a = system.actorOf(Props(new Actor {
+          def receive = Actor.emptyBehavior
+        })) 
         akka.concurrent.Await.result(TestEventListener.p.future)
         EventFilter.warning(start = "unhandled message", occurrences = 1) intercept {
           a ! 42
@@ -33,16 +37,16 @@ class AkkaSpecSpec extends WordSpec with Matchers {
       } finally {
         TestKit.shutdownActorSystem(system)
       }
-      akka.concurrent.BlockingEventLoop.reset
+     //ManagedEventLoop.reset
     }
-
+/*
     "terminate all actors" in {
       // verbose config just for demonstration purposes, please leave in in case of debugging
       /*import scala.collection.JavaConverters._
       val conf = Map(
         "akka.actor.debug.lifecycle" -> true, "akka.actor.debug.event-stream" -> true,
         "akka.loglevel" -> "DEBUG", "akka.stdout-loglevel" -> "DEBUG")*/
-      akka.concurrent.BlockingEventLoop.switch
+      ManagedEventLoop.manage
       val system = ActorSystem("AkkaSpec1" , AkkaSpec.testConf)// @note IMPLEMENT IN SCALA.JS , ConfigFactory.parseMap(conf.asJava).withFallback(AkkaSpec.testConf))
 
       class EmptyActor extends Actor {
@@ -54,11 +58,11 @@ class AkkaSpecSpec extends WordSpec with Matchers {
       spec.ref foreach (_.isTerminated should not be true)
       TestKit.shutdownActorSystem(system)
       spec.awaitCond(spec.ref forall (_.isTerminated), 2 seconds)
-      akka.concurrent.BlockingEventLoop.reset
+      ManagedEventLoop.reset
     }
 
     "stop correctly when sending PoisonPill to rootGuardian" in {
-      akka.concurrent.BlockingEventLoop.switch
+      ManagedEventLoop.manage
       val system = ActorSystem("AkkaSpec2" , AkkaSpec.testConf)
       val spec = new AkkaSpec(system) {}
       val latch = new TestLatch(1)(system)
@@ -67,7 +71,7 @@ class AkkaSpecSpec extends WordSpec with Matchers {
       system.actorSelection("/") ! PoisonPill
 
       Await.ready(latch, 2 seconds)
-      akka.concurrent.BlockingEventLoop.reset
+      ManagedEventLoop.reset
     }
 
     "enqueue unread messages from testActor to deadLetters" in {
@@ -112,5 +116,7 @@ class AkkaSpecSpec extends WordSpec with Matchers {
       }
     }
     akka.concurrent.BlockingEventLoop.reset
+    */
   }
+
 }

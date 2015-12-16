@@ -27,19 +27,42 @@ private[akka] object Reflect {
   	  var self: ActorRef
   	}
 
+    try {
+
   	name match {
   	  case "props" =>
-  	  	instance.asInstanceOf[PatchedActorCell].props = value.asInstanceOf[Props]
-  	  	true
+        instance.asInstanceOf[PatchedActorCell].props = value.asInstanceOf[Props]
+        true
   	  case "context" =>
-  	  	instance.asInstanceOf[PatchedActor].context = value.asInstanceOf[ActorContext]
-  	  	true
+        instance.asInstanceOf[PatchedActor].context = value.asInstanceOf[ActorContext]
+        true
   	  case "self" =>
   	  	instance.asInstanceOf[PatchedActor].self = value.asInstanceOf[ActorRef]
   	  	true
-  	  case _ =>
+  	  case any =>
   	  	false
-  	}  
+  	}
+    } catch {
+      case err : Throwable =>
+        err.printStackTrace
+        println("-> reflect call is "+instance+" class is "+instance.getClass+" property "+name+" new value "+value+" error is "+err.getClass)
+        println("instance -> "+(instance == js.undefined))
+        println("props -> "+instance.asInstanceOf[PatchedActorCell].props)
+        println("context -> "+instance.asInstanceOf[PatchedActor].context)
+        println("self -> "+instance.asInstanceOf[PatchedActor].self)
+        //println(" da qui-> "+instance.asInstanceOf[PatchedActor].context)
+        /*
+        name match {
+        case "props" =>
+          println(" da qui-> "+instance.asInstanceOf[PatchedActorCell].props)
+        case "context" =>
+          println(" da qui-> "+instance.asInstanceOf[PatchedActor].context)
+        case "self" =>
+          println(" da qui-> "+instance.asInstanceOf[PatchedActor].self)
+        }
+        */
+        true
+    } 
   }
 
   /**

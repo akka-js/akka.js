@@ -15,31 +15,37 @@ import scala.scalajs.js
 private[akka] object Reflect {
 
   protected[akka] final def lookupAndSetField(clazz: Class[_], instance: AnyRef, name: String, value: Any): Boolean = {
-  	//Now we manage only IR patched classes
-  	import akka.actor._
+    //Now we manage only IR patched classes
+    import akka.actor._
 
-  	type PatchedActorCell = {
-  	  var props: Props
-  	}
+    type PatchedActorCell = {
+      var props: Props
+    }
 
-  	type PatchedActor = {
-  	  var context: ActorContext
-  	  var self: ActorRef
-  	}
+    type PatchedActor = {
+      var context: ActorContext
+      var self: ActorRef
+    }
 
-  	name match {
-  	  case "props" =>
-  	  	instance.asInstanceOf[PatchedActorCell].props = value.asInstanceOf[Props]
-  	  	true
-  	  case "context" =>
-  	  	instance.asInstanceOf[PatchedActor].context = value.asInstanceOf[ActorContext]
-  	  	true
-  	  case "self" =>
-  	  	instance.asInstanceOf[PatchedActor].self = value.asInstanceOf[ActorRef]
-  	  	true
-  	  case _ =>
-  	  	false
-  	}  
+    try {
+
+    name match {
+      case "props" =>
+        instance.asInstanceOf[PatchedActorCell].props = value.asInstanceOf[Props]
+        true
+      case "context" =>
+        instance.asInstanceOf[PatchedActor].context = value.asInstanceOf[ActorContext]
+        true
+      case "self" =>
+        instance.asInstanceOf[PatchedActor].self = value.asInstanceOf[ActorRef]
+        true
+      case any =>
+        false
+    }
+    } catch {
+      case err : Throwable =>
+        false
+    } 
   }
 
   /**

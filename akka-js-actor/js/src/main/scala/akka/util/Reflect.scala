@@ -15,53 +15,35 @@ import scala.scalajs.js
 private[akka] object Reflect {
 
   protected[akka] final def lookupAndSetField(clazz: Class[_], instance: AnyRef, name: String, value: Any): Boolean = {
-  	//Now we manage only IR patched classes
-  	import akka.actor._
+    //Now we manage only IR patched classes
+    import akka.actor._
 
-  	type PatchedActorCell = {
-  	  var props: Props
-  	}
+    type PatchedActorCell = {
+      var props: Props
+    }
 
-  	type PatchedActor = {
-  	  var context: ActorContext
-  	  var self: ActorRef
-  	}
+    type PatchedActor = {
+      var context: ActorContext
+      var self: ActorRef
+    }
 
     try {
-
-  	name match {
-  	  case "props" =>
+    name match {
+      case "props" =>
         instance.asInstanceOf[PatchedActorCell].props = value.asInstanceOf[Props]
         true
-  	  case "context" =>
+      case "context" =>
         instance.asInstanceOf[PatchedActor].context = value.asInstanceOf[ActorContext]
         true
-  	  case "self" =>
-  	  	instance.asInstanceOf[PatchedActor].self = value.asInstanceOf[ActorRef]
-  	  	true
-  	  case any =>
-  	  	false
-  	}
+      case "self" =>
+        instance.asInstanceOf[PatchedActor].self = value.asInstanceOf[ActorRef]
+        true
+      case any =>
+        false
+    }
     } catch {
       case err : Throwable =>
-        err.printStackTrace
-        println("-> reflect call is "+instance+" class is "+instance.getClass+" property "+name+" new value "+value+" error is "+err.getClass)
-        println("instance -> "+(instance == js.undefined))
-        println("props -> "+instance.asInstanceOf[PatchedActorCell].props)
-        println("context -> "+instance.asInstanceOf[PatchedActor].context)
-        println("self -> "+instance.asInstanceOf[PatchedActor].self)
-        //println(" da qui-> "+instance.asInstanceOf[PatchedActor].context)
-        /*
-        name match {
-        case "props" =>
-          println(" da qui-> "+instance.asInstanceOf[PatchedActorCell].props)
-        case "context" =>
-          println(" da qui-> "+instance.asInstanceOf[PatchedActor].context)
-        case "self" =>
-          println(" da qui-> "+instance.asInstanceOf[PatchedActor].self)
-        }
-        */
-        true
+        false
     } 
   }
 

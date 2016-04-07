@@ -27,14 +27,6 @@ private[akka] object Reflect {
       var self: ActorRef
     }
 
-    type WithName = {
-      def name: String
-    }
-
-    type WithPath = {
-      def path: WithName
-    }
-
     try {
       name match {
         case "props" =>

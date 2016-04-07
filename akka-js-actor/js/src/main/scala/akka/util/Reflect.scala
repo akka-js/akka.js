@@ -27,23 +27,32 @@ private[akka] object Reflect {
       var self: ActorRef
     }
 
-    try {
-    name match {
-      case "props" =>
-        instance.asInstanceOf[PatchedActorCell].props = value.asInstanceOf[Props]
-        true
-      case "context" =>
-        instance.asInstanceOf[PatchedActor].context = value.asInstanceOf[ActorContext]
-        true
-      case "self" =>
-        instance.asInstanceOf[PatchedActor].self = value.asInstanceOf[ActorRef]
-        true
-      case any =>
-        false
+    type WithName = {
+      def name: String
     }
+
+    type WithPath = {
+      def path: WithName
+    }
+
+    try {
+      name match {
+        case "props" =>
+          instance.asInstanceOf[PatchedActorCell].props = value.asInstanceOf[Props]
+          true
+        case "context" =>
+          instance.asInstanceOf[PatchedActor].context = value.asInstanceOf[ActorContext]
+          true
+        case "self" =>
+          instance.asInstanceOf[PatchedActor].self = value.asInstanceOf[ActorRef]
+          true
+        case any =>
+          false
+      }
     } catch {
       case err : Throwable =>
-        false
+        //this is dirty and should be improved...
+        s"$value".equals("null") || s"$value".endsWith("deadLetters]")
     } 
   }
 

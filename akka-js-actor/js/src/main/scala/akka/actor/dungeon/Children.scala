@@ -12,7 +12,11 @@ import scala.annotation.tailrec
 import scala.util.control.NonFatal
 import scala.collection.immutable
 import akka.actor._
-import akka.util.Helpers
+import akka.util.{ Unsafe, Helpers }
+
+private[akka] object Children {
+  val GetNobody = () ⇒ Nobody
+}
 
 private[akka] trait Children { this: ActorCell ⇒
 
@@ -43,7 +47,68 @@ private[akka] trait Children { this: ActorCell ⇒
   private[akka] def attachChild(props: Props, name: String, systemService: Boolean): ActorRef =
     makeChild(this, props, checkName(name), async = true, systemService = systemService)
 
+
+  @volatile private var _functionRefsDoNotCallMeDirectly = Map.empty[String, FunctionRef]
+  //js initialization
+  Unsafe.instance.compareAndSwapObject(this, AbstractActorCell.functionRefsOffset, null, Map.empty[String, FunctionRef])
+
+  private def functionRefs: Map[String, FunctionRef] = _functionRefsDoNotCallMeDirectly
+    //Unsafe.instance.getObjectVolatile(this, AbstractActorCell.functionRefsOffset).asInstanceOf[Map[String, FunctionRef]]
+
+  private[akka] def getFunctionRefOrNobody(name: String, uid: Int = ActorCell.undefinedUid): InternalActorRef =
+    functionRefs.getOrElse(name, Children.GetNobody()) match {
+      case f: FunctionRef ⇒
+        if (uid == ActorCell.undefinedUid || f.path.uid == uid) f else Nobody
+      case other ⇒
+        other
+    }
+
+  private[akka] def addFunctionRef(f: (ActorRef, Any) ⇒ Unit): FunctionRef = {
+    val childPath = new ChildActorPath(self.path, randomName(new java.lang.StringBuilder("$$")), ActorCell.newUid())
+    val ref = new FunctionRef(childPath, provider, system.eventStream, f)
+
+    @tailrec def rec(): Unit = {
+      val old = functionRefs
+      val added = old.updated(childPath.name, ref)
+      if (!Unsafe.instance.compareAndSwapObject(this, AbstractActorCell.functionRefsOffset, old, added)) rec()
+    }
+    rec()
+
+    ref
+  }
+
+  private[akka] def removeFunctionRef(ref: FunctionRef): Boolean = {
+    require(ref.path.parent eq self.path, "trying to remove FunctionRef from wrong ActorCell")
+    val name = ref.path.name
+    @tailrec def rec(): Boolean = {
+      val old = functionRefs
+      if (!old.contains(name)) false
+      else {
+        val removed = old - name
+        if (!Unsafe.instance.compareAndSwapObject(this, AbstractActorCell.functionRefsOffset, old, removed)) rec()
+        else {
+          ref.stop()
+          true
+        }
+      }
+    }
+    rec()
+  }
+
+  protected def stopFunctionRefs(): Unit = {
+    val refs = Unsafe.instance.getAndSetObject(this, AbstractActorCell.functionRefsOffset, Map.empty).asInstanceOf[Map[String, FunctionRef]]
+    refs.valuesIterator.foreach(_.stop())
+  }
+
   @volatile private var _nextNameDoNotCallMeDirectly = 0L
+  final protected def randomName(sb: java.lang.StringBuilder): String = {
+    def inc(): Long = {
+      _nextNameDoNotCallMeDirectly += 1
+      _nextNameDoNotCallMeDirectly
+    }
+    Helpers.base64(inc(), sb)
+  }
+
   final protected def randomName(): String = {
     def inc(): Long = {
       _nextNameDoNotCallMeDirectly += 1

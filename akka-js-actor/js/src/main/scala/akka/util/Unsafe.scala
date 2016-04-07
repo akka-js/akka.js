@@ -16,5 +16,11 @@ object Unsafe {
         true
       }
 
+      def getAndSetObject(o: Any, offset: Long, next: Any) = {
+        val ret = unsafeVars.get((o.hashCode,offset)).getOrElse(null)
+        unsafeVars((o.hashCode,offset)) = next
+        ret
+      }
+
     }
 }

@@ -210,6 +210,8 @@ object ActorSystem {
     final val LogDeadLetters: Int = 1
     final val LogDeadLettersDuringShutdown: Boolean = false
 
+    final val SerializeAllMessages: Boolean = false
+
     final val AddLoggingReceive: Boolean = true
     final val DebugAutoReceive: Boolean = false
     final val DebugLifecycle: Boolean = true

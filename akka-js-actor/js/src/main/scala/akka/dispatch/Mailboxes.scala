@@ -104,17 +104,21 @@ private[akka] class Mailboxes(
    def lookupByQueueType(queueType: Class[_ <: Any]): MailboxType = lookup(lookupId(queueType))
 
    private final val rmqClass = classOf[RequiresMessageQueue[_]]
+   */
    /**
     * Return the required message queue type for this class if any.
     */
-   def getRequiredType(actorClass: Class[_ <: Actor]): Class[_] =
+    //this dummy implementation should be verified
+   def getRequiredType(actorClass: Class[_ <: Actor]): Class[_] = null
+   /*
      Reflect.findMarker(actorClass, rmqClass) match {
        case t: ParameterizedType ⇒ t.getActualTypeArguments.head match {
          case c: Class[_] ⇒ c
          case x           ⇒ throw new IllegalArgumentException(s"no wildcard type allowed in RequireMessageQueue argument (was [$x])")
        }
      }
-
+    */
+    /*
    // don’t care if this happens twice
    private var mailboxSizeWarningIssued = false
 
@@ -189,12 +193,13 @@ private[akka] class Mailboxes(
        verifyRequirements(lookup(DefaultMailboxId))
      }
    }
-
+    */
    /**
     * Check if this class can have a required message queue type.
     */
-   def hasRequiredType(actorClass: Class[_ <: Actor]): Boolean = rmqClass.isAssignableFrom(actorClass)
-
+    //this dummy implementation should be verified
+   def hasRequiredType(actorClass: Class[_ <: Actor]): Boolean = false//rmqClass.isAssignableFrom(actorClass)
+   /*
    private def lookupId(queueType: Class[_]): String =
      mailboxBindings.get(queueType) match {
        case None    ⇒ throw new ConfigurationException(s"Mailbox Mapping for [${queueType}] not configured")

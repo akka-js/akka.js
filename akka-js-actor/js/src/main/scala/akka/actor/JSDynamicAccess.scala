@@ -23,10 +23,11 @@ object JSDynamicAccess {
 } 
 
 @annotation.JSExportDescendentClasses
-class JSDynamicAccess(/**val classLoader: ClassLoader*/) extends DynamicAccess {
-	import scala.scalajs.js
+class JSDynamicAccess(val classLoader: ClassLoader) extends DynamicAccess {
 
-  def classLoader: ClassLoader = ???
+  def this() = this(null)
+
+	import scala.scalajs.js
 
 	def getRuntimeClass[A](name: String): js.Dynamic = {
 
@@ -57,7 +58,11 @@ class JSDynamicAccess(/**val classLoader: ClassLoader*/) extends DynamicAccess {
     "akka.actor.LocalActorRefProvider" -> classOf[akka.actor.LocalActorRefProvider],
     //"akka.worker.WorkerActorRefProvider" -> classOf[akka.worker.WorkerActorRefProvider],
     "akka.event.LogExt" -> classOf[akka.event.LogExt],
-    "akka.event.DefaultLogger" -> classOf[akka.event.DefaultLogger]
+    "akka.event.DefaultLogger" -> classOf[akka.event.DefaultLogger],
+    "akka.event.LoggingBusActor" -> classOf[akka.event.LoggingBusActor],
+    //da togliere?"akka.event.LoggingFilter" -> classOf[akka.event.DefaultLoggingFilter],
+    "akka.event.DefaultLoggingFilter" -> classOf[akka.event.DefaultLoggingFilter],
+    "akka.actor.EventLoopScheduler" -> classOf[akka.actor.EventLoopScheduler]
   ) ++ JSDynamicAccess.additional_classes_map
 
   def injectClass[T](nc: (String, Class[T])) = 
@@ -97,14 +102,16 @@ class JSDynamicAccess(/**val classLoader: ClassLoader*/) extends DynamicAccess {
     }
     val packageName = splitted.tail.reverse
 
+    Try {
     val obj =
         (packageName.foldLeft(scala.scalajs.runtime.environmentInfo.exportsNamespace){
          (prev, part) =>
             prev.selectDynamic(part)
          }).applyDynamic(objName)()
 
-    Try {
       obj.asInstanceOf[T]
     }
   }
 }
+
+class ReflectiveDynamicAccess(cl: ClassLoader) extends JSDynamicAccess() {}

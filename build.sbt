@@ -18,7 +18,8 @@ lazy val akkaActor = crossProject.in(file("akka-js-actor"))
     version := "0.1.1-SNAPSHOT"
   ).jsSettings(
     libraryDependencies ++= Seq(
-      "eu.unicredit" %%% "shocon" % "0.0.2-SNAPSHOT"
+      "eu.unicredit" %%% "shocon" % "0.0.2-SNAPSHOT",
+      "org.scala-js" %%% "scalajs-java-time" % "0.1.0"
     ),
     compile in Compile := {
       val analysis = (compile in Compile).value

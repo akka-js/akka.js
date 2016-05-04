@@ -6,17 +6,15 @@ package akka.util
 import java.util.Comparator
 import scala.annotation.tailrec
 import java.util.regex.Pattern
-/**
- * @note IMPLEMENT IN SCALA.JS
- *
- import com.typesafe.config.Config
- */
+import com.typesafe.config.Config
 import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.duration.Duration
 import java.util.concurrent.TimeUnit
 import java.util.Locale
 
 object Helpers {
+
+  def toRootLowerCase(s: String) = s.toLowerCase()
 
   /**
    * @note IMPLEMENT IN SCALA.JS
@@ -132,9 +130,7 @@ object Helpers {
   /**
    * INTERNAL API
    */
-/**
- * @note IMPLEMENT IN SCALA.JS
- *
+
    private[akka] final implicit class ConfigOps(val config: Config) extends AnyVal {
      def getMillisDuration(path: String): FiniteDuration = getDuration(path, TimeUnit.MILLISECONDS)
 
@@ -143,6 +139,5 @@ object Helpers {
      private def getDuration(path: String, unit: TimeUnit): FiniteDuration =
        Duration(config.getDuration(path, unit), unit)
    }
- */
 
 }

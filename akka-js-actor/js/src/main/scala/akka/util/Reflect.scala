@@ -53,7 +53,7 @@ private[akka] object Reflect {
    * @param clazz the class which to instantiate an instance of
    * @return a new instance from the default constructor of the given class
    */
-  private[akka] def instantiate[T](clazz: Class[T]): T = 
+  private[akka] def instantiate[T](clazz: Class[T]): T =
     try instantiate[T](findConstructor(clazz, immutable.Seq[Any]()), immutable.Seq[Any]())
     catch {
       case iae: IllegalAccessException ⇒
@@ -92,4 +92,8 @@ private[akka] object Reflect {
         prev.selectDynamic(part)
       }
   }
+
+  val getCallerClass: Option[Int ⇒ Class[_]] = None
+
+  private[akka] def findClassLoader(): ClassLoader = null
 }

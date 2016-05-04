@@ -6,11 +6,9 @@ package akka.dispatch
 
 import java.util.concurrent.TimeUnit
 
-import java.util.concurrent.{ ConcurrentHashMap/**@note IMPLEMENT IN SCALA.JS, TimeUnit, ThreadFactory */}
-/** @note IMPLEMENT IN SCALA.JS
+import java.util.concurrent.{ ConcurrentHashMap, ThreadFactory }
 import com.typesafe.config.{ ConfigFactory, Config }
 import akka.actor.{ Scheduler, DynamicAccess, ActorSystem }
-*/
 import com.typesafe.config.Config
 import akka.actor.{ Scheduler, ActorSystem }
 import akka.event.Logging.Warning
@@ -27,10 +25,10 @@ import scala.concurrent.ExecutionContext
  * DispatcherPrerequisites represents useful contextual pieces when constructing a MessageDispatcher
  */
 trait DispatcherPrerequisites {
-  /** @note IMPLEMENT IN SCALA.JS def threadFactory: ThreadFactory */
+  def threadFactory: ThreadFactory
   def eventStream: EventStream
   def scheduler: Scheduler
-  /** @note IMPLEMENT IN SCALA.JS def dynamicAccess: DynamicAccess */
+  def dynamicAccess: DynamicAccess
   def settings: ActorSystem.Settings
   def mailboxes: Mailboxes
   def defaultExecutionContext: Option[ExecutionContext]
@@ -39,11 +37,11 @@ trait DispatcherPrerequisites {
 /**
  * INTERNAL API
  */
-private[akka] case class DefaultDispatcherPrerequisites(
-  /** @note IMPLEMENT IN SCALA.JS val threadFactory: ThreadFactory, */
+private[akka] final case class DefaultDispatcherPrerequisites(
+  val threadFactory: ThreadFactory,
   val eventStream: EventStream,
   val scheduler: Scheduler,
-  /** @note IMPLEMENT IN SCALA.JS val dynamicAccess: DynamicAccess, */
+  val dynamicAccess: DynamicAccess,
   val settings: ActorSystem.Settings,
   val mailboxes: Mailboxes,
   val defaultExecutionContext: Option[ExecutionContext]) extends DispatcherPrerequisites

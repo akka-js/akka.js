@@ -34,6 +34,7 @@ import scala.util.Failure
 import scala.util.control.NonFatal
 import akka.actor.ActorRef
 import akka.actor.DeadLetter
+import akka.actor.DynamicAccess
 import akka.dispatch.sysmsg.SystemMessage
 import akka.dispatch.sysmsg.LatestFirstSystemMessageList
 import akka.dispatch.sysmsg.EarliestFirstSystemMessageList
@@ -45,13 +46,9 @@ object Mailboxes {
 }
 
 private[akka] class Mailboxes(
-                              /**
-                               * @note IMPLEMENT IN SCALA.JS
-                               *
-                               * val settings: ActorSystem.Settings,
-                               * val eventStream: EventStream,
-                               * dynamicAccess: DynamicAccess,
-                               */
+                               val settings: ActorSystem.Settings,
+                               val eventStream: EventStream,
+                               dynamicAccess: DynamicAccess,
                                deadLetters: ActorRef) {
 
   import Mailboxes._

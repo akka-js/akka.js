@@ -20,6 +20,7 @@ import scala.util.control.NoStackTrace
 import scala.util.control.NonFatal
 import java.util.Locale
 import scala.reflect.ClassTag
+import scala.scalajs.js.annotation
 
 /**
  * This trait brings log level handling to the EventStream: it reads the log
@@ -155,7 +156,9 @@ trait LoggingBus extends ActorEventBus {
           if loggerName != StandardOutLogger.getClass.getName
         } yield {
           system.dynamicAccess.getClassFor[Actor](loggerName).map({
-            case actorClass ⇒ addLogger(system, actorClass, level, logName)
+            case actorClass ⇒ 
+              val tmp = addLogger(system, actorClass, level, logName)
+              tmp
           }).recover({
             case e ⇒ throw new ConfigurationException(
               "Logger specified in config can't be loaded [" + loggerName +
@@ -216,12 +219,11 @@ trait LoggingBus extends ActorEventBus {
    * INTERNAL API
    */
   private def addLogger(system: ActorSystemImpl, clazz: Class[_ <: Actor], level: LogLevel, logName: String): ActorRef = {
-    val name = "log" + Extension(system).id() + "-" + simpleName(clazz)
+    val name = "log" /*+ Extension(system).id() this causes a deadlock...*/ + "-" + simpleName(clazz)
     val actor = system.systemActorOf(Props(clazz), name)
     val senderActor = system.systemActorOf(Props(
       //@note IMPLEMENT IN SCALA.JS <<<
       new LoggingBusActor(name, logName, me, actor, level)), "loggerChecker")
-    
     /** @note IMPLEMENT IN SCALA.JS
     implicit def timeout = system.settings.LoggerStartTimeout
     import akka.pattern.ask
@@ -1130,6 +1132,41 @@ trait LoggingAdapter {
 }
 
 /**
+ * Filter of log events that is used by the `LoggingAdapter` before
+ * publishing log events to the `eventStream`. It can perform
+ * fine grained filtering based on the log source.
+ *
+ * Note that the [[EventStream]] will only subscribe `loggers` to the events
+ * corresponding to the `logLevel` of the `EventStream`. Therefore it is good
+ * practice that the `LoggingFilter` implementation first filters using the
+ * `logLevel` of the `EventStream` before applying more fine grained filters.
+ */
+trait LoggingFilter {
+  def isErrorEnabled(logClass: Class[_], logSource: String): Boolean
+  def isWarningEnabled(logClass: Class[_], logSource: String): Boolean
+  def isInfoEnabled(logClass: Class[_], logSource: String): Boolean
+  def isDebugEnabled(logClass: Class[_], logSource: String): Boolean
+}
+
+/**
+ * Default [[LoggingFilter]] that uses the logLevel of the `eventStream`, which
+ * initial value is defined in configuration. The logLevel `eventStream` can be
+ * changed while the system is running.
+ */
+@annotation.JSExport
+class DefaultLoggingFilter(any: Any*/*logLevel: () ⇒ Logging.LogLevel*/) extends LoggingFilter {
+
+  def this(settings: Settings, eventStream: EventStream) = this(null)
+    //this(() ⇒ eventStream.logLevel)
+
+  import Logging._
+  def isErrorEnabled(logClass: Class[_], logSource: String) = true//logLevel() >= ErrorLevel
+  def isWarningEnabled(logClass: Class[_], logSource: String) = true//logLevel() >= WarningLevel
+  def isInfoEnabled(logClass: Class[_], logSource: String) = true//logLevel() >= InfoLevel
+  def isDebugEnabled(logClass: Class[_], logSource: String) = true//logLevel() >= DebugLevel
+}
+
+/**
  * LoggingAdapter extension which adds MDC support.
  * Only recommended to be used within Actors as it isn't thread safe.
  */
@@ -1195,14 +1232,20 @@ trait DiagnosticLoggingAdapter extends LoggingAdapter {
 /**
  * [[akka.event.LoggingAdapter]] that publishes [[akka.event.Logging.LogEvent]] to event stream.
  */
-class BusLogging(val bus: LoggingBus, val logSource: String, val logClass: Class[_]) extends LoggingAdapter {
+class BusLogging(val bus: LoggingBus, val logSource: String, val logClass: Class[_], loggingFilter: LoggingFilter)
+  extends LoggingAdapter {
+
+  // For backwards compatibility, and when LoggingAdapter is created without direct
+  // association to an ActorSystem
+  def this(bus: LoggingBus, logSource: String, logClass: Class[_]) =
+    this(bus, logSource, logClass, new DefaultLoggingFilter(() ⇒ bus.logLevel))
 
   import Logging._
 
-  def isErrorEnabled = bus.logLevel >= ErrorLevel
-  def isWarningEnabled = bus.logLevel >= WarningLevel
-  def isInfoEnabled = bus.logLevel >= InfoLevel
-  def isDebugEnabled = bus.logLevel >= DebugLevel
+  def isErrorEnabled = loggingFilter.isErrorEnabled(logClass, logSource)
+  def isWarningEnabled = loggingFilter.isWarningEnabled(logClass, logSource)
+  def isInfoEnabled = loggingFilter.isInfoEnabled(logClass, logSource)
+  def isDebugEnabled = loggingFilter.isDebugEnabled(logClass, logSource)
 
   protected def notifyError(message: String): Unit = bus.publish(Error(logSource, logClass, message, mdc))
   protected def notifyError(cause: Throwable, message: String): Unit = bus.publish(Error(cause, logSource, logClass, message, mdc))

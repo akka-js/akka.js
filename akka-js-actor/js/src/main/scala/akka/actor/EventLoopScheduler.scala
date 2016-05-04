@@ -3,8 +3,15 @@ package akka.actor
 import scala.scalajs.js.timers._
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.FiniteDuration
+import java.util.concurrent.ThreadFactory
+import com.typesafe.config.Config
+import akka.event.LoggingAdapter
+import scala.scalajs.js.annotation
 
-class EventLoopScheduler extends Scheduler {
+@annotation.JSExport
+class EventLoopScheduler(config: Config,
+                         log: LoggingAdapter,
+                         threadFactory: ThreadFactory) extends Scheduler {
 
   def schedule(
       initialDelay: FiniteDuration,

@@ -5,6 +5,7 @@
 package akka.dispatch
 
 import java.util.Collection
+import java.util.concurrent.ThreadFactory
 /** @note IMPLEMENT IN SCALA.JS
 import scala.concurrent.{ Awaitable, BlockContext, CanAwait }
 import scala.concurrent.duration.Duration
@@ -22,8 +23,9 @@ import java.util.concurrent.{
   ThreadFactory,
   ThreadPoolExecutor
 }
-import java.util.concurrent.atomic.{ AtomicReference, AtomicLong }
 */
+import java.util.concurrent.atomic.{ AtomicReference, AtomicLong }
+
 import java.util.concurrent.{ TimeUnit, Callable, ExecutorService }
 
 /** @note IMPLEMENT IN SCALA.JS
@@ -162,11 +164,11 @@ case class ThreadPoolConfigBuilder(config: ThreadPoolConfig) {
   def configure(fs: Option[Function[ThreadPoolConfigBuilder, ThreadPoolConfigBuilder]]*): ThreadPoolConfigBuilder =
     fs.foldLeft(this)((c, f) ⇒ f.map(_(c)).getOrElse(c))
 }
-
+*/
 object MonitorableThreadFactory {
   val doNothing: Thread.UncaughtExceptionHandler =
     new Thread.UncaughtExceptionHandler() { def uncaughtException(thread: Thread, cause: Throwable) = () }
-
+/*
   private[akka] class AkkaForkJoinWorkerThread(_pool: ForkJoinPool) extends ForkJoinWorkerThread(_pool) with BlockContext {
     override def blockOn[T](thunk: ⇒ T)(implicit permission: CanAwait): T = {
       val result = new AtomicReference[Option[T]](None)
@@ -180,6 +182,7 @@ object MonitorableThreadFactory {
       result.get.get // Exception intended if None
     }
   }
+*/
 }
 
 case class MonitorableThreadFactory(name: String,
@@ -187,28 +190,39 @@ case class MonitorableThreadFactory(name: String,
                                     contextClassLoader: Option[ClassLoader],
                                     exceptionHandler: Thread.UncaughtExceptionHandler = MonitorableThreadFactory.doNothing,
                                     protected val counter: AtomicLong = new AtomicLong)
-  extends ThreadFactory with ForkJoinPool.ForkJoinWorkerThreadFactory {
+  extends ThreadFactory /*with ForkJoinPool.ForkJoinWorkerThreadFactory*/ {
 
-  def newThread(pool: ForkJoinPool): ForkJoinWorkerThread = {
+  def newThread(pool: Any/*ForkJoinPool*/)/*: ForkJoinWorkerThread*/ = {
+    /*
     val t = wire(new MonitorableThreadFactory.AkkaForkJoinWorkerThread(pool))
     // Name of the threads for the ForkJoinPool are not customizable. Change it here.
     t.setName(name + "-" + counter.incrementAndGet())
     t
+    */
+    Thread.currentThread
   }
 
-  def newThread(runnable: Runnable): Thread = wire(new Thread(runnable, name + "-" + counter.incrementAndGet()))
+  class JsThread(runnable: Runnable) extends Thread {
+
+    override def start() = runnable.run
+
+  }
+
+  def newThread(runnable: Runnable): Thread = new JsThread(runnable)
 
   def withName(newName: String): MonitorableThreadFactory = copy(newName)
 
   protected def wire[T <: Thread](t: T): T = {
+    /*
     t.setUncaughtExceptionHandler(exceptionHandler)
     t.setDaemon(daemonic)
     contextClassLoader foreach t.setContextClassLoader
+    */
     t
   }
+//}
+
 }
-}
-*/
 
 
 /**

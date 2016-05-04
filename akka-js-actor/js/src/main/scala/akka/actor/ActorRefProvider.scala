@@ -79,12 +79,7 @@ trait ActorRefProvider {
   /**
    * The Deployer associated with this ActorRefProvider
    */
- /**
-  * @note IMPLEMENT IN SCALA.JS
-  * Deployer is NOT implemented
-  *
-  * def deployer: Deployer
-  */
+  def deployer: Deployer
 
   /**
    * Generates and returns a unique actor path below “/temp”.
@@ -166,7 +161,7 @@ trait ActorRefProvider {
    * This Future is completed upon termination of this ActorRefProvider, which
    * is usually initiated by stopping the guardian via ActorSystem.stop().
    */
-  def terminationFuture: Future[Unit]
+  def terminationFuture: Future[Terminated]
 
   /**
    * Obtain the address which is to be used within sender references when
@@ -451,34 +446,31 @@ private[akka] object LocalActorRefProvider {
  * Depending on this class is not supported, only the [[ActorRefProvider]] interface is supported.
  */
 @scala.scalajs.js.annotation.JSExport
-/*private[akka]*/ class LocalActorRefProvider /*private[akka]*/ (
-                                                          _systemName: String,
-                                                          override val settings: ActorSystem.Settings,
-                                                          val eventStream: EventStream,
-                                                          /**
-                                                           * @note IMPLEMENT IN SCALA.JS
-                                                           *
-                                                           val dynamicAccess: DynamicAccess,
-                                                           override val deployer: Deployer,
-                                                           */
-                                                          _deadLetters: Option[ActorPath ⇒ InternalActorRef])
-  extends ActorRefProvider {
+class LocalActorRefProvider (
+  _systemName: String,
+  override val settings: ActorSystem.Settings,
+  val eventStream: EventStream,
+  val dynamicAccess: DynamicAccess//,
+  //override val deployer: Deployer,
+  //_deadLetters: Option[ActorPath ⇒ InternalActorRef])
+  ) extends ActorRefProvider {
 
   // this is the constructor needed for reflectively instantiating the provider
+  /*
   def this(_systemName: String,
            settings: ActorSystem.Settings,
-           eventStream: EventStream
-           /** @note IMPLEMENT IN SCALA.JS , dynamicAccess: DynamicAccess */) =
+           eventStream: EventStream,
+           dynamicAccess: DynamicAccess) =
     this(_systemName,
       settings,
       eventStream,
-    /**
-     * @note IMPLEMENT IN SCALA.JS
-     * Deployer not implemented
-     * dynamicAccess,
-     *  new Deployer(settings, dynamicAccess),
-     */
+      dynamicAccess,
+      //new Deployer(settings, dynamicAccess),
       None)
+  */
+  val _deadLetters: Option[ActorPath ⇒ InternalActorRef] = None
+
+  override val deployer: Deployer = null
 
   override val rootPath: ActorPath = RootActorPath(Address("akka", _systemName))
 
@@ -504,29 +496,35 @@ private[akka] object LocalActorRefProvider {
    * receive only Supervise/ChildTerminated system messages or Failure message.
    */
   private[akka] val theOneWhoWalksTheBubblesOfSpaceTime: InternalActorRef = new MinimalActorRef {
-    val stopped = new Switch(false)
-
-    @volatile
-    var causeOfTermination: Option[Throwable] = None
+    val causeOfTermination: Promise[Terminated] = Promise[Terminated]()
 
     val path = rootPath / "bubble-walker"
 
     def provider: ActorRefProvider = LocalActorRefProvider.this
 
-    override def stop(): Unit = stopped switchOn { terminationPromise.complete(causeOfTermination.map(Failure(_)).getOrElse(Success(()))) }
-    @deprecated("Use context.watch(actor) and receive Terminated(actor)", "2.2") override def isTerminated: Boolean = stopped.isOn
+    def isWalking = causeOfTermination.future.isCompleted == false
 
-    override def !(message: Any)(implicit sender: ActorRef = Actor.noSender): Unit = stopped.ifOff(message match {
-      case null ⇒ throw new InvalidMessageException("Message is null")
-      case _    ⇒ log.error(s"$this received unexpected message [$message]")
-    })
+    override def stop(): Unit = {
+      causeOfTermination.trySuccess(Terminated(provider.rootGuardian)(existenceConfirmed = true, addressTerminated = true)) //Idempotent
+      terminationPromise.tryCompleteWith(causeOfTermination.future) // Signal termination downstream, idempotent
+    }
 
-    override def sendSystemMessage(message: SystemMessage): Unit = stopped ifOff {
+    @deprecated("Use context.watch(actor) and receive Terminated(actor)", "2.2")
+    override private[akka] def isTerminated: Boolean = !isWalking
+
+    override def !(message: Any)(implicit sender: ActorRef = Actor.noSender): Unit =
+      if (isWalking)
+        message match {
+          case null ⇒ throw new InvalidMessageException("Message is null")
+          case _    ⇒ log.error(s"$this received unexpected message [$message]")
+        }
+
+    override def sendSystemMessage(message: SystemMessage): Unit = if (isWalking) {
       message match {
-        case Failed(child, ex, _) ⇒
+        case Failed(child: InternalActorRef, ex, _) ⇒
           log.error(ex, s"guardian $child failed, shutting down!")
-          causeOfTermination = Some(ex)
-          child.asInstanceOf[InternalActorRef].stop()
+          causeOfTermination.tryFailure(ex)
+          child.stop()
         case Supervise(_, _)           ⇒ // TODO register child in some map to keep track of it and enable shutdown after all dead
         case _: DeathWatchNotification ⇒ stop()
         case _                         ⇒ log.error(s"$this received unexpected system message [$message]")
@@ -544,9 +542,9 @@ private[akka] object LocalActorRefProvider {
   @volatile
   private var system: ActorSystemImpl = _
 
-  lazy val terminationPromise: Promise[Unit] = Promise[Unit]()
+  lazy val terminationPromise: Promise[Terminated] = Promise[Terminated]()
 
-  def terminationFuture: Future[Unit] = terminationPromise.future
+  def terminationFuture: Future[Terminated] = terminationPromise.future
 
   @volatile
   private var extraNames: Map[String, InternalActorRef] = Map()

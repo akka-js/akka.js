@@ -16,7 +16,7 @@ import akka.event.DefaultLogger
 import akka.actor.NoSerializationVerificationNeeded
 import akka.japi.Util.immutableSeq
 import java.lang.{ Iterable ⇒ JIterable }
-import akka.util.BoxedType 
+import akka.util.BoxedType
 
 /**
  * Implementation helpers of the EventFilter facilities: send `Mute`
@@ -79,7 +79,7 @@ abstract class EventFilter(occurrences: Int) {
    */
   protected def matches(event: LogEvent): Boolean
 
-  final def apply(event: LogEvent): Boolean = { 
+  final def apply(event: LogEvent): Boolean = {
     if (matches(event)) {
       if (todo != Int.MaxValue) todo -= 1
       true
@@ -477,7 +477,9 @@ case class DeadLettersFilter(val messageClass: Class[_])(occurrences: Int) exten
  * }
  * </code></pre>
  */
-object TestEventListener { var p = scala.concurrent.Promise[Boolean] }
+object TestEventListener {
+  var p = scala.concurrent.Promise[Boolean]
+}
 
 import scala.scalajs.js.annotation
 @annotation.JSExport
@@ -496,7 +498,7 @@ class TestEventListener extends /*Logging.*/DefaultLogger {
       sender() ! LoggerInitialized
     case Mute(filters)   ⇒ filters foreach addFilter
     case UnMute(filters) ⇒ filters foreach removeFilter
-    case event: LogEvent ⇒ if (!filter(event)) print(event) 
+    case event: LogEvent ⇒ if (!filter(event)) print(event)
     case DeadLetter(msg, snd, rcp) ⇒
       if (!msg.isInstanceOf[Terminate]) {
         val event = Warning(rcp.path.toString, rcp.getClass, msg)

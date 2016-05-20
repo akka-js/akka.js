@@ -9,7 +9,8 @@ val commonSettings = Seq(
     ),
     resolvers += "Typesafe repository" at "http://repo.typesafe.com/typesafe/releases/",
     resolvers += "sonatype-snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
-    scalaJSStage in Global := FastOptStage
+    scalaJSStage in Global := FastOptStage,
+    cancelable in Global := true
 )
 
 lazy val akkaActor = crossProject.in(file("akka-js-actor"))
@@ -42,7 +43,11 @@ lazy val akkaTestkit = crossProject.in(file("akka-js-testkit"))
   .settings(
     version := "0.1.0-SNAPSHOT"
   ).jsSettings(
-    libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.0-M14"
+    libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.0-M16-SNAP6",
+    scalaJSStage in Global := FastOptStage,
+    scalaJSUseRhino in Global := false,
+    preLinkJSEnv := NodeJSEnv().value,
+    postLinkJSEnv := NodeJSEnv().value.withSourceMap(true)
   ).dependsOn(akkaActor)
 
 lazy val akkaTestkitJS = akkaTestkit.js.dependsOn(akkaActorJS)

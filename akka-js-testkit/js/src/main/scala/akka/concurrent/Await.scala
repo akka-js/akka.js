@@ -12,7 +12,7 @@ import scala.scalajs.js.Dynamic.global
 import scala.scalajs.js.timers._
 import scala.scalajs.runtime.UndefinedBehaviorError
 import scala.collection.mutable.{ Queue, ListBuffer }
- 
+
 
 object ManagedEventLoop {
 
@@ -101,7 +101,7 @@ object ManagedEventLoop {
     global.clearTimeout = jsClearTimeout
     global.clearInterval = jsClearInterval
   }
- 
+
   def manage: Unit = {
     global.setTimeout = { (f: js.Function0[_], delay: Number) =>
       if(f.toString() != "undefined") {
@@ -128,7 +128,7 @@ object ManagedEventLoop {
       events -= event.asInstanceOf[IntervalEvent]
     }
   }
-  
+
   manage
 }
 
@@ -161,7 +161,6 @@ object Await {
     @scala.annotation.tailrec
     def loop(f: Future[T]): Try[T] = {
       val execution: Duration = ManagedEventLoop.tick
-
       if(execution > endTime) throw new java.util.concurrent.TimeoutException(s"Futures timed out after [${atMost.toMillis}] milliseconds")
       else f.value match {
         case None => loop(f)

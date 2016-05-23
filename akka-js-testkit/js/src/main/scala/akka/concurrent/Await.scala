@@ -1,6 +1,5 @@
 package akka.concurrent
 
-
 import java.util.concurrent.TimeUnit
 
 import scala.util.{Try, Success, Failure }
@@ -13,7 +12,6 @@ import scala.scalajs.js.timers._
 import scala.scalajs.runtime.UndefinedBehaviorError
 import scala.collection.mutable.{ Queue, ListBuffer }
 
-
 object ManagedEventLoop {
 
   private val jsSetTimeout = global.setTimeout
@@ -21,7 +19,7 @@ object ManagedEventLoop {
   private val jsClearTimeout = global.clearTimeout
   private val jsClearInterval = global.clearInterval
 
-  def timer() = Duration.fromNanos(System.nanoTime())
+  def timer() = Duration(System.currentTimeMillis, TimeUnit.MILLISECONDS)
 
   type JSFun = js.Function0[Any]
   private abstract class Event(handler: JSFun) {
@@ -44,7 +42,7 @@ object ManagedEventLoop {
         }, time.asInstanceOf[js.Any])
       )
     def hasToRun(now: Duration): Boolean = {
-      (now > creationDate + Duration.fromNanos(time*1000000))
+      (now > creationDate + Duration(time, TimeUnit.MILLISECONDS))
     }
     val hasToBeRemoved: Boolean = true
   }
@@ -59,7 +57,7 @@ object ManagedEventLoop {
         }, time.asInstanceOf[js.Any])
       )
     def hasToRun(now: Duration): Boolean = {
-      (now > lastRan + Duration.fromNanos(time*1000000))
+      (now > lastRan + Duration(time, TimeUnit.MILLISECONDS))
     }
     val hasToBeRemoved: Boolean = false
   }
@@ -86,9 +84,10 @@ object ManagedEventLoop {
 
     val toBeProcessed = events.filter(_.hasToRun(now))
 
-    toBeProcessed.foreach(_.run())
-
     val toBeRemoved = toBeProcessed.filter(_.hasToBeRemoved)
+    events --= toBeRemoved
+
+    toBeProcessed.foreach(_.run())
 
     events --= toBeRemoved
 

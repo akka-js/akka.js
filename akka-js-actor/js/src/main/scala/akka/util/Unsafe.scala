@@ -24,9 +24,7 @@ object Unsafe {
     final val instance = new {
 
       def getObjectVolatile(o: Any, offset: Long): AnyRef = {
-        unsafeVars.get((o.hashCode,offset.toInt)).getOrElse(fallback(offset)) match {
-          case ar: AnyRef => ar
-        }
+        unsafeVars.get((o.hashCode,offset.toInt)).getOrElse(fallback(offset)).asInstanceOf[AnyRef]
       }
 
       def compareAndSwapObject(o: Any, offset: Long, old: Any, next: Any) = {

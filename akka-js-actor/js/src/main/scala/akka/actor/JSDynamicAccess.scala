@@ -54,15 +54,14 @@ class JSDynamicAccess(val classLoader: ClassLoader) extends DynamicAccess {
   here we are waiting for Scala.js official implementation
   */
   private val classes_map: mutable.HashMap[String, Class[_]] = mutable.HashMap(
-    //"akka.testkit.TestEventListener" -> classOf[akka.testkit.TestEventListener],
     "akka.actor.LocalActorRefProvider" -> classOf[akka.actor.LocalActorRefProvider],
-    //"akka.worker.WorkerActorRefProvider" -> classOf[akka.worker.WorkerActorRefProvider],
+    "akka.actor.JSLocalActorRefProvider" -> classOf[akka.actor.JSLocalActorRefProvider],
     "akka.event.LogExt" -> classOf[akka.event.LogExt],
     "akka.event.DefaultLogger" -> classOf[akka.event.DefaultLogger],
     "akka.event.LoggingBusActor" -> classOf[akka.event.LoggingBusActor],
-    //da togliere?"akka.event.LoggingFilter" -> classOf[akka.event.DefaultLoggingFilter],
     "akka.event.DefaultLoggingFilter" -> classOf[akka.event.DefaultLoggingFilter],
-    "akka.actor.EventLoopScheduler" -> classOf[akka.actor.EventLoopScheduler]
+    "akka.actor.EventLoopScheduler" -> classOf[akka.actor.EventLoopScheduler],
+    "akka.actor.DefaultSupervisorStrategy" -> classOf[akka.actor.DefaultSupervisorStrategy]
   ) ++ JSDynamicAccess.additional_classes_map
 
   def injectClass[T](nc: (String, Class[T])) = 

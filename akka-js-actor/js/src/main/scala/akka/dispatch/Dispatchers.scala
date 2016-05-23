@@ -88,16 +88,16 @@ class Dispatchers(val settings: ActorSystem.Settings, val prerequisites: Dispatc
    */
   
   def lookup(id: String): MessageDispatcher = new DispatcherConfigurator(new Config, prerequisites).dispatcher() /** lookupConfigurator(id).dispatcher() */
-  /**@note IMPLEMENT IN SCALA.JS
+
   /**
    * Checks that the configuration provides a section for the given dispatcher.
    * This does not guarantee that no ConfigurationException will be thrown when
    * using this dispatcher, because the details can only be checked by trying
    * to instantiate it, which might be undesirable when just checking.
    */
-  
   def hasDispatcher(id: String): Boolean = dispatcherConfigurators.containsKey(id) /** @note IMPLEMENT IN SCALA.JS || cachingConfig.hasPath(id) */
-
+  
+  /**@note IMPLEMENT IN SCALA.JS
   private def lookupConfigurator(id: String): MessageDispatcherConfigurator = {
     dispatcherConfigurators.get(id) match {
     /** @note IMPLEMENT IN SCALA.JS  

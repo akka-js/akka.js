@@ -5,6 +5,8 @@ val commonSettings = Seq(
         "-deprecation",
         "-unchecked",
         "-feature",
+        "-language:postfixOps",
+        "-language:reflectiveCalls",
         "-encoding", "utf8"
     ),
     resolvers += "Typesafe repository" at "http://repo.typesafe.com/typesafe/releases/",

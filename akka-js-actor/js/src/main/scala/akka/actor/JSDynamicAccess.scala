@@ -1,16 +1,10 @@
-/**
- * Copyright (C) 2009-2014 Typesafe Inc. <http://www.typesafe.com>
- */
 package akka.actor
 
 import scala.collection.immutable
 import scala.reflect.ClassTag
 import scala.util.Try
 import scala.scalajs.js.annotation
-//import akka.testkit.TestKit
-//import akka.testkit.TestEventListener
 import akka.event.LogExt
-//import akka.worker.WorkerActorRefProvider
 import scala.collection.mutable
 
 object JSDynamicAccess {

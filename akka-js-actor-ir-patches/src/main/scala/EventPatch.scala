@@ -2,12 +2,6 @@ package akka.event
 
 import akka.actor._
 
-//probably this will be removed at a certain point
-class LoggingBusActor {
-  implicit var context: ActorContext = null
-  implicit final var self: ActorRef = null
-}
-
 class DeadLetterListener {
   implicit var context: ActorContext = null
   implicit final var self: ActorRef = null
@@ -16,4 +10,26 @@ class DeadLetterListener {
 class DefaultLogger {
   implicit var context: ActorContext = null
   implicit final var self: ActorRef = null
+}
+
+class JSDefaultLogger {
+  implicit var context: ActorContext = null
+  implicit final var self: ActorRef = null
+}
+
+class EventStream {
+  implicit var context: ActorContext = null
+  implicit final var self: ActorRef = null
+}
+
+class EventStreamUnsubscriber {
+  implicit var context: ActorContext = null
+  implicit final var self: ActorRef = null
+}
+
+object Logging {
+  class StandardOutLogger {
+    implicit var context: ActorContext = null
+    implicit final var self: ActorRef = null
+  }
 }

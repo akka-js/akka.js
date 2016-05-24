@@ -4,7 +4,6 @@ import scala.collection.immutable
 import scala.reflect.ClassTag
 import scala.util.Try
 import scala.scalajs.js.annotation
-import akka.event.LogExt
 import scala.collection.mutable
 
 object JSDynamicAccess {
@@ -50,10 +49,8 @@ class JSDynamicAccess(val classLoader: ClassLoader) extends DynamicAccess {
   private val classes_map: mutable.HashMap[String, Class[_]] = mutable.HashMap(
     "akka.actor.LocalActorRefProvider" -> classOf[akka.actor.LocalActorRefProvider],
     "akka.actor.JSLocalActorRefProvider" -> classOf[akka.actor.JSLocalActorRefProvider],
-    "akka.event.LogExt" -> classOf[akka.event.LogExt],
-    "akka.event.DefaultLogger" -> classOf[akka.event.DefaultLogger],
-    "akka.event.LoggingBusActor" -> classOf[akka.event.LoggingBusActor],
-    "akka.event.DefaultLoggingFilter" -> classOf[akka.event.DefaultLoggingFilter],
+    "akka.event.JSDefaultLogger" -> classOf[akka.event.JSDefaultLogger],
+    "akka.event.JSDefaultLoggingFilter" -> classOf[akka.event.JSDefaultLoggingFilter],
     "akka.actor.EventLoopScheduler" -> classOf[akka.actor.EventLoopScheduler],
     "akka.actor.DefaultSupervisorStrategy" -> classOf[akka.actor.DefaultSupervisorStrategy]
   ) ++ JSDynamicAccess.additional_classes_map

@@ -8,9 +8,10 @@ import akka.concurrent.ManagedEventLoop
 class TestTimeSpec extends AkkaSpec {// @note IMPLEMENT IN SCALA.JS Map("akka.test.timefactor" -> 2.0)) {
 
   "A TestKit" must {
+    ManagedEventLoop.manage
 
     "correctly dilate times" taggedAs TimingTest in {
-      ManagedEventLoop.manage
+
       1.second.dilated.toNanos should be(1000000000L * testKitSettings.TestTimeFactor)
 
       val probe = TestProbe()
@@ -23,14 +24,12 @@ class TestTimeSpec extends AkkaSpec {// @note IMPLEMENT IN SCALA.JS Map("akka.te
     }
 
    "awaitAssert must throw correctly" in {
-      ManagedEventLoop.manage
       awaitAssert("foo" should be("foo"))
       within(300.millis, 2.seconds) {
         intercept[TestFailedException] {
           awaitAssert("foo" should be("bar"), 500.millis, 300.millis)
         }
       }
-      ManagedEventLoop.reset
     }
 
   }

@@ -150,10 +150,11 @@ trait TestKitBase {
   /**
    * ActorRef of the test actor. Access is provided to enable e.g.
    * registration as message target.
-   */
+    */
   val testActor: ActorRef = {
     import akka.concurrent._
     // Need to switch into blocking mode, otherwise anything that extends TestKitBase will fail due to `awaitCond`
+    ManagedEventLoop.manage
     val impl = system.asInstanceOf[ExtendedActorSystem]
     val ref = impl.systemActorOf(TestActor.props(queue)
       // @note IMPLEMENT IN SCALA.JS .withDispatcher(CallingThreadDispatcher.Id),

@@ -38,7 +38,7 @@ akka {
   jvm-exit-on-fatal-error = on
 
   actor {
-    provider = "akka.actor.LocalActorRefProvider"
+    provider = "akka.actor.JSLocalActorRefProvider"
     guardian-supervisor-strategy = "akka.actor.DefaultSupervisorStrategy"
     creation-timeout = 20s
     serialize-messages = off

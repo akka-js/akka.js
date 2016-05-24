@@ -11,7 +11,7 @@ import akka.actor.ActorSystem
 class DefaultTimeoutSpec
   extends WordSpec with Matchers with BeforeAndAfterAll with TestKitBase with DefaultTimeout {
 
-  implicit lazy val system = ActorSystem("AkkaCustomSpec")
+  implicit lazy val system = ActorSystem("AkkaCustomSpec", AkkaSpec.testConf)
 
   override def afterAll = system.shutdown
 

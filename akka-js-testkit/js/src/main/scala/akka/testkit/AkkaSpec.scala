@@ -22,13 +22,15 @@ akka {
   home = ""
   version = "2.4-SNAPSHOT"
   #loggers = ["akka.event.Logging$DefaultLogger"]
-  loggers = ["akka.testkit.TestEventListener"]
+  loggers = ["akka.event.JSDefaultLogger"]
+  #loggers = ["akka.event.DefaultLogger"]
   #loggers = ["akka.event.LoggingBusActor"]
-  logging-filter = "akka.event.DefaultLoggingFilter"
+  logging-filter = "akka.event.JSDefaultLoggingFilter"
+  #logging-filter = "akka.event.DefaultLoggingFilter"
   loggers-dispatcher = "akka.actor.default-dispatcher"
   logger-startup-timeout = 5s
-  loglevel = "WARNING"
-  stdout-loglevel = "WARNING"
+  loglevel = "INFO"
+  stdout-loglevel = "DEBUG"
   log-config-on-start = off
   log-dead-letters = 0
   log-dead-letters-during-shutdown = off
@@ -36,8 +38,8 @@ akka {
   extensions = []
   daemonic = off
   jvm-exit-on-fatal-error = on
-
   actor {
+    #provider = "akka.actor.LocalActorRefProvider"
     provider = "akka.actor.JSLocalActorRefProvider"
     guardian-supervisor-strategy = "akka.actor.DefaultSupervisorStrategy"
     creation-timeout = 20s
@@ -103,7 +105,6 @@ akka {
         }
       }
     }
-
     default-dispatcher {
       type = "Dispatcher"
       executor = "default-executor"
@@ -135,7 +136,6 @@ akka {
       attempt-teamwork = on
       mailbox-requirement = ""
     }
-
     default-mailbox {
       mailbox-type = "akka.dispatch.UnboundedMailbox"
       mailbox-capacity = 1000

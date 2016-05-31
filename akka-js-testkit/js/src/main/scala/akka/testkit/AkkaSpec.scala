@@ -22,7 +22,7 @@ akka {
   home = ""
   version = "2.4-SNAPSHOT"
   #loggers = ["akka.event.Logging$DefaultLogger"]
-  loggers = ["akka.event.JSDefaultLogger"]
+  loggers = ["akka.testkit.TestEventListener"]
   #loggers = ["akka.event.DefaultLogger"]
   #loggers = ["akka.event.LoggingBusActor"]
   logging-filter = "akka.event.JSDefaultLoggingFilter"

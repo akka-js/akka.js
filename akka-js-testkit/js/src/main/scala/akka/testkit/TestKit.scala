@@ -165,7 +165,7 @@ trait TestKitBase {
       ref match {
       case r: RepointableRef ⇒ r.isStarted
       case _                 ⇒ true
-    }} catch {case e: Exception => println("ERROR");e.printStackTrace;false}, 1 second, 10 millis)
+      }} catch {case e: Exception => println("ERROR");e.printStackTrace;false}, 1 second, 10 millis)
     ref
   }
 
@@ -273,7 +273,7 @@ trait TestKitBase {
     val f = scala.concurrent.Promise[Boolean]
     lazy val fn: js.Function0[Any] = { () =>
       if (!p) {
-      try {
+        try {
         assert(now < stop, "timeout " + _max + " expired: " + message)
         js.Dynamic.global.setTimeout(fn, ((stop - now) min interval).toMillis.asInstanceOf[js.Any])
       } catch {

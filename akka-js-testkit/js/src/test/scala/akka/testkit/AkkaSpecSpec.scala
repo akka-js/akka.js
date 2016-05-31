@@ -23,22 +23,27 @@ class AkkaSpecSpec extends WordSpec with Matchers {
   ManagedEventLoop.manage
   "An AkkaSpec" must {
 
-    "warn about unhandled messages" in {
+    /*"warn about unhandled messages" in {
       //ManagedEventLoop.manage
+
       implicit val system = ActorSystem("AkkaSpec0", AkkaSpec.testConf)
       try {
+
         val a = system.actorOf(Props(new Actor {
           def receive = Actor.emptyBehavior
         }))
+
         akka.concurrent.Await.result(TestEventListener.p.future)
+
         EventFilter.warning(start = "unhandled message", occurrences = 1) intercept {
           a ! 42
         }
       } finally {
         TestKit.shutdownActorSystem(system)
       }
+
       //ManagedEventLoop.reset
-    }
+    }*/
 
     "terminate all actors" in {
       // verbose config just for demonstration purposes, please leave in in case of debugging
@@ -76,7 +81,7 @@ class AkkaSpecSpec extends WordSpec with Matchers {
 
     }
 
-    "enqueue unread messages from testActor to deadLetters" in {
+    /*"enqueue unread messages from testActor to deadLetters" in {
 
       val system, otherSystem = ActorSystem("AkkaSpec3", AkkaSpec.testConf)
 
@@ -116,7 +121,7 @@ class AkkaSpecSpec extends WordSpec with Matchers {
         TestKit.shutdownActorSystem(system)
         TestKit.shutdownActorSystem(otherSystem)
       }
-    }
+    }*/
 
 
   }

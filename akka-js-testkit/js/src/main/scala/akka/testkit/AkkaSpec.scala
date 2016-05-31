@@ -33,6 +33,8 @@ akka {
   actor {
     provider = "akka.actor.JSLocalActorRefProvider"
     guardian-supervisor-strategy = "akka.actor.DefaultSupervisorStrategy"
+    unstarted-push-timeout = 10000ms
+
     debug {
       receive = off
       autoreceive = off

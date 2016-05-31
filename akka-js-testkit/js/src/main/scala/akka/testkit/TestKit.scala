@@ -274,7 +274,6 @@ trait TestKitBase {
     lazy val fn: js.Function0[Any] = { () =>
       if (!p) {
       try {
-        println("calling")
         assert(now < stop, "timeout " + _max + " expired: " + message)
         js.Dynamic.global.setTimeout(fn, ((stop - now) min interval).toMillis.asInstanceOf[js.Any])
       } catch {

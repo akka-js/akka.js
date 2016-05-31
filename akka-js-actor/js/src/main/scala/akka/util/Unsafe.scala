@@ -24,28 +24,28 @@ object Unsafe {
     final val instance = new {
 
       def getObjectVolatile(o: Any, offset: Long): AnyRef = {
-        unsafeVars.get((o.hashCode,offset.toInt)).getOrElse(fallback(offset)).asInstanceOf[AnyRef]
+        unsafeVars.get((o.hashCode,offset.asInstanceOf[Int])).getOrElse(fallback(offset)).asInstanceOf[AnyRef]
       }
 
       def compareAndSwapObject(o: Any, offset: Long, old: Any, next: Any) = {
-        unsafeVars((o.hashCode,offset.toInt)) = next
+        unsafeVars.update((o.hashCode,offset.asInstanceOf[Int]), next)
         true
       }
 
       def getAndSetObject(o: Any, offset: Long, next: Any) = {
-        val ret = unsafeVars.get((o.hashCode,offset.toInt)).getOrElse(fallback(offset))
-        unsafeVars((o.hashCode,offset.toInt)) = next
+        val ret = unsafeVars.get((o.hashCode,offset.asInstanceOf[Int])).getOrElse(fallback(offset))
+        unsafeVars.update((o.hashCode,offset.asInstanceOf[Int]), next)
         ret
       }
 
       def getAndAddLong(o: Any, offset: Long, next: Long) = {
-        val ret = unsafeVars.get((o.hashCode,offset.toInt)).map(_.asInstanceOf[Long]).getOrElse(0L)
-        unsafeVars((o.hashCode,offset.toInt)) = ret + next
+        val ret = unsafeVars.get((o.hashCode,offset.asInstanceOf[Int])).map(_.asInstanceOf[Long]).getOrElse(0L)
+        unsafeVars.update((o.hashCode,offset.toInt), ret + next)
         ret
       }
 
-      def putObjectVolatile(o: Any, offset: Int, next: Any) = {
-        unsafeVars((o.hashCode,offset.toInt)) = next
+      def putObjectVolatile(o: Any, offset: Long, next: Any) = {
+        unsafeVars.update((o.hashCode,offset.asInstanceOf[Int]), next)
       }
 
     }

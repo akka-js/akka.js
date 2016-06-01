@@ -134,7 +134,7 @@ class TestActorRefSpec extends AkkaSpec(/*"disp1.type=Dispatcher"*/) with Before
   "A TestActorRef should be an ActorRef, hence it" must {
 
     "support nested Actor creation" when {
-   /*
+
       "used with TestActorRef" in {
 
         val a = TestActorRef(Props(new Actor {
@@ -149,7 +149,7 @@ class TestActorRefSpec extends AkkaSpec(/*"disp1.type=Dispatcher"*/) with Before
 
       }
 
-      "used with ActorRef" in {
+      /*"used with ActorRef" in {
 
         val a = TestActorRef(Props(new Actor {
           val nested = context.actorOf(Props(new Actor { def receive = { case _ ⇒ } }))
@@ -215,8 +215,8 @@ class TestActorRefSpec extends AkkaSpec(/*"disp1.type=Dispatcher"*/) with Before
 
       }
 
-      /*
-      "restart when Killed" in {
+
+      /*"restart when Killed" in {
 
         EventFilter[ActorKilledException]() intercept {
           counter = 2

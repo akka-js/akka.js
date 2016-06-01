@@ -21,31 +21,60 @@ object Unsafe {
       else null
     }
 
+    def safeHashCode(a: Any): Int = {
+      a match {
+        case rar: akka.actor.RepointableActorRef =>
+          rar.path.uid
+        case ap: akka.pattern.PromiseActorRef =>
+          ap.provider.tempPath().uid
+        case ac: akka.actor.ActorCell =>
+          ac.self.path.uid
+        case _ =>
+          a.hashCode()
+      }
+    }
+
     final val instance = new {
 
       def getObjectVolatile(o: Any, offset: Long): AnyRef = {
-        unsafeVars.get((o.hashCode,offset.asInstanceOf[Int])).getOrElse(fallback(offset)).asInstanceOf[AnyRef]
+        unsafeVars.get((safeHashCode(o),offset.asInstanceOf[Int])).getOrElse(fallback(offset)).asInstanceOf[AnyRef]
       }
 
       def compareAndSwapObject(o: Any, offset: Long, old: Any, next: Any) = {
-        unsafeVars.update((o.hashCode,offset.asInstanceOf[Int]), next)
+        val key = (safeHashCode(o),offset.asInstanceOf[Int])
+        if (next == null)
+          unsafeVars.remove(key)
+        else
+          unsafeVars.update(key, next)
         true
       }
 
       def getAndSetObject(o: Any, offset: Long, next: Any) = {
-        val ret = unsafeVars.get((o.hashCode,offset.asInstanceOf[Int])).getOrElse(fallback(offset))
-        unsafeVars.update((o.hashCode,offset.asInstanceOf[Int]), next)
+        val key = (safeHashCode(o),offset.asInstanceOf[Int])
+        val ret = unsafeVars.get(key).getOrElse(fallback(offset))
+        if (next == null)
+          unsafeVars.remove(key)
+        else
+          unsafeVars.update(key, next)
         ret
       }
 
       def getAndAddLong(o: Any, offset: Long, next: Long) = {
-        val ret = unsafeVars.get((o.hashCode,offset.asInstanceOf[Int])).map(_.asInstanceOf[Long]).getOrElse(0L)
-        unsafeVars.update((o.hashCode,offset.toInt), ret + next)
+        val key = (safeHashCode(o),offset.asInstanceOf[Int])
+        val ret = unsafeVars.get(key).map(_.asInstanceOf[Long]).getOrElse(0L)
+        if (next == 0L)
+          unsafeVars.remove(key)
+        else
+          unsafeVars.update(key, ret + next)
         ret
       }
 
       def putObjectVolatile(o: Any, offset: Long, next: Any) = {
-        unsafeVars.update((o.hashCode,offset.asInstanceOf[Int]), next)
+        val key = (safeHashCode(o),offset.asInstanceOf[Int])
+        if (next == null)
+          unsafeVars.remove(key)
+        else
+          unsafeVars.update(key, next)
       }
 
     }

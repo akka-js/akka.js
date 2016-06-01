@@ -4,6 +4,6 @@
 package akka.pattern
 
 object AbstractPromiseActorRef {
-  final val stateOffset = 30
-  final val watchedByOffset = 31
+  final val stateOffset = 30L
+  final val watchedByOffset = 31L
 }

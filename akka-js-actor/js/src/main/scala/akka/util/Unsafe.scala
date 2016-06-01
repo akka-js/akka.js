@@ -27,8 +27,6 @@ object Unsafe {
           rar.path.uid
         case ap: akka.pattern.PromiseActorRef =>
           ap.provider.tempPath().uid
-        case ac: akka.actor.ActorCell =>
-          ac.self.path.uid
         case _ =>
           a.hashCode()
       }

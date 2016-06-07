@@ -29,7 +29,7 @@ An example could be:
 ```scala
 import com.typesafe.config.ConfigFactory
 
-val config = ConfigFactory.pasreString("""
+val config = ConfigFactory.parseString("""
 akka {
 home = ""
 version = "2.4-SNAPSHOT"

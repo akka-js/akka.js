@@ -38,7 +38,7 @@ lazy val akkaActor = crossProject.in(file("akka-js-actor"))
     useMethodEraserPluginSettings : _*
   )
 
-lazy val akkaActorJS = akkaActor.js
+lazy val akkaActorJS = akkaActor.js.dependsOn(akkaJsActorIrPatches)
 
 lazy val akkaTestkit = crossProject.in(file("akka-js-testkit"))
   .settings(commonSettings: _*)

@@ -1,3 +1,5 @@
+![Akka.Js](https://github.com/unicredit/akka.js/blob/merge-js/logo/akkajs.png)
+
 This repository is an ongoing effort to port Akka to the JavaScript runtime, thanks to [Scala.js](http://scala-js.org)
 
 ## Build it and try the examples
@@ -8,13 +10,11 @@ libraryDependencies += "akka.js" %%% "akkaactor" % "0.1.1-SNAPSHOT"
 ```
 
 or you can compile and publish locally yourself:
-``` 
+```
 $ git clone https://github.com/unicredit/akka.js
 $ cd akka.js
-$ git checkout refactoring
 $ git submodule init
 $ git submodule update
-$ sbt akkaJsActorIrPatches/compile
 $ sbt akkaActorJS/publishLocal
 ```
 

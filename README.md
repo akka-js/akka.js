@@ -2,14 +2,9 @@
 
 This repository is an ongoing effort to port Akka to the JavaScript runtime, thanks to [Scala.js](http://scala-js.org)
 
-## Build it and try the examples
+## Build it
 
-You can start from the published SNAPSHOT:
-```scala
-libraryDependencies += "akka.js" %%% "akkaactor" % "0.1.1-SNAPSHOT"
-```
-
-or you can compile and publish locally yourself:
+To work with the very last version you can compile and publish local:
 ```
 $ git clone https://github.com/unicredit/akka.js
 $ cd akka.js
@@ -17,10 +12,6 @@ $ git submodule init
 $ git submodule update
 $ sbt akkaActorJS/publishLocal
 ```
-
-Now providing a proper configuration to the ActorSystem you can directly use akka within your scala-js projects.
-
-Then download the examples and follow the README.md available [here](https://github.com/unicredit/akka.js-examples)
 
 ## Use it
 
@@ -72,7 +63,7 @@ scheduler {
 
 val system = ActorSystem("akkajsapp", config)
 ```
-You now can use Akka as described in the official [docs](http://doc.akka.io/docs/akka/snapshot/scala.html?_ga=1.18381040.859811434.1456739074).
+You now can use Akka as described in the official [docs](http://doc.akka.io/docs/akka/snapshot/scala.html).
 
 Please consider that only akka-core is available and on Javascript VM you are in a limited environment.
 

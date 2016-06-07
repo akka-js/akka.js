@@ -78,7 +78,7 @@ class Dispatchers(val settings: ActorSystem.Settings, val prerequisites: Dispatc
    */
   def defaultGlobalDispatcher: MessageDispatcher = lookup(DefaultDispatcherId)
 
-  private val dispatcherConfigurators = new ConcurrentHashMap[String, MessageDispatcherConfigurator] 
+  private val dispatcherConfigurators = new ConcurrentHashMap[String, MessageDispatcherConfigurator]
 
   /**
    * Returns a dispatcher as specified in configuration. Please note that this
@@ -86,7 +86,7 @@ class Dispatchers(val settings: ActorSystem.Settings, val prerequisites: Dispatc
    *
    * @throws ConfigurationException if the specified dispatcher cannot be found in the configuration
    */
-  
+
   def lookup(id: String): MessageDispatcher = new DispatcherConfigurator(new Config, prerequisites).dispatcher() /** lookupConfigurator(id).dispatcher() */
 
   /**
@@ -96,11 +96,11 @@ class Dispatchers(val settings: ActorSystem.Settings, val prerequisites: Dispatc
    * to instantiate it, which might be undesirable when just checking.
    */
   def hasDispatcher(id: String): Boolean = dispatcherConfigurators.containsKey(id) /** @note IMPLEMENT IN SCALA.JS || cachingConfig.hasPath(id) */
-  
+
   /**@note IMPLEMENT IN SCALA.JS
   private def lookupConfigurator(id: String): MessageDispatcherConfigurator = {
     dispatcherConfigurators.get(id) match {
-    /** @note IMPLEMENT IN SCALA.JS  
+    /** @note IMPLEMENT IN SCALA.JS
       case null ⇒
         // It doesn't matter if we create a dispatcher configurator that isn't used due to concurrent lookup.
         // That shouldn't happen often and in case it does the actual ExecutorService isn't
@@ -117,8 +117,8 @@ class Dispatchers(val settings: ActorSystem.Settings, val prerequisites: Dispatc
       case existing ⇒ existing
     }
   }
- 
-  
+
+
 
   /**
    * Register a [[MessageDispatcherConfigurator]] that will be

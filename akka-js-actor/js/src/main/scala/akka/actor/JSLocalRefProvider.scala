@@ -78,9 +78,7 @@ class JSLocalActorRefProvider (
   _systemName: String,
   override val settings: ActorSystem.Settings,
   val _eventStream: EventStream,
-  val _dynamicAccess: DynamicAccess/*,
-  override val deployer: Deployer,
-  _deadLetters: Option[ActorPath ⇒ InternalActorRef]*/) extends LocalActorRefProvider(
+  val _dynamicAccess: DynamicAccess) extends LocalActorRefProvider(
   _systemName,
   settings,
   _eventStream,

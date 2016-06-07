@@ -28,7 +28,6 @@ class EventLoopScheduler(config: Config,
 
   def maxFrequency: Double = 1.0 / 0.0004 // as per HTML spec
 
-  //XXX: To be refactored
   private case class JSTimeoutTask(delay: FiniteDuration)(task: => Any) extends Cancellable {
     private[this] var underlying: Option[SetTimeoutHandle] =
       Some(setTimeout(delay)(task))

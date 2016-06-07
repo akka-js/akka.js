@@ -33,13 +33,8 @@ object Envelope {
 }
 
 final case class TaskInvocation(eventStream: EventStream, runnable: Runnable, cleanup: () ⇒ Unit) extends Runnable /** @note IMPLEMENT IN SCALA.JS extends Batchable */ {
-	final /** @note IMPLEMENT IN SCALA.JS override */ def isBatchable: Boolean = runnable match {
-	  /** @note IMPLEMENT IN SCALA.JS
-       case b: Batchable                           ⇒ b.isBatchable
-	     case _: scala.concurrent.OnCompleteRunnable ⇒ true
-	  */
+	final def isBatchable: Boolean = runnable match {
     case _                                      ⇒ false  
-    
   }
 
   def run(): Unit =
@@ -102,12 +97,12 @@ abstract class MessageDispatcher(val configurator: MessageDispatcherConfigurator
 	val eventStream = prerequisites.eventStream
 
 	@volatile private[this] var _inhabitantsDoNotCallMeDirectly: Long = _ // DO NOT TOUCH!
-	@volatile private[this] var _shutdownScheduleDoNotCallMeDirectly: Int = _ // DO NOT TOUCH! 
+	@volatile private[this] var _shutdownScheduleDoNotCallMeDirectly: Int = _ // DO NOT TOUCH!
 
 	/** @note IMPLEMENT IN SCALA.JS @tailrec */ private final def addInhabitants(add: Long): Long = {
 		val c = inhabitants
 		val r = c + add
-    
+
     if (r < 0) {
 		  // We haven't succeeded in decreasing the inhabitants yet but the simple fact that we're trying to
 		  // go below zero means that there is an imbalance and we might as well throw the exception
@@ -115,7 +110,7 @@ abstract class MessageDispatcher(val configurator: MessageDispatcherConfigurator
 		  reportFailure(e)
 		  throw e
 		}
-    
+
     /** @note IMPLEMENT IN SCALA.JS
 	  if (Unsafe.instance.compareAndSwapLong(this, inhabitantsOffset, c, r)) r else addInhabitants(add)
     */
@@ -124,10 +119,10 @@ abstract class MessageDispatcher(val configurator: MessageDispatcherConfigurator
 	}
 
   /** @note IMPLEMENT IN SCALA.JS
-	final def inhabitants: Long = Unsafe.instance.getLongVolatile(this, inhabitantsOffset) 
+	final def inhabitants: Long = Unsafe.instance.getLongVolatile(this, inhabitantsOffset)
   */
   final def inhabitants: Long = _inhabitantsDoNotCallMeDirectly
-  
+
   /** @note IMPLEMENT IN SCALA.JS
 	private final def shutdownSchedule: Int = Unsafe.instance.getIntVolatile(this, shutdownScheduleOffset)
 	private final def updateShutdownSchedule(expect: Int, update: Int): Boolean = Unsafe.instance.compareAndSwapInt(this, shutdownScheduleOffset, expect, update)
@@ -137,7 +132,7 @@ abstract class MessageDispatcher(val configurator: MessageDispatcherConfigurator
     _shutdownScheduleDoNotCallMeDirectly = update
     true
   }
-  
+
 	/**
 	 *  Creates and returns a mailbox for the given actor.
 	 */
@@ -164,10 +159,10 @@ abstract class MessageDispatcher(val configurator: MessageDispatcherConfigurator
 	 */
 	final def detach(actor: ActorCell): Unit = try unregister(actor) finally ifSensibleToDoSoThenScheduleShutdown()
 
-  /** THIS COMES FROM BatchingExecutor */ 
-  override def execute(runnable: Runnable): Unit = unbatchedExecute(runnable) 
+  /** THIS COMES FROM BatchingExecutor */
+  override def execute(runnable: Runnable): Unit = unbatchedExecute(runnable)
   /** END */
-  
+
 	final /** @note IMPLEMENT IN SCALA.JS override */ protected def unbatchedExecute(r: Runnable): Unit = {
 	  val invocation = TaskInvocation(eventStream, r, taskCleanup)
 		addInhabitants(+1)
@@ -246,7 +241,7 @@ abstract class MessageDispatcher(val configurator: MessageDispatcherConfigurator
 			case RESCHEDULED ⇒
 			  if (updateShutdownSchedule(RESCHEDULED, SCHEDULED)) scheduleShutdownAction()
 			  else run()
-			case UNSCHEDULED ⇒  
+			case UNSCHEDULED ⇒
       }
 		}
 	}
@@ -329,10 +324,10 @@ abstract class MessageDispatcher(val configurator: MessageDispatcherConfigurator
 	protected[akka] def shutdown(): Unit
 }
 
- 
+
 /**
  * An ExecutorServiceConfigurator is a class that given some prerequisites and a configuration can create instances of ExecutorService
- */ 
+ */
 abstract class ExecutorServiceConfigurator(config: Config, prerequisites: DispatcherPrerequisites) extends ExecutorServiceFactoryProvider
 
 

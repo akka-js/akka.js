@@ -8,19 +8,11 @@ import akka.event.Logging.Error
 import akka.actor.ActorCell
 import akka.event.Logging
 import akka.dispatch.sysmsg.SystemMessage
-/** @note IMPLEMENT IN SCALA.JS
-import java.util.concurrent.atomic.AtomicReference
-import java.util.concurrent.{ ExecutorService, RejectedExecutionException }
-import scala.concurrent.forkjoin.ForkJoinPool
-*/
 import java.util.concurrent.ExecutorService
 import scala.concurrent.duration.Duration
 import scala.concurrent.Awaitable
 import scala.concurrent.duration.FiniteDuration
 import scala.annotation.tailrec
-/** @note IMPLEMENT IN SCALA.JS
-import java.lang.reflect.ParameterizedType
-*/
 
 /**
  * The event-based ``Dispatcher`` binds a set of Actors to a thread pool backed up by a
@@ -77,19 +69,6 @@ class Dispatcher(
    * INTERNAL API
    */
   protected[akka] def executeTask(invocation: TaskInvocation) {
-    /** @note IMPLEMENT IN SCALA.JS
-    try {
-      executorService execute invocation
-    } catch {
-      case e: RejectedExecutionException ⇒
-        try {
-          executorService execute invocation
-        } catch {
-          case e2: RejectedExecutionException ⇒
-            eventStream.publish(Error(e, getClass.getName, getClass, "executeTask was rejected twice!"))
-            throw e2
-        }
-    }*/
     executorService execute invocation
   }
 
@@ -121,23 +100,6 @@ class Dispatcher(
   protected[akka] override def registerForExecution(mbox: Mailbox, hasMessageHint: Boolean, hasSystemMessageHint: Boolean): Boolean = {
     if (mbox.canBeScheduledForExecution(hasMessageHint, hasSystemMessageHint)) { //This needs to be here to ensure thread safety and no races
       if (mbox.setAsScheduled()) {
-        /** @note IMPLEMENT IN SCALA.JS
-        try {
-          executorService execute mbox
-          true
-        } catch {
-          case e: RejectedExecutionException ⇒
-            try {
-              executorService execute mbox
-              true
-            } catch { //Retry once
-              case e: RejectedExecutionException ⇒
-                mbox.setAsIdle()
-                eventStream.publish(Error(e, getClass.getName, getClass, "registerForExecution was rejected twice!"))
-                throw e
-            }
-        }
-        */
         executorService execute mbox
         mbox.setAsIdle()
         true

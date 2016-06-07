@@ -22,6 +22,60 @@ Now providing a proper configuration to the ActorSystem you can directly use akk
 
 Then download the examples and follow the README.md available [here](https://github.com/unicredit/akka.js-examples)
 
+## Use it
+
+First of all you need to setup a new [Scala.js project](https://www.scala-js.org/doc/project/).
+Then add to your JS project configuration:
+```scala
+resolvers += Resolver.sonatypeRepo("snapshots")
+
+libraryDependencies += "akka.js" %%% "akkaactor" % "0.1.1-SNAPSHOT"
+```
+
+At this point you can use most of the Akka core Api.
+Please note that you have to provide a specific configuration during ActorSystem creation.
+An example could be:
+```scala
+import com.typesafe.config.ConfigFactory
+
+val config = ConfigFactory.pasreString("""
+akka {
+home = ""
+version = "2.4-SNAPSHOT"
+loggers = ["akka.event.JSDefaultLogger"]
+logging-filter = "akka.event.JSDefaultLoggingFilter"
+loggers-dispatcher = "akka.actor.default-dispatcher"
+logger-startup-timeout = 5s
+loglevel = "INFO"
+stdout-loglevel = "DEBUG"
+log-config-on-start = off
+log-dead-letters = 0
+log-dead-letters-during-shutdown = off
+
+actor {
+  provider = "akka.actor.JSLocalActorRefProvider"
+  guardian-supervisor-strategy = "akka.actor.DefaultSupervisorStrategy"
+
+  debug {
+    receive = off
+    autoreceive = off
+    lifecycle = off
+    event-stream = off
+    unhandled = off
+  }
+}
+scheduler {
+  implementation = akka.actor.EventLoopScheduler
+}
+}
+""")
+
+val system = ActorSystem("akkajsapp", config)
+```
+You now can use Akka as described in the official [docs](http://doc.akka.io/docs/akka/snapshot/scala.html?_ga=1.18381040.859811434.1456739074).
+
+Please consider that only akka-core is available and on Javascript VM you are in a limited environment.
+
 ## Design documentation
 
 The BSc thesis detailing most of the work and the approach taken can be found [here](pdf/thesis.pdf)

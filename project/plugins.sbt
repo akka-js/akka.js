@@ -2,6 +2,10 @@ addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.10-SNAPSHOT")
 
 addSbtPlugin("eu.unicredit" % "sbt-scalajs-ir-patch-plugin" % "0.0.1-SNAPSHOT")
 
+addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "0.2.2")
+
+addSbtPlugin("com.typesafe.sbt" % "sbt-pgp" % "0.8.3")
+
 logLevel := Level.Warn
 
 resolvers += "Typesafe repository" at "http://repo.typesafe.com/typesafe/releases/"

@@ -16,7 +16,7 @@ val commonSettings = Seq(
 )
 
 lazy val akkaActor = crossProject.in(file("akka-js-actor"))
-  .settings(commonSettings: _*)
+  .settings(commonSettings : _*)
   .settings(
     version := "0.1.1-SNAPSHOT"
   ).jsSettings(
@@ -36,7 +36,37 @@ lazy val akkaActor = crossProject.in(file("akka-js-actor"))
   ).jsSettings(
     useAnnotationAdderPluginSettings ++
     useMethodEraserPluginSettings : _*
-  )
+  ).jsSettings(
+    publishMavenStyle := true,
+    pomIncludeRepository := { x => false },
+    credentials += Credentials(Path.userHome / ".ivy2" / "sonatype.credentials"),
+    pomExtra := {
+      <url>https://github.com/unicredit/akka.js</url>
+      <licenses>
+        <license>
+          <name>Scala License</name>
+          <url>http://www.scala-lang.org/license.html</url>
+        </license>
+      </licenses>
+      <scm>
+        <connection>scm:git:github.com/unicredit/akka.js</connection>
+        <developerConnection>scm:git:git@github.com:unicredit/akka.js</developerConnection>
+        <url>github.com/unicredit/akka.js</url>
+      </scm>
+      <developers>
+        <developer>
+          <id>andreaTP</id>
+          <name>Andrea Peruffo</name>
+          <url>https://github.com/andreaTP/</url>
+        </developer>
+        <developer>
+          <id>yawnt</id>
+          <name>Gianluca Stivan</name>
+          <url>https://github.com/yawnt/</url>
+        </developer>
+      </developers>
+    }
+  ).jsSettings(sonatypeSettings : _*)
 
 lazy val akkaActorJS = akkaActor.js.dependsOn(akkaJsActorIrPatches)
 
@@ -122,7 +152,6 @@ lazy val akkaJsActorIrPatches = Project(
     publishArtifact in Compile := true
   ) settings (commonSettings : _*
   ) enablePlugins (ScalaJSPlugin)
-
 
 lazy val root = project.in(file(".")).settings(commonSettings: _*)
   .aggregate(akkaJsActorIrPatches, akkaActorJS, akkaTestkitJS, akkaActorTestJS)

@@ -34,8 +34,7 @@ lazy val akkaActor = crossProject.in(file("akka-js-actor"))
       analysis
     }
   ).jsSettings(
-    useAnnotationAdderPluginSettings ++
-    useMethodEraserPluginSettings : _*
+    useAnnotationAdderPluginSettings : _*
   ).jsSettings(
     publishMavenStyle := true,
     pomIncludeRepository := { x => false },
@@ -114,21 +113,6 @@ lazy val useAnnotationAdderPluginSettings = Seq(
        Seq("-Xplugin:" + jar.getAbsolutePath)
     }
   )
-
-//erase harmfull method from classes
-lazy val methodEraserPlugin = Project(
-    id   = "methodEraserPlugin",
-    base = file("plugins/method-eraser-plugin")
-  ) settings (
-    libraryDependencies <+= (scalaVersion)("org.scala-lang" % "scala-compiler" % _),
-    publishArtifact in Compile := false
-  ) settings (commonSettings : _*)
-
-lazy val useMethodEraserPluginSettings = Seq(
-  scalacOptions in Compile <++= (Keys.`package` in (methodEraserPlugin, Compile)) map { (jar: File) =>
-     Seq("-Xplugin:" + jar.getAbsolutePath)
-  }
-)
 
 //SCALAJS IR PATCHER SECTION
 

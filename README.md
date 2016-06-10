@@ -10,6 +10,7 @@ $ git clone https://github.com/unicredit/akka.js
 $ cd akka.js
 $ git submodule init
 $ git submodule update
+$ sbt akkaActorJSIrPatches/compile
 $ sbt akkaActorJS/publishLocal
 ```
 

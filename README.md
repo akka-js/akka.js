@@ -1,5 +1,7 @@
 ![Akka.Js](https://github.com/unicredit/akka.js/blob/merge-js/logo/akkajs.png)
 
+[![Scala.js](https://www.scala-js.org/assets/badges/scalajs-0.6.8.svg)](https://www.scala-js.org)
+
 This repository is an ongoing effort to port Akka to the JavaScript runtime, thanks to [Scala.js](http://scala-js.org)
 
 ## Build it

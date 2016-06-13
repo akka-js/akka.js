@@ -8,12 +8,12 @@ This repository is an ongoing effort to port Akka to the JavaScript runtime, tha
 
 To work with the very last version you can compile and publish local:
 ```
-$ git clone https://github.com/unicredit/akka.js
-$ cd akka.js
-$ git submodule init
-$ git submodule update
-$ sbt akkaActorJSIrPatches/compile
-$ sbt akkaActorJS/publishLocal
+git clone https://github.com/unicredit/akka.js
+cd akka.js
+git submodule init
+git submodule update
+sbt akkaActorJSIrPatches/compile
+sbt akkaActorJS/publishLocal
 ```
 
 ## Use it

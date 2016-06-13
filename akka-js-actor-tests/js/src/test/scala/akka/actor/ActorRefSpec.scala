@@ -10,7 +10,8 @@ import akka.testkit._
 import akka.util.Timeout
 import scala.concurrent.duration._
 // @note IMPLEMENT IN SCALA.JS
-import akka.concurrent.{ Await, BlockingEventLoop }
+import akka.concurrent.Await
+import akka.concurrent.ManagedEventLoop
 import java.lang.IllegalStateException
 import scala.concurrent.Promise
 import akka.pattern.ask
@@ -80,7 +81,7 @@ class WorkerActor() extends Actor {
     }
   }
 
-  private def work(): Unit = BlockingEventLoop.wait(1.second) // @note IMPLEMENT IN SCALA.JS Thread.sleep(1.second.dilated.toMillis)
+  private def work(): Unit = ???// BlockingEventLoop.wait(1.second) // @note IMPLEMENT IN SCALA.JS Thread.sleep(1.second.dilated.toMillis)
 }
 
 object ActorRefSpec {
@@ -131,6 +132,7 @@ object ActorRefSpec {
 // @note IMPLEMENT IN SCALA.JS @org.junit.runner.RunWith(classOf[org.scalatest.junit.JUnitRunner])
 class ActorRefSpec extends AkkaSpec with DefaultTimeout {
   import akka.actor.ActorRefSpec._
+  ManagedEventLoop.manage
 
   def promiseIntercept(f: ⇒ Actor)(to: Promise[Actor]): Actor = try {
     val r = f
@@ -152,7 +154,6 @@ class ActorRefSpec extends AkkaSpec with DefaultTimeout {
   "An ActorRef" must {
 
     "not allow Actors to be created outside of an actorOf" in {
-      BlockingEventLoop.blockingOn
       import system.actorOf
 
       intercept[akka.actor.ActorInitializationException] {
@@ -273,7 +274,6 @@ class ActorRefSpec extends AkkaSpec with DefaultTimeout {
 
         contextStackMustBeEmpty()
       }
-      BlockingEventLoop.blockingOff
     }
 /*
     "be serializable using Java Serialization on local node" in {
@@ -354,7 +354,6 @@ class ActorRefSpec extends AkkaSpec with DefaultTimeout {
     }*/
 
     "support nested actorOfs" in {
-      BlockingEventLoop.blockingOn
       val a = system.actorOf(Props(new Actor {
         val nested = system.actorOf(Props(new Actor { def receive = { case _ ⇒ } }))
         def receive = { case _ ⇒ sender() ! nested }
@@ -364,11 +363,9 @@ class ActorRefSpec extends AkkaSpec with DefaultTimeout {
       a should not be null
       nested should not be null
       (a ne nested) should be(true)
-      BlockingEventLoop.blockingOff
     }
 
     "support advanced nested actorOfs" in {
-      BlockingEventLoop.blockingOn
       val a = system.actorOf(Props(new OuterActor(system.actorOf(Props(new InnerActor)))))
       val inner = Await.result(a ? "innerself", timeout.duration)
 
@@ -377,11 +374,9 @@ class ActorRefSpec extends AkkaSpec with DefaultTimeout {
       inner should not be a
 
       Await.result(a ? "msg", timeout.duration) should be("msg")
-      BlockingEventLoop.blockingOff
     }
 
     "support reply via sender" in {
-      BlockingEventLoop.blockingOn
       val latch = new TestLatch(4)
       val serverRef = system.actorOf(Props[ReplyActor])
       val clientRef = system.actorOf(Props(new SenderActor(serverRef, latch)))
@@ -404,21 +399,17 @@ class ActorRefSpec extends AkkaSpec with DefaultTimeout {
 
       system.stop(clientRef)
       system.stop(serverRef)
-      BlockingEventLoop.blockingOff
     }
 
     "support actorOfs where the class of the actor isn't public" in {
-      BlockingEventLoop.blockingOn
       val a = system.actorOf(NonPublicClass.createProps())
       a.tell("pigdog", testActor)
       expectMsg("pigdog")
       system stop a
-      BlockingEventLoop.blockingOff
     }
 
     "stop when sent a poison pill" in {
-      BlockingEventLoop.blockingOn
-      val timeout = Timeout(20000)
+      val timeout = Timeout(20000 millis)
       val ref = system.actorOf(Props(new Actor {
         def receive = {
           case 5 ⇒ sender() ! "five"
@@ -434,13 +425,10 @@ class ActorRefSpec extends AkkaSpec with DefaultTimeout {
       Await.result(fnull, timeout.duration).asInstanceOf[String] should be("null")
 
       verifyActorTermination(ref)
-
-      BlockingEventLoop.blockingOff
     }
 
 
     "restart when Kill:ed" in {
-      BlockingEventLoop.blockingOn
       filterException[ActorKilledException] {
         val latch = TestLatch(2)
 
@@ -462,11 +450,9 @@ class ActorRefSpec extends AkkaSpec with DefaultTimeout {
         boss ! "sendKill"
         Await.ready(latch, 5 seconds)
       }
-      BlockingEventLoop.blockingOff
     }
 
     "be able to check for existence of children" in {
-      BlockingEventLoop.blockingOn
       val parent = system.actorOf(Props(new Actor {
 
         val child = context.actorOf(
@@ -479,7 +465,6 @@ class ActorRefSpec extends AkkaSpec with DefaultTimeout {
 
       assert(Await.result((parent ? "child"), remaining) === true)
       assert(Await.result((parent ? "whatnot"), remaining) === false)
-      BlockingEventLoop.blockingOff
     }
   }
 }

@@ -7,7 +7,8 @@ import language.postfixOps
 import akka.testkit._
 import com.typesafe.config.ConfigFactory
 import scala.concurrent.{ ExecutionContext, Future }
-import akka.concurrent.{ Await, BlockingEventLoop }
+import akka.concurrent.Await
+import akka.concurrent.ManagedEventLoop
 import scala.concurrent.duration._
 import java.util.concurrent.RejectedExecutionException
 import akka.util.Timeout
@@ -137,7 +138,7 @@ object ActorSystemSpec {
 
 // @note IMPLEMENT IN SCALA.JS @org.junit.runner.RunWith(classOf[org.scalatest.junit.JUnitRunner])
 class ActorSystemSpec extends AkkaSpec(/*ActorSystemSpec.config*/) with ImplicitSender {
-
+  ManagedEventLoop.manage
   // @note IMPLEMENT IN SCALA.JS import ActorSystemSpec.FastActor
 
   "An ActorSystem" must {
@@ -174,7 +175,6 @@ class ActorSystemSpec extends AkkaSpec(/*ActorSystemSpec.config*/) with Implicit
     }
 */
     "log dead letters" in {
-      BlockingEventLoop.blockingOn
       val sys = ActorSystem("LogDeadLetters", ConfigFactory.parseString("{\"akka\": {\"loglevel\":\"INFO\"}}").withFallback(AkkaSpec.testConf))
       try {
         val a = sys.actorOf(Props[/*ActorSystemSpec.*/Terminater])
@@ -185,11 +185,9 @@ class ActorSystemSpec extends AkkaSpec(/*ActorSystemSpec.config*/) with Implicit
           a ! "boom"
         }(sys)
       } finally shutdown(sys)
-      BlockingEventLoop.blockingOff
     }
 
     "run termination callbacks in order" in {
-      BlockingEventLoop.blockingOn
       val system2 = ActorSystem("TerminationCallbacks", AkkaSpec.testConf)
       val result = scala.collection.mutable.Queue[Int]()
       val count = 10
@@ -210,11 +208,9 @@ class ActorSystemSpec extends AkkaSpec(/*ActorSystemSpec.config*/) with Implicit
 
       //immutableSeq(result) should be(expected)
       result.toIndexedSeq should be(expected)
-      BlockingEventLoop.blockingOff
     }
 
    "awaitTermination after termination callbacks" in {
-      BlockingEventLoop.blockingOn
       val system2 = ActorSystem("AwaitTermination", AkkaSpec.testConf)
       @volatile
       var callbackWasRun = false
@@ -227,54 +223,45 @@ class ActorSystemSpec extends AkkaSpec(/*ActorSystemSpec.config*/) with Implicit
       system2.scheduler.scheduleOnce(200.millis.dilated) { system2.shutdown() }
 
       //system2.awaitTermination(5 seconds)
-      BlockingEventLoop.wait(1 seconds)
+      //BlockingEventLoop.wait(1 seconds)
       callbackWasRun should be(true)
-      BlockingEventLoop.blockingOff
     }
 
     "return isTerminated status correctly" in {
-      BlockingEventLoop.blockingOn
       val system = ActorSystem()
 
       system.isTerminated should be(false)
       system.shutdown()
      // system.awaitTermination(10 seconds)
-      BlockingEventLoop.wait(1 seconds)
+      //BlockingEventLoop.wait(1 seconds)
       system.isTerminated should be(true)
-      BlockingEventLoop.blockingOff
     }
 
     "throw RejectedExecutionException when shutdown" in {
-      BlockingEventLoop.blockingOn
       val system2 = ActorSystem("AwaitTermination", AkkaSpec.testConf)
       system2.shutdown()
       //system2.awaitTermination(10 seconds)
-      BlockingEventLoop.wait(2 seconds)
+      //BlockingEventLoop.wait(2 seconds)
 
       intercept[RuntimeException] { // should be RejectedExecutionException, waiting for https://github.com/scala-js/scala-js/pull/1663
         system2.registerOnTermination { println("IF YOU SEE THIS THEN THERE'S A BUG HERE") }
       }.getMessage should be("Must be called prior to system shutdown.")
-      BlockingEventLoop.blockingOff
     }
 
     "reliably create waves of actors" in {
-      BlockingEventLoop.blockingOn
       import system.dispatcher
       implicit val timeout = Timeout((20 seconds).dilated)
       val waves = for (i ← 1 to 3) yield system.actorOf(Props[/*ActorSystemSpec.*/Waves]) ? 10000
       Await.result(Future.sequence(waves), timeout.duration + 10.seconds) should be(Seq("done", "done", "done"))
-      BlockingEventLoop.blockingOff
     }
 
     "find actors that just have been created" in {
-      BlockingEventLoop.blockingOn
       system.actorOf(Props(new FastActor(TestLatch(), testActor)).withDispatcher("slow"))
       expectMsgType[Class[_]] should be(classOf[LocalActorRef])
-      BlockingEventLoop.blockingOff
     }
 
+    /*
     "reliable deny creation of actors while shutting down" in {
-      BlockingEventLoop.blockingOn
       val system = ActorSystem()
       import system.dispatcher
       system.scheduler.scheduleOnce(200 millis) { system.shutdown() }
@@ -297,17 +284,15 @@ class ActorSystemSpec extends AkkaSpec(/*ActorSystemSpec.config*/) with Implicit
       }
 
       created filter (ref ⇒ !ref.isTerminated /*&& !ref.asInstanceOf[ActorRefWithCell].underlying.isInstanceOf[UnstartedCell]*/) should be(Seq())
-      BlockingEventLoop.blockingOff
     }
+    */
 
     "shut down when /user fails" in {
-      BlockingEventLoop.blockingOn
       implicit val system = ActorSystem("Stop", AkkaSpec.testConf)
       EventFilter[ActorKilledException]() intercept {
         system.actorSelection("/user") ! Kill
         awaitCond(system.isTerminated)
       }
-      BlockingEventLoop.blockingOff
     }
 /*
     "allow configuration of guardian supervisor strategy" in {

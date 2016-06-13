@@ -14,7 +14,8 @@ import akka.testkit._
 import scala.concurrent.duration._
 import java.util.concurrent.atomic._
 // @note IMPLEMENT IN SCALA.JS import scala.concurrent.Await
-import akka.concurrent.{ BlockingEventLoop, Await }
+import akka.concurrent.Await
+import akka.concurrent.ManagedEventLoop
 import akka.pattern.ask
 import java.util.UUID.{ randomUUID ⇒ newUuid }
 
@@ -34,11 +35,10 @@ import java.util.UUID.{ randomUUID ⇒ newUuid }
 //@org.junit.runner.RunWith(classOf[org.scalatest.junit.JUnitRunner])
 class ActorLifeCycleSpec extends AkkaSpec(/*"akka.actor.serialize-messages=off"*/) with BeforeAndAfterEach with ImplicitSender with DefaultTimeout {
   //import ActorLifeCycleSpec._
-
+  ManagedEventLoop.manage
   "An Actor" must {
 
     "invoke preRestart, preStart, postRestart when using OneForOneStrategy" in {
-      BlockingEventLoop.blockingOn
       filterException[ActorKilledException] {
         val id = newUuid.toString
         val supervisor = system.actorOf(Props(classOf[Supervisor], OneForOneStrategy(maxNrOfRetries = 3)(List(classOf[Exception]))))
@@ -70,11 +70,9 @@ class ActorLifeCycleSpec extends AkkaSpec(/*"akka.actor.serialize-messages=off"*
         expectNoMsg(1 seconds)
         system.stop(supervisor)
       }
-      BlockingEventLoop.blockingOff
     }
 
     "default for preRestart and postRestart is to call postStop and preStart respectively" in {
-      BlockingEventLoop.blockingOn
       filterException[ActorKilledException] {
         val id = newUuid().toString
         val supervisor = system.actorOf(Props(classOf[Supervisor], OneForOneStrategy(maxNrOfRetries = 3)(List(classOf[Exception]))))
@@ -103,11 +101,9 @@ class ActorLifeCycleSpec extends AkkaSpec(/*"akka.actor.serialize-messages=off"*
         expectNoMsg(1 seconds)
         system.stop(supervisor)
       }
-      BlockingEventLoop.blockingOff
     }
 
     "not invoke preRestart and postRestart when never restarted using OneForOneStrategy" in {
-      BlockingEventLoop.blockingOn
       val id = newUuid().toString
       val supervisor = system.actorOf(Props(classOf[Supervisor],
         OneForOneStrategy(maxNrOfRetries = 3)(List(classOf[Exception]))))
@@ -123,7 +119,6 @@ class ActorLifeCycleSpec extends AkkaSpec(/*"akka.actor.serialize-messages=off"*
       expectMsg(("postStop", id, 0))
       expectNoMsg(1 seconds)
       system.stop(supervisor)
-      BlockingEventLoop.blockingOff
     }
 /*
     "log failues in postStop" in {
@@ -139,7 +134,6 @@ class ActorLifeCycleSpec extends AkkaSpec(/*"akka.actor.serialize-messages=off"*
     }
 */
     "clear the behavior stack upon restart" in {
-      BlockingEventLoop.blockingOn
       case class Become(recv: ActorContext ⇒ Receive)
       val a = system.actorOf(Props(new Actor {
         def receive = {
@@ -161,7 +155,6 @@ class ActorLifeCycleSpec extends AkkaSpec(/*"akka.actor.serialize-messages=off"*
       }
       a ! "hello"
       expectMsg(42)
-      BlockingEventLoop.blockingOff
     }
   }
 

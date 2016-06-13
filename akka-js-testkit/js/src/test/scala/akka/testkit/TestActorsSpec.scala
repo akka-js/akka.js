@@ -15,7 +15,11 @@ class TestActorsSpec extends AkkaSpec with ImplicitSender {
       val message = "hello world"
       val echo = system.actorOf(echoActorProps)
 
-      echo ! message
+      import system.dispatcher
+      import scala.concurrent.duration._
+      system.scheduler.scheduleOnce(0 millis)(
+        echo ! message
+      )
 
       expectMsg(message)
 

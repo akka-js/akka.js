@@ -9,12 +9,11 @@ import org.scalatest.{ BeforeAndAfterEach, WordSpec }
 import akka.actor._
 import akka.event.Logging.Warning
 import scala.concurrent.{ Future, Promise }
-import akka.concurrent.{ Await, BlockingEventLoop }
+import akka.concurrent.{ Await, ManagedEventLoop }
 import scala.concurrent.duration._
 import akka.actor.ActorSystem
 import akka.pattern.ask
 import akka.dispatch.Dispatcher
-import akka.concurrent.BlockingEventLoop
 import scala.scalajs.js.annotation._
 import scala.scalajs.js
 import scala.concurrent.duration._
@@ -24,7 +23,7 @@ import scala.concurrent.duration._
  */
 object TestActorRefSpec {
 
-  var counter = 4 
+  var counter = 4
   var p = Promise[Int]
   }
   //val thread = Thread.currentThread
@@ -65,7 +64,7 @@ object TestActorRefSpec {
   @JSExport
   class WorkerActor() extends TActor {
     def receiveT = {
-      case "work" ⇒ 
+      case "work" ⇒
         sender() ! "workDone"
         try {
         context stop self
@@ -129,13 +128,15 @@ class TestActorRefSpec extends AkkaSpec(/*"disp1.type=Dispatcher"*/) with Before
   //override def beforeEach(): Unit = otherthread = null
 
   private def assertThread(): Unit = () //otherthread should (be(null) or equal(thread))
-  
+  ManagedEventLoop.manage
+
+
   "A TestActorRef should be an ActorRef, hence it" must {
 
     "support nested Actor creation" when {
 
       "used with TestActorRef" in {
-        BlockingEventLoop.switch
+
         val a = TestActorRef(Props(new Actor {
           val nested = TestActorRef(Props(new Actor { def receive = { case _ ⇒ } }))
           def receive = { case _ ⇒ sender() ! nested }
@@ -145,11 +146,11 @@ class TestActorRefSpec extends AkkaSpec(/*"disp1.type=Dispatcher"*/) with Before
         val nested = Await.result((a ? "any"), timeout.duration).asInstanceOf[ActorRef]
         nested should not be (null)
         a should not be theSameInstanceAs(nested)
-        BlockingEventLoop.reset
+
       }
 
-      "used with ActorRef" in {
-        BlockingEventLoop.switch
+      /*"used with ActorRef" in {
+
         val a = TestActorRef(Props(new Actor {
           val nested = context.actorOf(Props(new Actor { def receive = { case _ ⇒ } }))
           def receive = { case _ ⇒ sender() ! nested }
@@ -159,11 +160,11 @@ class TestActorRefSpec extends AkkaSpec(/*"disp1.type=Dispatcher"*/) with Before
         val nested = Await.result((a ? "any"), timeout.duration).asInstanceOf[ActorRef]
         nested should not be (null)
         a should not be theSameInstanceAs(nested)
-        BlockingEventLoop.reset
-      }
+
+      }*/
 
       "support reply via sender()" in {
-        BlockingEventLoop.switch
+
 
         val serverRef = TestActorRef(Props[ReplyActor])
         val clientRef = TestActorRef(Props(classOf[SenderActor], serverRef))
@@ -185,16 +186,16 @@ class TestActorRefSpec extends AkkaSpec(/*"disp1.type=Dispatcher"*/) with Before
         clientRef ! "simple"
         clientRef ! "simple"
 
-        Await.result(p.future) should be(0) 
+        Await.result(p.future) should be(0)
 
-        BlockingEventLoop.reset
+
 
         assertThread()
       }
 
 
     "stop when sent a poison pill" in {
-        BlockingEventLoop.switch
+
         EventFilter[ActorKilledException]() intercept {
           val a = TestActorRef(Props[WorkerActor])
           val forwarder = system.actorOf(Props(new Actor {
@@ -211,12 +212,12 @@ class TestActorRefSpec extends AkkaSpec(/*"disp1.type=Dispatcher"*/) with Before
           a.isTerminated should be(true)
           assertThread()
         }
-        BlockingEventLoop.reset
+
       }
 
 
-      "restart when Killed" in {
-        BlockingEventLoop.switch
+      /*"restart when Killed" in {
+
         EventFilter[ActorKilledException]() intercept {
           counter = 2
           val p = Promise[Int]
@@ -239,35 +240,35 @@ class TestActorRefSpec extends AkkaSpec(/*"disp1.type=Dispatcher"*/) with Before
           //counter should be(0)
           Await.result(p.future, 5 seconds) should be(0)
           assertThread()
-          
+
         }
-        BlockingEventLoop.reset
+
       }
 
 
       "support futures" in {
-        BlockingEventLoop.switch
+
         val a = TestActorRef[WorkerActor]
         val f = a ? "work"
         // CallingThreadDispatcher means that there is no delay
         //f should be('completed)
         Await.result(f, timeout.duration) should be("workDone")
-        BlockingEventLoop.reset
+
       }
 
       "support receive timeout" in {
-        BlockingEventLoop.switch
+
         val a = TestActorRef(new ReceiveTimeoutActor(testActor))
         expectMsg("timeout")
-        BlockingEventLoop.reset
-      }
+
+      }*/
     }
   }
-    
+
   "A TestActorRef" must {
 
-    "allow access to internals" in {
-      BlockingEventLoop.switch
+    /*"allow access to internals" in {
+
       val p = Promise[Int]
       val ref = TestActorRef(new TActor {
         var s: String = _
@@ -279,16 +280,16 @@ class TestActorRefSpec extends AkkaSpec(/*"disp1.type=Dispatcher"*/) with Before
       val actor = ref.underlyingActor
       Await.result(p.future)
       actor.s should be("hallo")
-      BlockingEventLoop.reset
+
     }
-  
+
 
     "set receiveTimeout to None" in {
-      BlockingEventLoop.switch
+
       val a = TestActorRef[WorkerActor]
       a.underlyingActor.context.receiveTimeout should be theSameInstanceAs Duration.Undefined
-      BlockingEventLoop.reset
-    }
+
+    }*/
     /** @note IMPLEMENT IN SCALA.JS
     "set CallingThreadDispatcher" in {
       val a = TestActorRef[WorkerActor]
@@ -300,8 +301,8 @@ class TestActorRefSpec extends AkkaSpec(/*"disp1.type=Dispatcher"*/) with Before
       a.underlying.dispatcher.getClass should be(classOf[Dispatcher])
     }*/
 
-    
-    "proxy receive for the underlying actor without sender()" in {      
+
+    /*"proxy receive for the underlying actor without sender()" in {
       BlockingEventLoop.switch
       val ref = TestActorRef[WorkerActor]
       BlockingEventLoop.wait(10 millis)
@@ -320,6 +321,6 @@ class TestActorRefSpec extends AkkaSpec(/*"disp1.type=Dispatcher"*/) with Before
       ref.isTerminated should be(true)
       expectMsg("workDone")
       BlockingEventLoop.reset
-    }
+    }*/
   }
 }

@@ -75,6 +75,7 @@ lazy val akkaTestkit = crossProject.in(file("akka-js-testkit"))
     version := "0.1.0-SNAPSHOT"
   ).jsSettings(
     libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.0-M16-SNAP6",
+    libraryDependencies += "org.scala-js" %% "scalajs-test-interface" % "0.6.10-SNAPSHOT" % "test",
     scalaJSStage in Global := FastOptStage,
     scalaJSUseRhino in Global := false,
     preLinkJSEnv := NodeJSEnv().value,

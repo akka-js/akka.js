@@ -10,7 +10,7 @@ import scala.scalajs.js
 import scala.scalajs.js.Dynamic.global
 import scala.scalajs.js.timers._
 import scala.scalajs.runtime.UndefinedBehaviorError
-import scala.collection.mutable.{ Queue, ListBuffer }
+import scala.collection.mutable.{ Queue, ArrayBuffer }
 
 object ManagedEventLoop {
 
@@ -32,7 +32,7 @@ object ManagedEventLoop {
 
     def run(): Unit = handler()
   }
-  private final case class TimeoutEvent(handler: JSFun, time: Double) extends Event(handler) {
+  private final class TimeoutEvent(handler: => JSFun, time: Double) extends Event(handler) {
     def clear(): Unit = externalQueueH.map(x => jsClearTimeout(x))
     def globalize(): Unit =
       externalQueueH = Some(
@@ -46,7 +46,10 @@ object ManagedEventLoop {
     }
     val hasToBeRemoved: Boolean = true
   }
-  private final case class IntervalEvent(handler: JSFun, time: Double) extends Event(handler) {
+  private final object TimeoutEvent {
+    def apply(handler: => JSFun, time: Double) = new TimeoutEvent(handler, time)
+  }
+  private final class IntervalEvent(handler: => JSFun, time: Double) extends Event(handler) {
     var lastRan = creationDate
     def clear(): Unit = externalQueueH.map(x => jsClearInterval(x))
     def globalize(): Unit =
@@ -61,8 +64,11 @@ object ManagedEventLoop {
     }
     val hasToBeRemoved: Boolean = false
   }
+  private final object IntervalEvent {
+    def apply(handler: => JSFun, time: Double) = new IntervalEvent(handler, time)
+  }
 
-  private val events = new ListBuffer[Event]()
+  private val events = new ArrayBuffer[Event]()
 
   private var isBlocking: Int = 0
 

@@ -2,6 +2,8 @@
 
 [![Scala.js](https://www.scala-js.org/assets/badges/scalajs-0.6.8.svg)](https://www.scala-js.org)
 
+[![Join the chat at https://gitter.im/unicredit/akka.js](https://badges.gitter.im/unicredit/akka.js.svg)](https://gitter.im/unicredit/akka.js?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 This repository is an ongoing effort to port Akka to the JavaScript runtime, thanks to [Scala.js](http://scala-js.org)
 
 ## Build it

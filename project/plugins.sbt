@@ -1,4 +1,4 @@
-addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.10-SNAPSHOT")
+addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.10")
 
 addSbtPlugin("eu.unicredit" % "sbt-scalajs-ir-patch-plugin" % "0.0.1-SNAPSHOT")
 

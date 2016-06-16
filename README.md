@@ -15,7 +15,7 @@ cd akka.js
 git submodule init
 git submodule update
 sbt akkaActorJSIrPatches/compile
-sbt akkaActorJS/publishLocal
+sbt akkaJsActorJS/publishLocal
 ```
 
 ## Use it
@@ -25,7 +25,7 @@ Then add to your JS project configuration:
 ```scala
 resolvers += Resolver.sonatypeRepo("snapshots")
 
-libraryDependencies += "eu.unicredit" %%% "akkaactor" % "0.1.1-SNAPSHOT"
+libraryDependencies += "eu.unicredit" %%% "akkajsactor" % "0.1.1-SNAPSHOT"
 ```
 
 At this point you can use most of the Akka core Api.

@@ -70,6 +70,9 @@ val system = ActorSystem("akkajsapp", config)
 ```
 You now can use Akka as described in the official [docs](http://doc.akka.io/docs/akka/snapshot/scala.html).
 
+More examples are contained into the @andreaTP session at Scala Days 2016:
+[slides](https://github.com/andreaTP/sd2016.git)
+
 Please consider that only akka-core is available and on Javascript VM you are in a limited environment.
 
 ## Design documentation

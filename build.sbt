@@ -15,7 +15,7 @@ val commonSettings = Seq(
     cancelable in Global := true
 )
 
-lazy val akkaActor = crossProject.in(file("akka-js-actor"))
+lazy val akkaJsActor = crossProject.in(file("akka-js-actor"))
   .settings(commonSettings : _*)
   .settings(
     version := "0.1.1-SNAPSHOT"
@@ -67,7 +67,7 @@ lazy val akkaActor = crossProject.in(file("akka-js-actor"))
     }
   ).jsSettings(sonatypeSettings : _*)
 
-lazy val akkaActorJS = akkaActor.js
+lazy val akkaJsActorJS = akkaJsActor.js
 
 lazy val akkaTestkit = crossProject.in(file("akka-js-testkit"))
   .settings(commonSettings: _*)
@@ -80,9 +80,9 @@ lazy val akkaTestkit = crossProject.in(file("akka-js-testkit"))
     scalaJSUseRhino in Global := false,
     preLinkJSEnv := NodeJSEnv().value,
     postLinkJSEnv := NodeJSEnv().value.withSourceMap(true)
-  ).dependsOn(akkaActor)
+  ).dependsOn(akkaJsActor)
 
-lazy val akkaTestkitJS = akkaTestkit.js.dependsOn(akkaActorJS)
+lazy val akkaTestkitJS = akkaTestkit.js.dependsOn(akkaJsActorJS)
 
 lazy val akkaActorTest = crossProject.in(file("akka-js-actor-tests"))
   .settings(commonSettings: _*)
@@ -139,4 +139,4 @@ lazy val akkaJsActorIrPatches = Project(
   ) enablePlugins (ScalaJSPlugin)
 
 lazy val root = project.in(file(".")).settings(commonSettings: _*)
-  .aggregate(akkaJsActorIrPatches, akkaActorJS, akkaTestkitJS, akkaActorTestJS)
+  .aggregate(akkaJsActorIrPatches, akkaJsActorJS, akkaTestkitJS, akkaActorTestJS)

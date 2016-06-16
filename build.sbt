@@ -1,6 +1,6 @@
 val commonSettings = Seq(
     scalaVersion := "2.11.8",
-    organization := "akka.js",
+    organization := "eu.unicredit",
     scalacOptions ++= Seq(
         "-deprecation",
         "-unchecked",

@@ -25,7 +25,7 @@ Then add to your JS project configuration:
 ```scala
 resolvers += Resolver.sonatypeRepo("snapshots")
 
-libraryDependencies += "akka.js" %%% "akkaactor" % "0.1.1-SNAPSHOT"
+libraryDependencies += "eu.unicredit" %%% "akkaactor" % "0.1.1-SNAPSHOT"
 ```
 
 At this point you can use most of the Akka core Api.

@@ -67,7 +67,7 @@ lazy val akkaJsActor = crossProject.in(file("akka-js-actor"))
     }
   ).jsSettings(sonatypeSettings : _*)
 
-lazy val akkaJsActorJS = akkaJsActor.js
+lazy val akkaJsActorJS = akkaJsActor.js.dependsOn(akkaJsActorIrPatches % Compile)
 
 lazy val akkaTestkit = crossProject.in(file("akka-js-testkit"))
   .settings(commonSettings: _*)

@@ -8,7 +8,8 @@ import akka.actor.FunctionRef
 
 object Unsafe {
 
-    val unsafeVars: mutable.HashMap[(Int,Int), Any] = mutable.HashMap()
+    val unsafeVars: WeakMap[AnyRef, mutable.HashMap[Int, Any]] =
+      new WeakMap[AnyRef, mutable.HashMap[Int, Any]]()
 
     def fallback(offset: Long) = {
       //Missing initializations...
@@ -21,59 +22,113 @@ object Unsafe {
       else null
     }
 
-    def safeHashCode(a: Any): Int = {
+    def safeHashCode(a: Any): AnyRef = {
       a match {
         case rar: akka.actor.RepointableActorRef =>
-          rar.path.uid
+          rar//.path
         case ap: akka.pattern.PromiseActorRef =>
-          ap.provider.tempPath().uid
+          ap//.provider.tempPath()
         case _ =>
-          a.hashCode()
+          a.asInstanceOf[AnyRef]
       }
+    }
+
+    def safeGet(m: WeakMap[AnyRef, mutable.HashMap[Int, Any]], k: AnyRef):
+      Option[mutable.HashMap[Int, Any]] = {
+      if (m.has(k)) Some(m.get(k))
+      else None
     }
 
     final val instance = new {
 
       def getObjectVolatile(o: Any, offset: Long): AnyRef = {
-        unsafeVars.get((safeHashCode(o),offset.asInstanceOf[Int])).getOrElse(fallback(offset)).asInstanceOf[AnyRef]
+        safeGet(unsafeVars, safeHashCode(o))
+          .map(_.get(offset.asInstanceOf[Int]))
+          .flatten
+          .getOrElse(fallback(offset)).asInstanceOf[AnyRef]
       }
 
       def compareAndSwapObject(o: Any, offset: Long, old: Any, next: Any) = {
-        val key = (safeHashCode(o),offset.asInstanceOf[Int])
+        val key = offset.asInstanceOf[Int]
         if (next == null)
-          unsafeVars.remove(key)
-        else
-          unsafeVars.update(key, next)
+          safeGet(unsafeVars, safeHashCode(o))
+            .map(_.remove(key))
+        else {
+          val old = safeGet(unsafeVars, safeHashCode(o))
+          if (old.isDefined)
+            old.get.update(key, next)
+          else {
+            val in = new mutable.HashMap[Int, Any]()
+            in.update(key, next)
+            unsafeVars.set(safeHashCode(o), in)
+          }
+        }
         true
       }
 
       def getAndSetObject(o: Any, offset: Long, next: Any) = {
-        val key = (safeHashCode(o),offset.asInstanceOf[Int])
-        val ret = unsafeVars.get(key).getOrElse(fallback(offset))
+        val key = offset.asInstanceOf[Int]
+        val ret = safeGet(unsafeVars, safeHashCode(o))
+          .map(_.get(key))
+          .flatten
+          .getOrElse(fallback(offset))
+
         if (next == null)
-          unsafeVars.remove(key)
-        else
-          unsafeVars.update(key, next)
+          safeGet(unsafeVars, safeHashCode(o))
+            .map(_.remove(key))
+        else {
+          val old = safeGet(unsafeVars, safeHashCode(o))
+          if (old.isDefined)
+            old.get.update(key, next)
+          else {
+            val in = new mutable.HashMap[Int, Any]()
+            in.update(key, next)
+            unsafeVars.set(safeHashCode(o), in)
+          }
+        }
         ret
       }
 
       def getAndAddLong(o: Any, offset: Long, next: Long) = {
-        val key = (safeHashCode(o),offset.asInstanceOf[Int])
-        val ret = unsafeVars.get(key).map(_.asInstanceOf[Long]).getOrElse(0L)
+        val key = offset.asInstanceOf[Int]
+        val ret = safeGet(unsafeVars, safeHashCode(o))
+          .map(_.get(key))
+          .flatten
+          .map(_.asInstanceOf[Long])
+          .getOrElse(0L)
+
         if (next == 0L)
-          unsafeVars.remove(key)
-        else
-          unsafeVars.update(key, ret + next)
+          safeGet(unsafeVars, safeHashCode(o))
+            .map(_.remove(key))
+        else {
+          val old = safeGet(unsafeVars, safeHashCode(o))
+          if (old.isDefined)
+            old.get.update(key, ret + next)
+          else {
+            val in = new mutable.HashMap[Int, Any]()
+            in.update(key, next)
+            unsafeVars.set(safeHashCode(o), in)
+          }
+        }
         ret
       }
 
       def putObjectVolatile(o: Any, offset: Long, next: Any) = {
-        val key = (safeHashCode(o),offset.asInstanceOf[Int])
-        if (next == null)
-          unsafeVars.remove(key)
-        else
-          unsafeVars.update(key, next)
-      }
+        val key = offset.asInstanceOf[Int]
 
+        if (next == null)
+          safeGet(unsafeVars, safeHashCode(o))
+            .map(_.remove(key))
+        else {
+          val old = safeGet(unsafeVars, safeHashCode(o))
+          if (old.isDefined)
+            old.get.update(key, next)
+          else {
+            val in = new mutable.HashMap[Int, Any]()
+            in.update(key, next)
+            unsafeVars.set(safeHashCode(o), in)
+          }
+        }
+      }
     }
 }

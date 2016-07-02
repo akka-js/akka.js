@@ -198,6 +198,8 @@ lazy val akkaJsActorIrPatches = Project(
   ) settings (commonSettings : _*
   ) enablePlugins (ScalaJSPlugin)
 
+
+
 lazy val root = project.in(file(".")).settings(commonSettings: _*)
   .aggregate(akkaJsActorIrPatches, akkaJsActorJS, akkaTestkitJS, akkaActorTestJS, akkaJsActorStreamJS)
 

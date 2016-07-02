@@ -6,6 +6,8 @@ addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "0.2.2")
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-pgp" % "0.8.3")
 
+addSbtPlugin("io.spray" % "sbt-boilerplate" % "0.6.0")
+
 logLevel := Level.Warn
 
 resolvers += "Typesafe repository" at "http://repo.typesafe.com/typesafe/releases/"

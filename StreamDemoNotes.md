@@ -10,7 +10,7 @@
     cd akka.js
     git submodule init
     git submodule update
-    sbt akkaActorJSIrPatches/compile
+    sbt akkaActorJSIrPatches/publishLocal
     sbt akkaJsActorJS/publishLocal 
     sbt akkaJsActorStreamJS/publishLocal 
     cd akka-stream-demo

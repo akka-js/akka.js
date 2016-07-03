@@ -18,7 +18,7 @@ val commonSettings = Seq(
 lazy val akkaJsActor = crossProject.in(file("akka-js-actor"))
   .settings(commonSettings : _*)
   .settings(
-    version := "0.1.1-SNAPSHOT"
+    version := "0.1.2-SNAPSHOT"
   ).jsSettings(
     libraryDependencies ++= Seq(
       "eu.unicredit" %%% "shocon" % "0.0.2-SNAPSHOT",
@@ -101,7 +101,7 @@ lazy val akkaActorTestJS = akkaActorTest.js
 lazy val akkaJsActorStream = crossProject.in(file("akka-js-actor-stream"))
   .settings(commonSettings : _*)
   .settings(
-    version := "0.1.1-SNAPSHOT"
+    version := "0.1.2-SNAPSHOT"
   ).jsSettings(
   libraryDependencies ++= Seq(
     "eu.unicredit" %%% "shocon" % "0.0.2-SNAPSHOT",
@@ -109,16 +109,7 @@ lazy val akkaJsActorStream = crossProject.in(file("akka-js-actor-stream"))
     "org.scala-js" %%% "scalajs-java-time" % "0.1.0",
     "org.reactivestreams" %%% "reactive-streams-scalajs" % "1.0.0",
     "org.scala-lang.modules" %% "scala-java8-compat" % "0.7.0"
-  ),
-  compile in Compile := {
-    val analysis = (compile in Compile).value
-    //val classDir = (classDirectory in Compile).value
-    //val configFile = (baseDirectory in Compile).value / ".." / ".." / "config" / "ir_patch.config"
-
-    //unicredit.IrPatcherPlugin.patchThis(classDir, configFile)
-
-    analysis
-  }
+  )
 ).jsSettings(
   useAnnotationAdderPluginSettings : _*
 ).jsSettings(

@@ -23,8 +23,8 @@ lazy val demo = crossProject.in(file(".")).
     resolvers += Resolver.sonatypeRepo("snapshots"),
     libraryDependencies ++= Seq(
 
-      "eu.unicredit" %%% "akkajsactorstream" % "0.1.1-SNAPSHOT",
-      "eu.unicredit" %%% "akkajsactor" % "0.1.1-SNAPSHOT",
+      "eu.unicredit" %%% "akkajsactorstream" % "0.1.2-SNAPSHOT",
+      "eu.unicredit" %%% "akkajsactor" % "0.1.2-SNAPSHOT",
       "org.scala-js" %%% "scalajs-dom" % "0.9.0",
       "com.lihaoyi" %%% "scalatags" % "0.5.4"
     ),

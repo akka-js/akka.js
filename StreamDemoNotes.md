@@ -1,17 +1,21 @@
-### Akka Stream ScalaJS Release Notes 
-## Build
-1. `git clone https ://github.com/reactive-streams/reactive-streams-scalajs.git`
-  2. `cd reactive-streams-scalajs
-	`3. `git checkout version-1`
-4. `sbt publishLocal`
-5. `git clone https://github.com/unicredit/akka.js `
-6. `cd akka.js`
-7. `git submodule init`
-8. `git submodule update`
-9. `sbt akkaJsActorStreamJS/publishLocal`
-10. `cd akka-stream-demo`
-11. `sbt demoJVM/run`
-12. `sbt demoJS/run`
+## Akka Stream ScalaJS Release Notes 
+### Build
+ ```
+    git clone https://github.com/reactive-streams/reactive-streams-scalajs.git
+    cd reactive-streams-scalajs
+    git checkout version-1
+    sbt publishLocal
+    cd ..
+    git clone https://github.com/solomono/akka.js.git
+    cd akka.js
+    git submodule init
+    git submodule update
+    sbt akkaActorJSIrPatches/compile
+    sbt akkaJsActorJS/publishLocal 
+    sbt akkaJsActorStreamJS/publishLocal 
+    cd akka-stream-demo
+    sbt demoJVM/run
+    sbt demoJS/run```
 
 ## Changes
 The following describes the changes required for the initial 
@@ -19,7 +23,7 @@ Scala.js support for Akka Streams
 
 ## akka.js
  1. plugin.sbt Added akkaJsActorStream
-	Note I basically copied reg akkaJsStream project expression and changed the minimum
+	Note I basically copied the akkaJsStream project expression and changed the minimum
 ## AkkaJSActor 
 2. Mailboxes, Mailbox
 	 ActorSubscriber in akkaJsActorStream
@@ -37,13 +41,13 @@ Scala.js support for Akka Streams
 Changed FlowNames(system).name.copy(namePrefix))
 to SeqActorName(namePrefix)). 
 3. ActorMaterializerImpl.scala
-	1.  removed TLS Module in materialize 
-	2. in actor of removed else case  in RepointableActorRef
+	1. In the method materializeAtomic removed the case for TLS Module 
+	2. In the actorOf in the case for RepointableActorRef if the actorCell is not started call point
 3. Attributes 
 	1. Removed the Java API  getAttribute calls and reimplemented where the Scala calls were dependent
 	2. Implemented URLEncoder to ScalaJS URIUtils.encodeURI(n)
 3. FramingTruncation AsPublisher
-	1. Java enums. Converted naively.  
+	1. Java enums. Converted to Scala naively.  
 4. GraphInterpreter
 	1. scala.concurrent.forkjoin.ThreadLocalRandom
  to java.util.concurrent.ThreadLocalRandom

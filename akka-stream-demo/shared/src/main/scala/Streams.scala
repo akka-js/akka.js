@@ -26,11 +26,11 @@ object Streams {
     var buf = Vector.empty[String]
 
     def receive = {
-      case value: Int  =>
+      case value:String  =>
         if (buf.isEmpty && totalDemand > 0)
-          onNext(value.toString())
+          onNext(value)
         else {
-          buf :+= value.toString
+          buf :+= value
           deliverBuf()
         }
       case ActorPublisherMessage.Request(_) =>
@@ -57,7 +57,7 @@ object Streams {
         }
       }
   }
-  def complexFlow(implicit system: ActorSystem) = {
+  def complexFlow(runActorPublisher: Boolean) (implicit system: ActorSystem) = {
 
     val log = system.log
 
@@ -65,14 +65,19 @@ object Streams {
 
     val toStringActor = system.actorOf(Props(new ToStringActor()), "toStringActor")
 
-    val factorial = Source(1 to 10).scan(1)(_ * _)
+    val toStringActorPublisherSource =
+      if (runActorPublisher)
+        Source.actorPublisher[String](Props[ToStringActorPublisher])
+      else
+        Source.actorRef[String](1000, OverflowStrategy.dropNew)
 
-    val strings = Source(1 to 10).map( _.toString)
+
+    val factorial = Source(1 to 10).scan(1)(_ * _)
 
     implicit val dispatcher = system.dispatcher
     implicit val timeout = Timeout(5 seconds)
 
-    val strings2 =  Source(1 to 10).mapAsync(4)(value => (toStringActor ? value).mapTo[String])
+    val strings =  Source(1 to 10).mapAsync(4)(value => (toStringActor ? value).mapTo[String])
 
     val throttledAndZipped = Flow[String]
       .zip(factorial)
@@ -80,11 +85,11 @@ object Streams {
       .mapAsync(10)(a=>Future(s"${new java.util.Date()} - $a"))
       .to(Sink.foreach(println))
 
-    //val toStringActorRef = throttledAndZipped.runWith(toStringActorPublisherSource)
+    val toStringActorRef = throttledAndZipped.runWith(toStringActorPublisherSource)
 
+    (1 to 10).map ( num => toStringActorRef !  s"<${num.toString}>")
 
     throttledAndZipped.runWith(strings)
-    log.debug("runwith string")
 
 
     system.scheduler.scheduleOnce(12 second)(
@@ -92,7 +97,7 @@ object Streams {
     )
 
 
-    //(1 to 10).map ( toStringActorRef ! _)
+
 
   }
 

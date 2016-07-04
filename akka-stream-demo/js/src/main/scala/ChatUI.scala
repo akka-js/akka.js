@@ -29,7 +29,7 @@ object ChatUI {
             cls := "pure-button pure-button-primary",
             onclick := {
               () => {
-                Streams.complexFlow
+                Streams.complexFlow(false)
           }})("Run")
         )
       )

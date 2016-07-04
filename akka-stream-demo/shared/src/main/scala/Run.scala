@@ -9,6 +9,6 @@ object Run {
     implicit val system = ActorSystem("streams", akkaConfig)
     PingPong.start
     Streams.simpleFlow
-    Streams.complexFlow
+    Streams.complexFlow(false)
   }
 }

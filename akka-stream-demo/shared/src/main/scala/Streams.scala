@@ -13,10 +13,17 @@ import scala.concurrent.duration._
 
 object Streams {
 
+  object EndMessage
 
   class ToStringActor extends Actor {
     def receive = {
-      case value => sender () ! s"[${value.toString}]"
+      case value => sender () ! value.toString
+    }
+  }
+  class PrintActorRef extends Actor {
+    def receive = {
+      case  EndMessage => println("Complete")
+      case value => println(s"Actor Sink  : ${value}")
     }
   }
 
@@ -57,6 +64,7 @@ object Streams {
         }
       }
   }
+
   def complexFlow(runActorPublisher: Boolean) (implicit system: ActorSystem) = {
 
     val log = system.log
@@ -64,6 +72,7 @@ object Streams {
     implicit val materializer = ActorMaterializer()
 
     val toStringActor = system.actorOf(Props(new ToStringActor()), "toStringActor")
+    val printActor = system.actorOf(Props(new PrintActorRef()), "PrintActor")
 
     val toStringActorPublisherSource =
       if (runActorPublisher)
@@ -80,19 +89,21 @@ object Streams {
     val strings =  Source(1 to 10).mapAsync(4)(value => (toStringActor ? value).mapTo[String])
 
     val throttledAndZipped = Flow[String]
-      .zip(factorial)
+      .zip(factorial).map{case (index, fact) => s"factorial(${index}) = ${fact}"}
       .throttle(1, 1.second, 1, ThrottleMode.shaping)
       .mapAsync(10)(a=>Future(s"${new java.util.Date()} - $a"))
-      .to(Sink.foreach(println))
-
-    val toStringActorRef = throttledAndZipped.runWith(toStringActorPublisherSource)
-
-    (1 to 10).map ( num => toStringActorRef !  s"<${num.toString}>")
-
-    throttledAndZipped.runWith(strings)
 
 
-    system.scheduler.scheduleOnce(12 second)(
+
+    val toStringActorRef = throttledAndZipped.to(Sink.actorRef(printActor, EndMessage)).runWith(toStringActorPublisherSource)
+
+    (1 to 10).map ( num => toStringActorRef !  num.toString)
+
+
+    throttledAndZipped.to(Sink.foreach{ea:String => println(s"Foreach Sink: ${ea}")}).runWith(strings)
+
+
+    system.scheduler.scheduleOnce(12 second )(
       system.terminate()
     )
 

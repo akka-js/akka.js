@@ -269,6 +269,10 @@ private[akka] class SubFusingActorMaterializerImpl(val delegate: ExtendedActorMa
  * INTERNAL API
  */
 private[akka] object FlowNames extends ExtensionId[FlowNames] with ExtensionIdProvider {
+  //I know this is an hack...
+  override def apply(system: ActorSystem): FlowNames =
+    createExtension(system.asInstanceOf[ExtendedActorSystem])
+
   override def get(system: ActorSystem): FlowNames = super.get(system)
   override def lookup() = FlowNames
   override def createExtension(system: ExtendedActorSystem): FlowNames = new FlowNames
@@ -323,4 +327,3 @@ private[akka] class StreamSupervisor(settings: ActorMaterializerSettings, haveSh
 
   override def postStop(): Unit = haveShutDown.set(true)
 }
-

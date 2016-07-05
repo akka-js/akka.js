@@ -69,7 +69,8 @@ lazy val akkaJsActor = crossProject.in(file("akka-js-actor"))
     useAnnotationAdderPluginSettings : _*
   ).jsSettings(
     publishSettings : _*
-  ).jsSettings(sonatypeSettings : _*)
+  ).jsSettings(sonatypeSettings : _*
+  ).enablePlugins(spray.boilerplate.BoilerplatePlugin)
 
 lazy val akkaJsActorJS = akkaJsActor.js.dependsOn(akkaJsActorIrPatches % Compile)
 

@@ -360,4 +360,14 @@ private[akka] abstract class Mailbox(val messageQueue: MessageQueue)
     }
 }
 
+/**
+  * DequeBasedMessageQueue refines QueueBasedMessageQueue to be backed by a java.util.Deque.
+  */
+trait DequeBasedMessageQueueSemantics {
+  def enqueueFirst(receiver: ActorRef, handle: Envelope): Unit
+}
+
+trait UnboundedDequeBasedMessageQueueSemantics extends DequeBasedMessageQueueSemantics with UnboundedMessageQueueSemantics
+
+
 

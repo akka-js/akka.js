@@ -18,7 +18,7 @@ val commonSettings = Seq(
 lazy val akkaJsActor = crossProject.in(file("akka-js-actor"))
   .settings(commonSettings : _*)
   .settings(
-    version := "0.1.1-SNAPSHOT"
+    version := "0.1.2-SNAPSHOT"
   ).jsSettings(
     libraryDependencies ++= Seq(
       "eu.unicredit" %%% "shocon" % "0.0.2-SNAPSHOT",
@@ -98,6 +98,57 @@ lazy val akkaActorTest = crossProject.in(file("akka-js-actor-tests"))
 
 lazy val akkaActorTestJS = akkaActorTest.js
 
+lazy val akkaJsActorStream = crossProject.in(file("akka-js-actor-stream"))
+  .settings(commonSettings : _*)
+  .settings(
+    version := "0.1.2-SNAPSHOT"
+  ).jsSettings(
+  libraryDependencies ++= Seq(
+    "eu.unicredit" %%% "shocon" % "0.0.2-SNAPSHOT",
+    "org.scala-js" %%% "scalajs-dom" % "0.9.0",
+    "org.scala-js" %%% "scalajs-java-time" % "0.1.0",
+    "org.reactivestreams" %%% "reactive-streams-scalajs" % "1.0.0",
+    "org.scala-lang.modules" %% "scala-java8-compat" % "0.7.0"
+  )
+).jsSettings(
+  useAnnotationAdderPluginSettings : _*
+).jsSettings(
+  publishMavenStyle := true,
+  pomIncludeRepository := { x => false },
+  credentials += Credentials(Path.userHome / ".ivy2" / "sonatype.credentials"),
+  pomExtra := {
+    <url>https://github.com/unicredit/akka.js</url>
+      <licenses>
+        <license>
+          <name>Scala License</name>
+          <url>http://www.scala-lang.org/license.html</url>
+        </license>
+      </licenses>
+      <scm>
+        <connection>scm:git:github.com/unicredit/akka.js</connection>
+        <developerConnection>scm:git:git@github.com:unicredit/akka.js</developerConnection>
+        <url>github.com/unicredit/akka.js</url>
+      </scm>
+      <developers>
+        <developer>
+          <id>andreaTP</id>
+          <name>Andrea Peruffo</name>
+          <url>https://github.com/andreaTP/</url>
+        </developer>
+        <developer>
+          <id>yawnt</id>
+          <name>Gianluca Stivan</name>
+          <url>https://github.com/yawnt/</url>
+        </developer>
+      </developers>
+  }
+).dependsOn(akkaJsActor
+).jsSettings(sonatypeSettings : _*
+).enablePlugins(spray.boilerplate.BoilerplatePlugin)
+
+
+lazy val akkaJsActorStreamJS = akkaJsActorStream.js
+
 //COMPILER PLUGINS SECTION
 
 //add scala.js annotations to proper classes
@@ -138,5 +189,8 @@ lazy val akkaJsActorIrPatches = Project(
   ) settings (commonSettings : _*
   ) enablePlugins (ScalaJSPlugin)
 
+
+
 lazy val root = project.in(file(".")).settings(commonSettings: _*)
-  .aggregate(akkaJsActorIrPatches, akkaJsActorJS, akkaTestkitJS, akkaActorTestJS)
+  .aggregate(akkaJsActorIrPatches, akkaJsActorJS, akkaTestkitJS, akkaActorTestJS, akkaJsActorStreamJS)
+

@@ -16,6 +16,10 @@ git submodule init
 git submodule update
 sbt akkaJsActorJS/publishLocal
 ```
+To have also the bleeding edge integration of akka-stream:
+```
+sbt akkaJsActorStreamJS/publishLocal
+```
 
 ## Use it
 

@@ -79,7 +79,7 @@ val system = ActorSystem("akkajsapp", config)
 ```
 You now can use Akka as described in the official [docs](http://doc.akka.io/docs/akka/snapshot/scala.html).
 
-Start with one of our (examples)[https://github.com/unicredit/akka.js-examples]
+Start with one of our [examples](https://github.com/unicredit/akka.js-examples)
 
 Check out the @andreaTP session at Scala Days 2016:
 [slides](https://github.com/andreaTP/sd2016.git)

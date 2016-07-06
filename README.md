@@ -14,6 +14,7 @@ git clone https://github.com/unicredit/akka.js
 cd akka.js
 git submodule init
 git submodule update
+sbt akkaJsActorIrPatches/compile
 sbt akkaJsActorJS/publishLocal
 ```
 To have also the bleeding edge integration of akka-stream:

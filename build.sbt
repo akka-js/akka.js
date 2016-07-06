@@ -72,7 +72,7 @@ lazy val akkaJsActor = crossProject.in(file("akka-js-actor"))
   ).jsSettings(sonatypeSettings : _*
   ).enablePlugins(spray.boilerplate.BoilerplatePlugin)
 
-lazy val akkaJsActorJS = akkaJsActor.js.dependsOn(akkaJsActorIrPatches % Compile)
+lazy val akkaJsActorJS = akkaJsActor.js
 
 lazy val akkaTestkit = crossProject.in(file("akka-js-testkit"))
   .settings(commonSettings: _*)
@@ -162,8 +162,8 @@ lazy val akkaJsActorIrPatches = Project(
       analysis
     },
     publishArtifact in Compile := true
-  ) settings (commonSettings : _*
-  ) enablePlugins (ScalaJSPlugin)
+  ).settings (commonSettings : _*
+  ).enablePlugins (ScalaJSPlugin)
 
 
 

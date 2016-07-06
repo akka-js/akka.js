@@ -6,22 +6,6 @@
 
 This repository is an ongoing effort to port Akka to the JavaScript runtime, thanks to [Scala.js](http://scala-js.org)
 
-## Build it
-
-To work with the very last version you can compile and publish local:
-```
-git clone https://github.com/unicredit/akka.js
-cd akka.js
-git submodule init
-git submodule update
-sbt akkaJsActorIrPatches/compile
-sbt akkaJsActorJS/publishLocal
-```
-To have also the bleeding edge integration of akka-stream:
-```
-sbt akkaJsActorStreamJS/publishLocal
-```
-
 ## Use it
 
 To have a blazing fast kick off you can check out our [examples](https://github.com/unicredit/akka.js-examples).
@@ -91,6 +75,22 @@ Check out the @andreaTP session at Scala Days 2016:
 The BSc thesis detailing most of the work and the approach taken can be found [here](../../blob/merge-js/pdf/thesis.pdf)
 
 The original codebase derives from Sébastien Doeraene's `scala-js-actors`, you can find his original report [here](http://lampwww.epfl.ch/~doeraene/scalajs-actors-design.pdf).
+
+## Build it
+
+To work with the very last version you can compile and publish local:
+```
+git clone https://github.com/unicredit/akka.js
+cd akka.js
+git submodule init
+git submodule update
+sbt akkaJsActorIrPatches/compile
+sbt akkaJsActorJS/publishLocal
+```
+To have also the bleeding edge integration of akka-stream:
+```
+sbt akkaJsActorStreamJS/publishLocal
+```
 
 ## Akka version
 

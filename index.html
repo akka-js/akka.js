@@ -37,27 +37,22 @@
 <p>This repository is an ongoing effort to port Akka to the JavaScript runtime, thanks to <a href="http://scala-js.org">Scala.js</a></p>
 
 <h2>
-<a id="build-it" class="anchor" href="#build-it" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Build it</h2>
-
-<p>To work with the very last version you can compile and publish local:</p>
-
-<pre><code>git clone https://github.com/unicredit/akka.js
-cd akka.js
-git submodule init
-git submodule update
-sbt akkaActorJSIrPatches/compile
-sbt akkaActorJS/publishLocal
-</code></pre>
-
-<h2>
 <a id="use-it" class="anchor" href="#use-it" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Use it</h2>
+
+<p>To have a blazing fast kick off you can check out our <a href="https://github.com/unicredit/akka.js-examples">examples</a>.</p>
+
+<p>Otherwise, if you want to start from scratch:</p>
 
 <p>First of all you need to setup a new <a href="https://www.scala-js.org/doc/project/">Scala.js project</a>.
 Then add to your JS project configuration:</p>
 
 <div class="highlight highlight-source-scala"><pre>resolvers <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-en">Resolver</span>.sonatypeRepo(<span class="pl-s"><span class="pl-pds">"</span>snapshots<span class="pl-pds">"</span></span>)
 
-libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>akka.js<span class="pl-pds">"</span></span> <span class="pl-k">%%%</span> <span class="pl-s"><span class="pl-pds">"</span>akkaactor<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.1.1-SNAPSHOT<span class="pl-pds">"</span></span></pre></div>
+libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>eu.unicredit<span class="pl-pds">"</span></span> <span class="pl-k">%%%</span> <span class="pl-s"><span class="pl-pds">"</span>akkajsactor<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.1.2-SNAPSHOT<span class="pl-pds">"</span></span></pre></div>
+
+<p>If you want to use Akka Stream:</p>
+
+<div class="highlight highlight-source-scala"><pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>eu.unicredit<span class="pl-pds">"</span></span> <span class="pl-k">%%%</span> <span class="pl-s"><span class="pl-pds">"</span>akkajsactorstream<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.1.2-SNAPSHOT<span class="pl-pds">"</span></span></pre></div>
 
 <p>At this point you can use most of the Akka core Api.
 Please note that you have to provide a specific configuration during ActorSystem creation.
@@ -101,7 +96,8 @@ An example could be:</p>
 
 <p>You now can use Akka as described in the official <a href="http://doc.akka.io/docs/akka/snapshot/scala.html">docs</a>.</p>
 
-<p>Please consider that only akka-core is available and on Javascript VM you are in a limited environment.</p>
+<p>Check out the <a href="https://github.com/andreaTP" class="user-mention">@andreaTP</a> session at Scala Days 2016:
+<a href="https://github.com/andreaTP/sd2016.git">slides</a></p>
 
 <h2>
 <a id="design-documentation" class="anchor" href="#design-documentation" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Design documentation</h2>
@@ -109,6 +105,24 @@ An example could be:</p>
 <p>The BSc thesis detailing most of the work and the approach taken can be found <a href="../../blob/merge-js/pdf/thesis.pdf">here</a></p>
 
 <p>The original codebase derives from Sébastien Doeraene's <code>scala-js-actors</code>, you can find his original report <a href="http://lampwww.epfl.ch/%7Edoeraene/scalajs-actors-design.pdf">here</a>.</p>
+
+<h2>
+<a id="build-it" class="anchor" href="#build-it" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Build it</h2>
+
+<p>To work with the very last version you can compile and publish local:</p>
+
+<pre><code>git clone https://github.com/unicredit/akka.js
+cd akka.js
+git submodule init
+git submodule update
+sbt akkaJsActorIrPatches/compile
+sbt akkaJsActorJS/publishLocal
+</code></pre>
+
+<p>To have also the bleeding edge integration of akka-stream:</p>
+
+<pre><code>sbt akkaJsActorStreamJS/publishLocal
+</code></pre>
 
 <h2>
 <a id="akka-version" class="anchor" href="#akka-version" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Akka version</h2>

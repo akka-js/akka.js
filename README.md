@@ -28,7 +28,12 @@ Then add to your JS project configuration:
 ```scala
 resolvers += Resolver.sonatypeRepo("snapshots")
 
-libraryDependencies += "eu.unicredit" %%% "akkajsactor" % "0.1.1-SNAPSHOT"
+libraryDependencies += "eu.unicredit" %%% "akkajsactor" % "0.1.2-SNAPSHOT"
+```
+
+If you want to use Akka Stream:
+```scala
+libraryDependencies += "eu.unicredit" %%% "akkajsactorstream" % "0.1.2-SNAPSHOT"
 ```
 
 At this point you can use most of the Akka core Api.
@@ -73,7 +78,9 @@ val system = ActorSystem("akkajsapp", config)
 ```
 You now can use Akka as described in the official [docs](http://doc.akka.io/docs/akka/snapshot/scala.html).
 
-More examples are contained into the @andreaTP session at Scala Days 2016:
+Start with one of our (examples)[https://github.com/unicredit/akka.js-examples]
+
+Check out the @andreaTP session at Scala Days 2016:
 [slides](https://github.com/andreaTP/sd2016.git)
 
 Please consider that only akka-core is available and on Javascript VM you are in a limited environment.

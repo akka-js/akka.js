@@ -24,6 +24,10 @@ sbt akkaJsActorStreamJS/publishLocal
 
 ## Use it
 
+To have a blazing fast kick off you can check out our [examples](https://github.com/unicredit/akka.js-examples).
+
+Otherwise, if you want to start from scratch:
+
 First of all you need to setup a new [Scala.js project](https://www.scala-js.org/doc/project/).
 Then add to your JS project configuration:
 ```scala
@@ -79,12 +83,8 @@ val system = ActorSystem("akkajsapp", config)
 ```
 You now can use Akka as described in the official [docs](http://doc.akka.io/docs/akka/snapshot/scala.html).
 
-Start with one of our [examples](https://github.com/unicredit/akka.js-examples)
-
 Check out the @andreaTP session at Scala Days 2016:
 [slides](https://github.com/andreaTP/sd2016.git)
-
-Please consider that only akka-core is available and on Javascript VM you are in a limited environment.
 
 ## Design documentation
 

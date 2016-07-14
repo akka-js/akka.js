@@ -22,16 +22,8 @@ object Unsafe {
       else null
     }
 
-    def safeHashCode(a: Any): AnyRef = {
-      a match {
-        case rar: akka.actor.RepointableActorRef =>
-          rar//.path
-        case ap: akka.pattern.PromiseActorRef =>
-          ap//.provider.tempPath()
-        case _ =>
-          a.asInstanceOf[AnyRef]
-      }
-    }
+    def toAnyRef(a: Any): AnyRef =
+      a.asInstanceOf[AnyRef]
 
     def safeGet(m: WeakMap[AnyRef, mutable.HashMap[Int, Any]], k: AnyRef):
       Option[mutable.HashMap[Int, Any]] = {
@@ -42,7 +34,7 @@ object Unsafe {
     final val instance = new {
 
       def getObjectVolatile(o: Any, offset: Long): AnyRef = {
-        safeGet(unsafeVars, safeHashCode(o))
+        safeGet(unsafeVars, toAnyRef(o))
           .map(_.get(offset.asInstanceOf[Int]))
           .flatten
           .getOrElse(fallback(offset)).asInstanceOf[AnyRef]
@@ -51,16 +43,16 @@ object Unsafe {
       def compareAndSwapObject(o: Any, offset: Long, old: Any, next: Any) = {
         val key = offset.asInstanceOf[Int]
         if (next == null)
-          safeGet(unsafeVars, safeHashCode(o))
+          safeGet(unsafeVars, toAnyRef(o))
             .map(_.remove(key))
         else {
-          val old = safeGet(unsafeVars, safeHashCode(o))
+          val old = safeGet(unsafeVars, toAnyRef(o))
           if (old.isDefined)
             old.get.update(key, next)
           else {
             val in = new mutable.HashMap[Int, Any]()
             in.update(key, next)
-            unsafeVars.set(safeHashCode(o), in)
+            unsafeVars.set(toAnyRef(o), in)
           }
         }
         true
@@ -68,22 +60,22 @@ object Unsafe {
 
       def getAndSetObject(o: Any, offset: Long, next: Any) = {
         val key = offset.asInstanceOf[Int]
-        val ret = safeGet(unsafeVars, safeHashCode(o))
+        val ret = safeGet(unsafeVars, toAnyRef(o))
           .map(_.get(key))
           .flatten
           .getOrElse(fallback(offset))
 
         if (next == null)
-          safeGet(unsafeVars, safeHashCode(o))
+          safeGet(unsafeVars, toAnyRef(o))
             .map(_.remove(key))
         else {
-          val old = safeGet(unsafeVars, safeHashCode(o))
+          val old = safeGet(unsafeVars, toAnyRef(o))
           if (old.isDefined)
             old.get.update(key, next)
           else {
             val in = new mutable.HashMap[Int, Any]()
             in.update(key, next)
-            unsafeVars.set(safeHashCode(o), in)
+            unsafeVars.set(toAnyRef(o), in)
           }
         }
         ret
@@ -91,23 +83,23 @@ object Unsafe {
 
       def getAndAddLong(o: Any, offset: Long, next: Long) = {
         val key = offset.asInstanceOf[Int]
-        val ret = safeGet(unsafeVars, safeHashCode(o))
+        val ret = safeGet(unsafeVars, toAnyRef(o))
           .map(_.get(key))
           .flatten
           .map(_.asInstanceOf[Long])
           .getOrElse(0L)
 
         if (next == 0L)
-          safeGet(unsafeVars, safeHashCode(o))
+          safeGet(unsafeVars, toAnyRef(o))
             .map(_.remove(key))
         else {
-          val old = safeGet(unsafeVars, safeHashCode(o))
+          val old = safeGet(unsafeVars, toAnyRef(o))
           if (old.isDefined)
             old.get.update(key, ret + next)
           else {
             val in = new mutable.HashMap[Int, Any]()
             in.update(key, next)
-            unsafeVars.set(safeHashCode(o), in)
+            unsafeVars.set(toAnyRef(o), in)
           }
         }
         ret
@@ -117,16 +109,16 @@ object Unsafe {
         val key = offset.asInstanceOf[Int]
 
         if (next == null)
-          safeGet(unsafeVars, safeHashCode(o))
+          safeGet(unsafeVars, toAnyRef(o))
             .map(_.remove(key))
         else {
-          val old = safeGet(unsafeVars, safeHashCode(o))
+          val old = safeGet(unsafeVars, toAnyRef(o))
           if (old.isDefined)
             old.get.update(key, next)
           else {
             val in = new mutable.HashMap[Int, Any]()
             in.update(key, next)
-            unsafeVars.set(safeHashCode(o), in)
+            unsafeVars.set(toAnyRef(o), in)
           }
         }
       }

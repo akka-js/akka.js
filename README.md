@@ -6,7 +6,7 @@
 
 This repository is an ongoing effort to port Akka to the JavaScript runtime, thanks to [Scala.js](http://scala-js.org)
 
-[LIVE DEMO](https://andreatp.github.io/akka.js-site/)
+[LIVE DEMO](https://unicredit.github.io/akka.js/)
 
 ## Use it
 

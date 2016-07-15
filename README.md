@@ -58,6 +58,10 @@ actor {
     event-stream = off
     unhandled = off
   }
+
+  default-dispatcher {
+    stash-capacity = -1
+  }
 }
 scheduler {
   implementation = akka.actor.EventLoopScheduler

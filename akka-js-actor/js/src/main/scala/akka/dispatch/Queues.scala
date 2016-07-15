@@ -183,9 +183,10 @@ case class UnboundedMailbox() extends MailboxType with ProducesMessageQueue[Unbo
 }
 
 object UnboundedMailbox {
-  class MessageQueue extends AbstractNodeQueue[Envelope] with UnboundedQueueBasedMessageQueue {
+  class MessageQueue extends AbstractNodeQueue[Envelope] with UnboundedQueueBasedMessageQueue with UnboundedDequeBasedMessageQueueSemantics {
     final def queue: Queue[Envelope] = this
     override def dequeue(): Envelope = queue.poll()
+    def enqueueFirst(receiver: ActorRef, handle: Envelope): Unit = queue addFirst handle
   }
 }
 

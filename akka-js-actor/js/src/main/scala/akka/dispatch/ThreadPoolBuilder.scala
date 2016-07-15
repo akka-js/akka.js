@@ -9,6 +9,9 @@ import java.util.concurrent.ThreadFactory
 import java.util.concurrent.atomic.{ AtomicReference, AtomicLong }
 
 import java.util.concurrent.{ TimeUnit, Callable, ExecutorService }
+
+import scala.concurrent.duration.Duration
+
 /**
  * Function0 without the fun stuff (mostly for the sake of the Java API side of things)
  */

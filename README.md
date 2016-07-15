@@ -84,9 +84,6 @@ To work with the very last version you can compile and publish local:
 ```
 git clone https://github.com/unicredit/akka.js
 cd akka.js
-git submodule init
-git submodule update
-sbt akkaActorJSIrPatches/compile
 sbt akkaJsActorJS/publishLocal
 ```
 To have also the bleeding edge integration of akka-stream:
@@ -96,7 +93,8 @@ sbt akkaJsActorStreamJS/publishLocal
 
 ## Akka version
 
-As of now, code is taken from Akka MASTER
+Akka.Js can now compile against different versions of Akka, we check the codebase against MASTER,
+but for specific needs you can try to compile against a different Akka version by changing the akkaVersion while building.
 
 ## License
 

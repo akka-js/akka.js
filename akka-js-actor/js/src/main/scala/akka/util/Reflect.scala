@@ -46,8 +46,15 @@ private[akka] object Reflect {
       case err : Throwable =>
         //this is dirty and should be improved...
         s"$value".equals("null") || s"$value".endsWith("deadLetters]")
-    } 
+    }
   }
+
+  /**
+   * INTERNAL API
+   * @param clazz the class which to instantiate an instance of
+   * @return a function which when applied will create a new instance from the default constructor of the given class
+   */
+  private[akka] def instantiator[T](clazz: Class[T]): () ⇒ T = () ⇒ instantiate(clazz)
 
   /**
    * INTERNAL API
@@ -80,7 +87,7 @@ private[akka] object Reflect {
         val argString = args mkString ("[", ", ", "]")
         throw new IllegalArgumentException(s"constructor $constructor is incompatible with arguments $argString", e)
     }
-  }  
+  }
 
   /**
    * INTERNAL API

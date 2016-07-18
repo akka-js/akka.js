@@ -163,7 +163,59 @@ lazy val akkaTestkitJS = akkaTestkit.js.dependsOn(akkaJsActorJS)
 lazy val akkaActorTest = crossProject.in(file("akka-js-actor-tests"))
   .settings(commonSettings: _*)
   .settings(
-    version := akkaJsVersion
+    version := akkaJsVersion,
+    akkaVersion := akkaOriginalVersion,
+    assembleAkkaLibrary := {
+      import org.eclipse.jgit.api._
+
+      val s = streams.value
+      val trgDir = target.value / "akkaSources" / akkaVersion.value
+
+
+      val akkaActorTrg = (file("akka-js-actor/js/target/") / "akkaSources" / akkaVersion.value)
+
+      if (!trgDir.exists) {
+        if (akkaActorTrg.exists) {
+          s.log.info(s"Akka sources from akkaActor sub-project")
+
+          // Make parent dirs and stuff
+          IO.createDirectory(trgDir)
+
+          IO.copyDirectory(
+            akkaActorTrg,
+            trgDir, overwrite = true)
+
+        } else {
+          s.log.info(s"Fetching Akka source version ${akkaVersion.value}")
+
+          // Make parent dirs and stuff
+          IO.createDirectory(trgDir)
+
+          // Clone akka source code
+          new CloneCommand()
+            .setDirectory(trgDir)
+            .setURI("https://github.com/akka/akka.git")
+            .call()
+        }
+      }
+
+      // Checkout proper ref. We do this anyway so we fail if
+      // something is wrong
+      val git = Git.open(trgDir)
+      s.log.info(s"Checking out Akka source version ${akkaVersion.value}")
+      git.checkout().setName(s"${akkaVersion.value}").call()
+
+      val srcTarget = file("akka-js-actor-tests/shared/src/test/scala")
+      IO.delete(srcTarget)
+      IO.copyDirectory(
+        trgDir / "akka-actor-tests" / "src" / "test" / "scala",
+        srcTarget, overwrite = true)
+
+
+      val jsSources = file("akka-js-actor-tests/js/src/test/scala")
+
+      rm_clash(srcTarget, jsSources)
+    }
   ).jsSettings(
     scalaJSUseRhino in Global := false,
     scalaJSStage in Global := FastOptStage,
@@ -175,7 +227,11 @@ lazy val akkaActorTest = crossProject.in(file("akka-js-actor-tests"))
      "org.scalacheck" %%% "scalacheck" % "1.13.2" % "test",
      "io.megl" %%% "play-json-extra" % "2.4.3"
    )
- ).dependsOn(akkaTestkit % "test->test")
+ ).jsSettings(
+  excludeDependencies += ("eu.unicredit" %% "akkaactorjsirpatches"),
+  compile in Compile <<= (compile in Compile) dependsOn assembleAkkaLibrary,
+  publishLocal <<= publishLocal dependsOn assembleAkkaLibrary
+).dependsOn(akkaTestkit % "test->test")
 
 lazy val akkaActorTestJS = akkaActorTest.js
 
@@ -266,7 +322,60 @@ lazy val akkaJsActorStreamJS = akkaJsActorStream.js
 lazy val akkaStreamTestkit = crossProject.in(file("akka-js-stream-testkit"))
   .settings(commonSettings: _*)
   .settings(
-    version := akkaJsVersion
+    version := akkaJsVersion,
+    akkaVersion := akkaOriginalVersion,
+    assembleAkkaLibrary := {
+      import org.eclipse.jgit.api._
+
+      val s = streams.value
+      val trgDir = target.value / "akkaSources" / akkaVersion.value
+
+
+      val akkaActorTrg = (file("akka-js-actor/js/target/") / "akkaSources" / akkaVersion.value)
+
+      if (!trgDir.exists) {
+        if (akkaActorTrg.exists) {
+          s.log.info(s"Akka sources from akkaActor sub-project")
+
+          // Make parent dirs and stuff
+          IO.createDirectory(trgDir)
+
+          IO.copyDirectory(
+            akkaActorTrg,
+            trgDir, overwrite = true)
+
+        } else {
+          s.log.info(s"Fetching Akka source version ${akkaVersion.value}")
+
+          // Make parent dirs and stuff
+          IO.createDirectory(trgDir)
+
+          // Clone akka source code
+          new CloneCommand()
+            .setDirectory(trgDir)
+            .setURI("https://github.com/akka/akka.git")
+            .call()
+        }
+      }
+
+      // Checkout proper ref. We do this anyway so we fail if
+      // something is wrong
+      val git = Git.open(trgDir)
+      s.log.info(s"Checking out Akka source version ${akkaVersion.value}")
+      git.checkout().setName(s"${akkaVersion.value}").call()
+
+      // Copy main
+      val srcTarget = file("akka-js-stream-testkit/shared/src")
+      IO.delete(srcTarget)
+      IO.copyDirectory(
+        trgDir / "akka-stream-testkit" / "src",
+        srcTarget, overwrite = true)
+
+
+      val jsSources = file("akka-js-stream-testkit/js/src")
+
+      rm_clash(srcTarget, jsSources)
+    }
   ).jsSettings(
   libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.0-M16-SNAP6" withSources (),
   libraryDependencies += "org.scala-js" %% "scalajs-test-interface" % "0.6.10-SNAPSHOT" % "test",
@@ -275,6 +384,10 @@ lazy val akkaStreamTestkit = crossProject.in(file("akka-js-stream-testkit"))
   scalaJSUseRhino in Global := false,
   preLinkJSEnv := NodeJSEnv().value,
   postLinkJSEnv := NodeJSEnv().value.withSourceMap(true)
+).jsSettings(
+    excludeDependencies += ("eu.unicredit" %% "akkaactorjsirpatches"),
+    compile in Compile <<= (compile in Compile) dependsOn assembleAkkaLibrary,
+    publishLocal <<= publishLocal dependsOn assembleAkkaLibrary
 ).dependsOn(akkaJsActorStream,akkaTestkit)
 
 lazy val akkaStreamTestkitJS = akkaStreamTestkit.js
@@ -282,7 +395,58 @@ lazy val akkaStreamTestkitJS = akkaStreamTestkit.js
 lazy val akkaStreamTest = crossProject.in(file("akka-js-stream-tests"))
   .settings(commonSettings: _*)
   .settings(
-    version := akkaJsVersion
+    version := akkaJsVersion,
+    akkaVersion := akkaOriginalVersion,
+    assembleAkkaLibrary := {
+      import org.eclipse.jgit.api._
+
+      val s = streams.value
+      val trgDir = target.value / "akkaSources" / akkaVersion.value
+
+
+      val akkaActorTrg = (file("akka-js-actor/js/target/") / "akkaSources" / akkaVersion.value)
+
+      if (!trgDir.exists) {
+        if (akkaActorTrg.exists) {
+          s.log.info(s"Akka sources from akkaActor sub-project")
+
+          // Make parent dirs and stuff
+          IO.createDirectory(trgDir)
+
+          IO.copyDirectory(
+            akkaActorTrg,
+            trgDir, overwrite = true)
+
+        } else {
+          s.log.info(s"Fetching Akka source version ${akkaVersion.value}")
+
+          // Make parent dirs and stuff
+          IO.createDirectory(trgDir)
+
+          // Clone akka source code
+          new CloneCommand()
+            .setDirectory(trgDir)
+            .setURI("https://github.com/akka/akka.git")
+            .call()
+        }
+      }
+
+      // Checkout proper ref. We do this anyway so we fail if
+      // something is wrong
+      val git = Git.open(trgDir)
+      s.log.info(s"Checking out Akka source version ${akkaVersion.value}")
+      git.checkout().setName(s"${akkaVersion.value}").call()
+
+      val srcTarget = file("akka-js-stream-tests/shared/src/test/scala")
+      IO.delete(srcTarget)
+      IO.copyDirectory(
+        trgDir / "akka-stream-tests" / "src" / "test" / "scala",
+        srcTarget, overwrite = true)
+
+      val jsSources = file("akka-js-stream-tests/js/src/test/scala")
+
+      rm_clash(srcTarget, jsSources)
+    }
   ).jsSettings(
     scalaJSUseRhino in Global := false,
     scalaJSStage in Global := FastOptStage,
@@ -295,6 +459,11 @@ lazy val akkaStreamTest = crossProject.in(file("akka-js-stream-tests"))
       "org.scalacheck" %%% "scalacheck" % "1.13.2" % "test",
       "org.scala-lang.modules" %% "scala-java8-compat" % "0.7.0" % "provided"
    )
+ ).jsSettings(
+      excludeDependencies += ("eu.unicredit" %% "akkaactorjsirpatches"),
+      compile in Compile <<= (compile in Compile) dependsOn assembleAkkaLibrary,
+      publishLocal <<= publishLocal dependsOn assembleAkkaLibrary
+
  ).dependsOn(akkaStreamTestkit % "test->test", akkaJsActorStream)
 
 lazy val akkaStreamTestJS = akkaStreamTest.js

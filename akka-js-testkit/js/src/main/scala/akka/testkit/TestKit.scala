@@ -145,7 +145,14 @@ trait TestKitBase {
 
   private[akka] var lastMessage: Message = NullMessage
 
+
   def lastSender = lastMessage.sender
+
+  /**
+    * Defines the testActor name.
+    */
+  protected def testActorName: String = "testActor"
+
 
   /**
    * ActorRef of the test actor. Access is provided to enable e.g.
@@ -216,6 +223,15 @@ trait TestKitBase {
    */
   def now: FiniteDuration = System.nanoTime.nanos
 
+
+  /**
+    * Obtain time remaining for execution of the innermost enclosing `within`
+    * block or missing that it returns the properly dilated default for this
+    * case from settings (key "akka.test.single-expect-default").
+    */
+  def remainingOrDefault = remainingOr(testKitSettings.SingleExpectDefaultTimeout.dilated)
+
+  //@note this has changed in akka changing it causes testkit to fail
   /**
    * Obtain time remaining for execution of the innermost enclosing `within`
    * block or missing that it returns the properly dilated default for this
@@ -875,39 +891,45 @@ object TestKit {
 /**
  * TestKit-based probe which allows sending, reception and reply.
  */
-class TestProbe(_application: ActorSystem) extends TestKit(_application) {
+class TestProbe(_application: ActorSystem, name: String) extends TestKit(_application) {
+
+  def this(_application: ActorSystem) = this(_application, "testProbe")
 
   /**
-   * Shorthand to get the testActor.
-   */
+    * Shorthand to get the testActor.
+    */
   def ref = testActor
 
+  protected override def testActorName = name
+
   /**
-   * Send message to an actor while using the probe's TestActor as the sender.
-   * Replies will be available for inspection with all of TestKit's assertion
-   * methods.
-   */
+    * Send message to an actor while using the probe's TestActor as the sender.
+    * Replies will be available for inspection with all of TestKit's assertion
+    * methods.
+    */
   def send(actor: ActorRef, msg: Any): Unit = actor.!(msg)(testActor)
 
   /**
-   * Forward this message as if in the TestActor's receive method with self.forward.
-   */
+    * Forward this message as if in the TestActor's receive method with self.forward.
+    */
   def forward(actor: ActorRef, msg: Any = lastMessage.msg): Unit = actor.!(msg)(lastMessage.sender)
 
   /**
-   * Get sender of last received message.
-   */
+    * Get sender of last received message.
+    */
   def sender() = lastMessage.sender
 
   /**
-   * Send message to the sender of the last dequeued message.
-   */
+    * Send message to the sender of the last dequeued message.
+    */
   def reply(msg: Any): Unit = sender().!(msg)(ref)
 
 }
 
+
 object TestProbe {
   def apply()(implicit system: ActorSystem) = new TestProbe(system)
+  def apply(name: String)(implicit system: ActorSystem) = new TestProbe(system, name)
 }
 
 trait ImplicitSender { this: TestKitBase ⇒

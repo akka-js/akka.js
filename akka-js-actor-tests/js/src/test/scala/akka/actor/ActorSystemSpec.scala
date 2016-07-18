@@ -19,16 +19,6 @@ import java.util.concurrent./** @note IMPLEMENT IN SCALA.JS { LinkedBlockingQueu
 import scala.scalajs.js.annotation.JSExport
 import scala.concurrent.Promise
 
-// @note IMPLEMENT IN SCALA.JS class JavaExtensionSpec extends JavaExtension with JUnitSuiteLike
-
-object TestExtension extends ExtensionId[TestExtension] with ExtensionIdProvider {
-  def lookup = this
-  def createExtension(s: ExtendedActorSystem) = new TestExtension(s)
-}
-
-// Dont't place inside ActorSystemSpec object, since it will not be garbage collected and reference to system remains
-@JSExport
-class TestExtension(val system: ExtendedActorSystem) extends Extension
 
 @JSExport
 class Waves extends Actor {
@@ -251,9 +241,10 @@ class ActorSystemSpec extends AkkaSpec(/*ActorSystemSpec.config*/) with Implicit
     "reliably create waves of actors" in {
       import system.dispatcher
       implicit val timeout = Timeout((20 seconds).dilated)
-      val waves = for (i ← 1 to 3) yield system.actorOf(Props[/*ActorSystemSpec.*/Waves]) ? 10000
+      val waves = for (i ← 1 to 3) yield system.actorOf(Props[/*ActorSystemSpec.*/Waves]) ? 1000
       Await.result(Future.sequence(waves), timeout.duration + 10.seconds) should be(Seq("done", "done", "done"))
     }
+
 
     "find actors that just have been created" in {
       system.actorOf(Props(new FastActor(TestLatch(), testActor)).withDispatcher("slow"))

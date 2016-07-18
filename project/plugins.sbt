@@ -12,3 +12,5 @@ logLevel := Level.Warn
 
 resolvers += "Typesafe repository" at "http://repo.typesafe.com/typesafe/releases/"
 resolvers += "Sonatype-Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
+
+libraryDependencies += "org.scala-js" %% "scalajs-env-selenium" % "0.1.3"

@@ -105,7 +105,7 @@ lazy val akkaActorTest = crossProject.in(file("akka-js-actor-tests"))
     preLinkJSEnv := NodeJSEnv().value,
     postLinkJSEnv := NodeJSEnv().value.withSourceMap(true),
     libraryDependencies ++= Seq(
-     "org.scalacheck" %%% "scalacheck" % "1.13.2-SNAPSHOT" % "test",
+     "org.scalacheck" %%% "scalacheck" % "1.13.2" % "test",
      "io.megl" %%% "play-json-extra" % "2.4.3"
    )
  ).dependsOn(akkaTestkit % "test->test")
@@ -162,7 +162,7 @@ lazy val akkaStreamTest = crossProject.in(file("akka-js-stream-tests"))
     postLinkJSEnv := NodeJSEnv().value.withSourceMap(true),
     libraryDependencies ++= Seq(
       "org.scalatest" %%% "scalatest" % "3.0.0-M16-SNAP6" % "test",
-      "org.scalacheck" %%% "scalacheck" % "1.13.2-SNAPSHOT" % "test",
+      "org.scalacheck" %%% "scalacheck" % "1.13.2" % "test",
       "org.scala-lang.modules" %% "scala-java8-compat" % "0.7.0" % "provided"
    )
  ).dependsOn(akkaStreamTestkit % "test->test", akkaJsActorStream)

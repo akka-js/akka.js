@@ -211,3 +211,44 @@ case class SingleConsumerOnlyUnboundedMailbox() extends MailboxType with Produce
  * fulfill the requirements.
  */
 trait RequiresMessageQueue[T]
+
+/**
+  * DequeBasedMessageQueue refines QueueBasedMessageQueue to be backed by a java.util.Deque.
+  */
+trait DequeBasedMessageQueueSemantics {
+  def enqueueFirst(receiver: ActorRef, handle: Envelope): Unit
+}
+
+trait UnboundedDequeBasedMessageQueueSemantics extends DequeBasedMessageQueueSemantics with UnboundedMessageQueueSemantics
+
+
+/**
+  * ControlAwareMessageQueue handles messages that extend [[akka.dispatch.ControlMessage]] with priority.
+  */
+trait ControlAwareMessageQueueSemantics extends QueueBasedMessageQueue {
+  def controlQueue: Queue[Envelope]
+  def queue: Queue[Envelope]
+
+  def enqueue(receiver: ActorRef, handle: Envelope): Unit = handle match {
+    case envelope @ Envelope(_: ControlMessage, _) ⇒ controlQueue add envelope
+    case envelope                                  ⇒ queue add envelope
+  }
+
+  def dequeue(): Envelope = {
+    val controlMsg = controlQueue.poll()
+
+    if (controlMsg ne null) controlMsg
+    else queue.poll()
+  }
+
+  override def numberOfMessages: Int = controlQueue.size + queue.size
+
+  override def hasMessages: Boolean = !(queue.isEmpty && controlQueue.isEmpty)
+}
+
+trait UnboundedControlAwareMessageQueueSemantics extends UnboundedMessageQueueSemantics with ControlAwareMessageQueueSemantics
+
+/**
+  * Messages that extend this trait will be handled with priority by control aware mailboxes.
+  */
+trait ControlMessage

@@ -14,6 +14,7 @@ val commonSettings = Seq(
     ),
     resolvers += "Typesafe repository" at "http://repo.typesafe.com/typesafe/releases/",
     resolvers += "sonatype-snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
+    resolvers += "Sonatype snapshots" at "http://oss.sonatype.org/content/repositories/snapshots/",
     scalaJSStage in Global := FastOptStage,
     cancelable in Global := true
 )
@@ -148,9 +149,10 @@ lazy val akkaTestkit = crossProject.in(file("akka-js-testkit"))
   .settings(
     version := akkaJsVersion
   ).jsSettings(
-    libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.0-M16-SNAP6",
+    libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.0-M16-SNAP6" withSources (),
     libraryDependencies += "org.scala-js" %% "scalajs-test-interface" % "0.6.10-SNAPSHOT" % "test",
     scalaJSStage in Global := FastOptStage,
+    publishArtifact in (Test, packageBin) := true,
     scalaJSUseRhino in Global := false,
     preLinkJSEnv := NodeJSEnv().value,
     postLinkJSEnv := NodeJSEnv().value.withSourceMap(true)
@@ -163,12 +165,17 @@ lazy val akkaActorTest = crossProject.in(file("akka-js-actor-tests"))
   .settings(
     version := akkaJsVersion
   ).jsSettings(
+    scalaJSUseRhino in Global := false,
+    scalaJSStage in Global := FastOptStage,
+    publishArtifact in (Test, packageBin) := true,
+    //scalaJSOptimizerOptions ~= { _.withDisableOptimizer(true) },
     preLinkJSEnv := NodeJSEnv().value,
     postLinkJSEnv := NodeJSEnv().value.withSourceMap(true),
     libraryDependencies ++= Seq(
-      "org.scalacheck" %%% "scalacheck" % "1.12.2" % "test"
+     "org.scalacheck" %%% "scalacheck" % "1.13.2" % "test",
+     "io.megl" %%% "play-json-extra" % "2.4.3"
    )
- ).dependsOn(akkaTestkit)
+ ).dependsOn(akkaTestkit % "test->test")
 
 lazy val akkaActorTestJS = akkaActorTest.js
 
@@ -256,6 +263,42 @@ lazy val akkaJsActorStream = crossProject.in(file("akka-js-actor-stream"))
 
 lazy val akkaJsActorStreamJS = akkaJsActorStream.js
 
+lazy val akkaStreamTestkit = crossProject.in(file("akka-js-stream-testkit"))
+  .settings(commonSettings: _*)
+  .settings(
+    version := akkaJsVersion
+  ).jsSettings(
+  libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.0-M16-SNAP6" withSources (),
+  libraryDependencies += "org.scala-js" %% "scalajs-test-interface" % "0.6.10-SNAPSHOT" % "test",
+  scalaJSStage in Global := FastOptStage,
+  publishArtifact in (Test, packageBin) := true,
+  scalaJSUseRhino in Global := false,
+  preLinkJSEnv := NodeJSEnv().value,
+  postLinkJSEnv := NodeJSEnv().value.withSourceMap(true)
+).dependsOn(akkaJsActorStream,akkaTestkit)
+
+lazy val akkaStreamTestkitJS = akkaStreamTestkit.js
+
+lazy val akkaStreamTest = crossProject.in(file("akka-js-stream-tests"))
+  .settings(commonSettings: _*)
+  .settings(
+    version := akkaJsVersion
+  ).jsSettings(
+    scalaJSUseRhino in Global := false,
+    scalaJSStage in Global := FastOptStage,
+    publishArtifact in (Test, packageBin) := true,
+    //scalaJSOptimizerOptions ~= { _.withDisableOptimizer(true) },
+    preLinkJSEnv := NodeJSEnv().value,
+    postLinkJSEnv := NodeJSEnv().value.withSourceMap(true),
+    libraryDependencies ++= Seq(
+      "org.scalatest" %%% "scalatest" % "3.0.0-M16-SNAP6" % "test",
+      "org.scalacheck" %%% "scalacheck" % "1.13.2" % "test",
+      "org.scala-lang.modules" %% "scala-java8-compat" % "0.7.0" % "provided"
+   )
+ ).dependsOn(akkaStreamTestkit % "test->test", akkaJsActorStream)
+
+lazy val akkaStreamTestJS = akkaStreamTest.js
+
 //COMPILER PLUGINS SECTION
 
 //add scala.js annotations to proper classes
@@ -299,4 +342,4 @@ lazy val akkaJsActorIrPatches = Project(
 
 
 lazy val root = project.in(file(".")).settings(commonSettings: _*)
-  .aggregate(akkaJsActorIrPatches, akkaJsActorJS, akkaTestkitJS, akkaActorTestJS, akkaJsActorStreamJS)
+  .aggregate(akkaJsActorIrPatches, akkaJsActorJS, akkaTestkitJS, akkaActorTestJS, akkaJsActorStreamJS, akkaStreamTestkitJS, akkaStreamTestJS)

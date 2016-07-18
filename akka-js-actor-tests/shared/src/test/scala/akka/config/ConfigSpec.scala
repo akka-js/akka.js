@@ -1,0 +1,1 @@
+../../../../../../../akka/akka-actor-tests/src/test/scala/akka/config/ConfigSpec.scala

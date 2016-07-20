@@ -139,7 +139,9 @@ def assembleAkkaLibrary(sourceDirs: List[String],
         trgDir / akkaProject, overwrite = true)
     }
 
+  }
 
+  if (!(currentProjectDir / "shared" / "src").exists) {
     sourceDirs.foreach { part =>
       val partDir = trgDir / akkaProject / "src" / part
       if (partDir.exists) {
@@ -165,9 +167,9 @@ def assembleAkkaLibrary(sourceDirs: List[String],
         log.info(s"Resolving clashes between $srcTarget to  $jsSources")
         rm_clash(srcTarget, jsSources)
       }
-
     }
   }
+
 
 }
 

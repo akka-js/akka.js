@@ -149,7 +149,7 @@ class TestActorRefSpec extends AkkaSpec(/*"disp1.type=Dispatcher"*/) with Before
 
       }
 
-      /*"used with ActorRef" in {
+      "used with ActorRef" in {
 
         val a = TestActorRef(Props(new Actor {
           val nested = context.actorOf(Props(new Actor { def receive = { case _ ⇒ } }))
@@ -161,7 +161,7 @@ class TestActorRefSpec extends AkkaSpec(/*"disp1.type=Dispatcher"*/) with Before
         nested should not be (null)
         a should not be theSameInstanceAs(nested)
 
-      }*/
+      }
 
       "support reply via sender()" in {
 
@@ -215,8 +215,31 @@ class TestActorRefSpec extends AkkaSpec(/*"disp1.type=Dispatcher"*/) with Before
 
       }
 
+      /*"restart when Kill:ed" in {
+        EventFilter[ActorKilledException]() intercept {
+          counter = 2
 
-      /*"restart when Killed" in {
+          val boss = TestActorRef(Props(new TActor {
+            val ref = TestActorRef(Props(new TActor {
+              def receiveT = { case _ ⇒ }
+              override def preRestart(reason: Throwable, msg: Option[Any]) { counter -= 1 }
+              override def postRestart(reason: Throwable) { counter -= 1 }
+            }), self, "child")
+
+            override def supervisorStrategy =
+              OneForOneStrategy(maxNrOfRetries = 5, withinTimeRange = 1 second)(List(classOf[ActorKilledException]))
+
+            def receiveT = { case "sendKill" ⇒ ref ! Kill }
+          }))
+
+          boss ! "sendKill"
+
+          counter should ===(0)
+          assertThread()
+        }
+      } */
+
+      "restart when Killed" in {
 
         EventFilter[ActorKilledException]() intercept {
           counter = 2
@@ -238,7 +261,7 @@ class TestActorRefSpec extends AkkaSpec(/*"disp1.type=Dispatcher"*/) with Before
           boss ! "sendKill"
 
           //counter should be(0)
-          Await.result(p.future, 5 seconds) should be(0)
+          Await.result(p.future, 15 seconds) should be(0)
           assertThread()
 
         }
@@ -261,13 +284,13 @@ class TestActorRefSpec extends AkkaSpec(/*"disp1.type=Dispatcher"*/) with Before
         val a = TestActorRef(new ReceiveTimeoutActor(testActor))
         expectMsg("timeout")
 
-      }*/
+      }
     }
   }
 
   "A TestActorRef" must {
 
-    /*"allow access to internals" in {
+    "allow access to internals" in {
 
       val p = Promise[Int]
       val ref = TestActorRef(new TActor {
@@ -289,7 +312,7 @@ class TestActorRefSpec extends AkkaSpec(/*"disp1.type=Dispatcher"*/) with Before
       val a = TestActorRef[WorkerActor]
       a.underlyingActor.context.receiveTimeout should be theSameInstanceAs Duration.Undefined
 
-    }*/
+    }
     /** @note IMPLEMENT IN SCALA.JS
     "set CallingThreadDispatcher" in {
       val a = TestActorRef[WorkerActor]

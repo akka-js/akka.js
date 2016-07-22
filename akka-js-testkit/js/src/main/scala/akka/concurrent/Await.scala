@@ -141,6 +141,7 @@ sealed trait CanAwait
 
 object AwaitPermission extends CanAwait
 
+
 trait Awaitable[T] {
    def ready(atMost: Duration)(implicit permit: CanAwait): Awaitable.this.type
    def result(atMost: Duration)(implicit permit: CanAwait): T
@@ -149,6 +150,10 @@ trait Awaitable[T] {
 case class LastRan(time: Double)
 
 object Await {
+  def ready[T](f: Future[T], atMost: Duration): f.type = {
+    result[T](f, atMost)
+    f
+  }
 
   def ready[T](awaitable: Awaitable[T], atMost: Duration): awaitable.type =
     awaitable.ready(atMost)(AwaitPermission)
@@ -189,6 +194,29 @@ object Await {
   def result[T](awaitable: Awaitable[T], atMost: Duration): T =
     awaitable.result(atMost)(AwaitPermission)
 
+}
+
+class CyclicBarrier(val c: Int) {
+  import scala.concurrent.Promise
+  private var counter = c
+  private var closed = Promise[Int]
+
+  def countDown() = {
+    counter -= 1
+    if(counter == 0) closed.success(1)
+  }
+  def getCount() = counter
+  def reset() = counter = c
+
+
+  def await(timeout: Long, unit: TimeUnit): Boolean = {
+    try {
+      Await.result(closed.future, Duration.fromNanos(TimeUnit.NANOSECONDS.convert(timeout, unit)))
+      true
+    } catch {
+      case e: Exception => throw e
+    }
+  }
 }
 
 class CountDownLatch(val c: Int) {

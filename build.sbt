@@ -2,20 +2,20 @@ val akkaJsVersion = "0.1.3-SNAPSHOT"
 val akkaOriginalVersion = "v2.4.8"
 
 val commonSettings = Seq(
-    scalaVersion := "2.11.8",
-    organization := "eu.unicredit",
-    scalacOptions ++= Seq(
-        "-deprecation",
-        "-unchecked",
-        "-feature",
-        "-language:postfixOps",
-        "-language:reflectiveCalls",
-        "-encoding", "utf8"
-    ),
-    resolvers += "Typesafe repository" at "http://repo.typesafe.com/typesafe/releases/",
-    resolvers += "sonatype-snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
-    scalaJSStage in Global := FastOptStage,
-    cancelable in Global := true
+  scalaVersion := "2.11.8",
+  organization := "eu.unicredit",
+  scalacOptions ++= Seq(
+    "-deprecation",
+    "-unchecked",
+    "-feature",
+    "-language:postfixOps",
+    "-language:reflectiveCalls",
+    "-encoding", "utf8"
+  ),
+  resolvers += "Typesafe repository" at "http://repo.typesafe.com/typesafe/releases/",
+  resolvers += "sonatype-snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
+  scalaJSStage in Global := FastOptStage,
+  cancelable in Global := true
 )
 
 val publishSettings = Seq(
@@ -58,11 +58,11 @@ lazy val assembleAkkaLibrary = taskKey[Unit](
 //basically eviction rules
 def rm_clash(base: java.io.File, target: java.io.File): Unit = {
   if (base.exists &&
-     ((base.isFile &&
-     ((target.exists && target.isFile) || base.getName.endsWith(".java"))) ||
-     (base.isDirectory && target.isDirectory &&
-       IO.listFiles(target).filterNot(_.getName.startsWith(".")).isEmpty))
-     ) {
+    ((base.isFile &&
+      ((target.exists && target.isFile) || base.getName.endsWith(".java"))) ||
+      (base.isDirectory && target.isDirectory &&
+        IO.listFiles(target).filterNot(_.getName.startsWith(".")).isEmpty))
+  ) {
     IO.delete(base)
   } else if (base.exists && base.isDirectory)
     IO.listFiles(base).foreach(f => rm_clash(f, new java.io.File(target, f.getName)))
@@ -116,30 +116,30 @@ lazy val akkaJsActor = crossProject.in(file("akka-js-actor"))
       rm_clash(srcTarget, jsSources)
     }
   ).jsSettings(
-    libraryDependencies ++= Seq(
-      "eu.unicredit" %%% "shocon" % "0.0.2-SNAPSHOT",
-      "org.scala-js" %%% "scalajs-java-time" % "0.1.0",
-      "org.scala-lang.modules" %% "scala-java8-compat" % "0.7.0" % "provided"
-    ),
-    compile in Compile := {
-      val analysis = (compile in Compile).value
-      val classDir = (classDirectory in Compile).value
-      val configFile = (baseDirectory in Compile).value / ".." / ".." / "config" / "ir_patch.config"
+  libraryDependencies ++= Seq(
+    "eu.unicredit" %%% "shocon" % "0.0.2-SNAPSHOT",
+    "org.scala-js" %%% "scalajs-java-time" % "0.1.0",
+    "org.scala-lang.modules" %% "scala-java8-compat" % "0.7.0" % "provided"
+  ),
+  compile in Compile := {
+    val analysis = (compile in Compile).value
+    val classDir = (classDirectory in Compile).value
+    val configFile = (baseDirectory in Compile).value / ".." / ".." / "config" / "ir_patch.config"
 
-      unicredit.IrPatcherPlugin.patchThis(classDir, configFile)
+    unicredit.IrPatcherPlugin.patchThis(classDir, configFile)
 
-      analysis
-    }
-  ).jsSettings(
-    useAnnotationAdderPluginSettings : _*
-  ).jsSettings(
-    publishSettings : _*
-  ).jsSettings(sonatypeSettings : _*
-  ).jsSettings(
-    excludeDependencies += ("eu.unicredit" %% "akkaactorjsirpatches"),
-    compile in Compile <<= (compile in Compile) dependsOn assembleAkkaLibrary,
-    publishLocal <<= publishLocal dependsOn assembleAkkaLibrary
-  ).enablePlugins(spray.boilerplate.BoilerplatePlugin)
+    analysis
+  }
+).jsSettings(
+  useAnnotationAdderPluginSettings : _*
+).jsSettings(
+  publishSettings : _*
+).jsSettings(sonatypeSettings : _*
+).jsSettings(
+  excludeDependencies += ("eu.unicredit" %% "akkaactorjsirpatches"),
+  compile in Compile <<= (compile in Compile) dependsOn assembleAkkaLibrary,
+  publishLocal <<= publishLocal dependsOn assembleAkkaLibrary
+).enablePlugins(spray.boilerplate.BoilerplatePlugin)
 
 lazy val akkaJsActorJS = akkaJsActor.js.dependsOn(akkaJsActorIrPatches % "provided")
 
@@ -148,13 +148,13 @@ lazy val akkaTestkit = crossProject.in(file("akka-js-testkit"))
   .settings(
     version := akkaJsVersion
   ).jsSettings(
-    libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.0-M16-SNAP6",
-    libraryDependencies += "org.scala-js" %% "scalajs-test-interface" % "0.6.10-SNAPSHOT" % "test",
-    scalaJSStage in Global := FastOptStage,
-    scalaJSUseRhino in Global := false,
-    preLinkJSEnv := NodeJSEnv().value,
-    postLinkJSEnv := NodeJSEnv().value.withSourceMap(true)
-  ).dependsOn(akkaJsActor)
+  libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.0-M16-SNAP6",
+  libraryDependencies += "org.scala-js" %% "scalajs-test-interface" % "0.6.10-SNAPSHOT" % "test",
+  scalaJSStage in Global := FastOptStage,
+  scalaJSUseRhino in Global := false,
+  preLinkJSEnv := NodeJSEnv().value,
+  postLinkJSEnv := NodeJSEnv().value.withSourceMap(true)
+).dependsOn(akkaJsActor)
 
 lazy val akkaTestkitJS = akkaTestkit.js.dependsOn(akkaJsActorJS)
 
@@ -163,12 +163,12 @@ lazy val akkaActorTest = crossProject.in(file("akka-js-actor-tests"))
   .settings(
     version := akkaJsVersion
   ).jsSettings(
-    preLinkJSEnv := NodeJSEnv().value,
-    postLinkJSEnv := NodeJSEnv().value.withSourceMap(true),
-    libraryDependencies ++= Seq(
-      "org.scalacheck" %%% "scalacheck" % "1.12.2" % "test"
-   )
- ).dependsOn(akkaTestkit)
+  preLinkJSEnv := NodeJSEnv().value,
+  postLinkJSEnv := NodeJSEnv().value.withSourceMap(true),
+  libraryDependencies ++= Seq(
+    "org.scalacheck" %%% "scalacheck" % "1.12.2" % "test"
+  )
+).dependsOn(akkaTestkit)
 
 lazy val akkaActorTestJS = akkaActorTest.js
 
@@ -260,27 +260,27 @@ lazy val akkaJsActorStreamJS = akkaJsActorStream.js
 
 //add scala.js annotations to proper classes
 lazy val annotationAdderPlugin = Project(
-    id   = "annotationAdderPlugin",
-    base = file("plugins/annotation-adder-plugin")
-  ) settings (
-    libraryDependencies <+= (scalaVersion)("org.scala-lang" % "scala-compiler" % _),
-    publishArtifact in Compile := false
+  id   = "annotationAdderPlugin",
+  base = file("plugins/annotation-adder-plugin")
+) settings (
+  libraryDependencies <+= (scalaVersion)("org.scala-lang" % "scala-compiler" % _),
+  publishArtifact in Compile := false
   ) settings (commonSettings : _*)
 
 lazy val useAnnotationAdderPluginSettings = Seq(
-    scalacOptions in Compile <++= (Keys.`package` in (annotationAdderPlugin, Compile)) map { (jar: File) =>
-       Seq("-Xplugin:" + jar.getAbsolutePath)
-    }
-  )
+  scalacOptions in Compile <++= (Keys.`package` in (annotationAdderPlugin, Compile)) map { (jar: File) =>
+    Seq("-Xplugin:" + jar.getAbsolutePath)
+  }
+)
 
 //SCALAJS IR PATCHER SECTION
 
 //core patches project
 lazy val akkaJsActorIrPatches = Project(
-    id   = "akkaActorJSIrPatches",
-    base = file("akka-js-actor-ir-patches")
-   ).
-   settings (
+  id   = "akkaActorJSIrPatches",
+  base = file("akka-js-actor-ir-patches")
+).
+  settings (
     compile in Compile := {
       val analysis = (compile in Compile).value
       val classDir = (classDirectory in Compile).value
@@ -294,7 +294,7 @@ lazy val akkaJsActorIrPatches = Project(
     },
     publishArtifact in Compile := true
   ).settings (commonSettings : _*
-  ).enablePlugins (ScalaJSPlugin)
+).enablePlugins (ScalaJSPlugin)
 
 
 

@@ -40,6 +40,6 @@ import akka.actor._
  * ask(actor, message);
  * }}}
  */
-package object pattern extends PipeToSupport with AskSupport /** @note IMPLEMENT WITH SCALA.JS with GracefulStopSupport with FutureTimeoutSupport */ {
+package object pattern extends PipeToSupport with AskSupport with GracefulStopSupport/** @note IMPLEMENT WITH SCALA.JS with GracefulStopSupport with FutureTimeoutSupport */ {
 
 }

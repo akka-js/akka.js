@@ -286,7 +286,7 @@ private[akka] abstract class Mailbox(val messageQueue: MessageQueue)
         if (Mailbox.debug) println(actor.self + " processing message " + next)
         actor invoke next
         /**if (Thread.interrupted())
-          throw new InterruptedException("Interrupted while processing actor messages")*/
+          * throw new InterruptedException("Interrupted while processing actor messages")*/
         processAllSystemMessages()
         if ((left > 1) && ((dispatcher.isThroughputDeadlineTimeDefined == false) || (System.nanoTime - deadlineNs) < 0))
           processMailbox(left - 1, deadlineNs)
@@ -359,15 +359,3 @@ private[akka] abstract class Mailbox(val messageQueue: MessageQueue)
         messageQueue.cleanUp(actor.self, actor.dispatcher.mailboxes.deadLetterMailbox.messageQueue)
     }
 }
-
-/**
-  * DequeBasedMessageQueue refines QueueBasedMessageQueue to be backed by a java.util.Deque.
-  */
-trait DequeBasedMessageQueueSemantics {
-  def enqueueFirst(receiver: ActorRef, handle: Envelope): Unit
-}
-
-trait UnboundedDequeBasedMessageQueueSemantics extends DequeBasedMessageQueueSemantics with UnboundedMessageQueueSemantics
-
-
-

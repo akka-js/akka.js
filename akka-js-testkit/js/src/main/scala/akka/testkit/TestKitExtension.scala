@@ -8,7 +8,7 @@ import akka.util.Timeout
 import akka.actor.{ ExtensionId, ActorSystem, Extension, ExtendedActorSystem }
 import scala.concurrent.duration.{ FiniteDuration, Duration, SECONDS }
 
-/**@note IMPLEMENT IN SCALA.JS
+/**@note IMPLEMENT IN SCALA.JS */
 object TestKitExtension extends ExtensionId[TestKitSettings] {
   override def get(system: ActorSystem): TestKitSettings = super.get(system)
   def createExtension(system: ExtendedActorSystem): TestKitSettings = new TestKitSettings(new Config /** system.settings.config */)
@@ -30,7 +30,7 @@ class TestKitSettings(val config: Config) extends Extension {
   val SingleExpectDefaultTimeout: FiniteDuration = Duration(3, SECONDS)
   val TestEventFilterLeeway: FiniteDuration = Duration(3, SECONDS)
   val DefaultTimeout: Timeout = Timeout(Duration(5, SECONDS))
-}*/
+}
 
 object TestKitSettings {
 

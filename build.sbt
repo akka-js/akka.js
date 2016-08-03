@@ -251,6 +251,7 @@ lazy val akkaJsActorStreamJS = akkaJsActorStream.js
 lazy val akkaStreamTestkit = crossProject.in(file("akka-js-stream-testkit"))
   .settings(commonSettings: _*)
   .settings(
+    // parallelExecution in Test := false,
     version := akkaJsVersion,
     akkaVersion := akkaOriginalVersion,
     akkaTargetDir := file("akka-js-actor/js/target/") / "akkaSources" / akkaVersion.value,

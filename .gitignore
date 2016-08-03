@@ -9,3 +9,4 @@ akka-js-actor-stream/js/src/main/boilerplate/akka
 akka-js-actor-tests/shared/src/test/scala/akka
 akka-js-stream-tests/shared/src/test/scala/akka
 akka-js-stream-testkit/shared/src/test/scala/akka
+akka-js-stream-testkit/shared/src/main/scala/akka

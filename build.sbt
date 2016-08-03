@@ -12,8 +12,10 @@ val commonSettings = Seq(
     "-language:reflectiveCalls",
     "-encoding", "utf8"
   ),
-  resolvers += "Typesafe repository" at "http://repo.typesafe.com/typesafe/releases/",
-  resolvers += "sonatype-snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
+  resolvers ++= Seq(
+    Resolver.typesafeRepo("releases"),
+    Resolver.sonatypeRepo("snapshots")
+  ),
   scalaJSStage in Global := FastOptStage,
   cancelable in Global := true
 )
@@ -50,13 +52,16 @@ val publishSettings = Seq(
   }
 )
 
+import java.io.File
+
 lazy val akkaVersion = settingKey[String]("akkaVersion")
+lazy val akkaTargetDir = settingKey[File]("akkaTargetDir")
 
 lazy val assembleAkkaLibrary = taskKey[Unit](
   "Checks out akka standard library from submodules/akka and then applies overrides.")
 
 //basically eviction rules
-def rm_clash(base: java.io.File, target: java.io.File): Unit = {
+def rm_clash(base: File, target: File): Unit = {
   if (base.exists &&
     ((base.isFile &&
       ((target.exists && target.isFile) || base.getName.endsWith(".java"))) ||
@@ -68,48 +73,52 @@ def rm_clash(base: java.io.File, target: java.io.File): Unit = {
     IO.listFiles(base).foreach(f => rm_clash(f, new java.io.File(target, f.getName)))
 }
 
+def getAkkaSources(targetDir: File, version: String) = {
+  import org.eclipse.jgit.api._
+
+  if (!targetDir.exists) {
+    //s.log.info(s"Fetching Akka source version ${akkaVersion.value}")
+
+    // Make parent dirs and stuff
+    IO.createDirectory(targetDir)
+
+    // Clone akka source code
+    new CloneCommand()
+      .setDirectory(targetDir)
+      .setURI("https://github.com/akka/akka.git")
+      .call()
+  }
+
+  val git = Git.open(targetDir)
+  //s.log.info(s"Checking out Akka source version ${version}")
+  git.checkout().setName(s"${version}").call()
+}
+
+def copyToSourceFolder(sourceDir: File, targetDir: File) = {
+  IO.delete(targetDir)
+  IO.copyDirectory(
+    sourceDir,
+    targetDir,
+    overwrite = true)
+}
+
 lazy val akkaJsActor = crossProject.in(file("akka-js-actor"))
   .settings(commonSettings : _*)
   .settings(
     version := akkaJsVersion,
     akkaVersion := akkaOriginalVersion,
+    akkaTargetDir := target.value / "akkaSources" / akkaVersion.value,
     assembleAkkaLibrary := {
-      import org.eclipse.jgit.api._
-
-      val s = streams.value
-      val trgDir = target.value / "akkaSources" / akkaVersion.value
-
-      if (!trgDir.exists) {
-        s.log.info(s"Fetching Akka source version ${akkaVersion.value}")
-
-        // Make parent dirs and stuff
-        IO.createDirectory(trgDir)
-
-        // Clone akka source code
-        new CloneCommand()
-          .setDirectory(trgDir)
-          .setURI("https://github.com/akka/akka.git")
-          .call()
-      }
-
-      // Checkout proper ref. We do this anyway so we fail if
-      // something is wrong
-      val git = Git.open(trgDir)
-      s.log.info(s"Checking out Akka source version ${akkaVersion.value}")
-      git.checkout().setName(s"${akkaVersion.value}").call()
-
+      getAkkaSources(akkaTargetDir.value, akkaVersion.value)
       val srcTarget = file("akka-js-actor/shared/src/main/scala")
-      IO.delete(srcTarget)
-      IO.copyDirectory(
-        trgDir / "akka-actor" / "src" / "main" / "scala",
-        srcTarget, overwrite = true)
-
-      val boilerplateTarget = file("akka-js-actor/js/src/main/boilerplate")
-      IO.delete(boilerplateTarget)
-
-      IO.copyDirectory(
-        trgDir / "akka-actor" / "src" / "main" / "boilerplate",
-        boilerplateTarget, overwrite = true)
+      copyToSourceFolder(
+        akkaTargetDir.value / "akka-actor" / "src" / "main" / "scala",
+        srcTarget
+      )
+      copyToSourceFolder(
+        akkaTargetDir.value / "akka-actor" / "src" / "main" / "boilerplate",
+        file("akka-js-actor/js/src/main/boilerplate")
+      )
 
       val jsSources = file("akka-js-actor/js/src/main/scala")
 
@@ -177,58 +186,18 @@ lazy val akkaJsActorStream = crossProject.in(file("akka-js-actor-stream"))
   .settings(
     version := akkaJsVersion,
     akkaVersion := akkaOriginalVersion,
+    akkaTargetDir := file("akka-js-actor/js/target/") / "akkaSources" / akkaVersion.value,
     assembleAkkaLibrary := {
-      import org.eclipse.jgit.api._
-
-      val s = streams.value
-      val trgDir = target.value / "akkaSources" / akkaVersion.value
-
-
-      val akkaActorTrg = (file("akka-js-actor/js/target/") / "akkaSources" / akkaVersion.value)
-
-      if (!trgDir.exists) {
-        if (akkaActorTrg.exists) {
-          s.log.info(s"Akka sources from akkaActor sub-project")
-
-          // Make parent dirs and stuff
-          IO.createDirectory(trgDir)
-
-          IO.copyDirectory(
-            akkaActorTrg,
-            trgDir, overwrite = true)
-
-        } else {
-          s.log.info(s"Fetching Akka source version ${akkaVersion.value}")
-
-          // Make parent dirs and stuff
-          IO.createDirectory(trgDir)
-
-          // Clone akka source code
-          new CloneCommand()
-            .setDirectory(trgDir)
-            .setURI("https://github.com/akka/akka.git")
-            .call()
-        }
-      }
-
-      // Checkout proper ref. We do this anyway so we fail if
-      // something is wrong
-      val git = Git.open(trgDir)
-      s.log.info(s"Checking out Akka source version ${akkaVersion.value}")
-      git.checkout().setName(s"${akkaVersion.value}").call()
-
+      getAkkaSources(akkaTargetDir.value, akkaVersion.value)
       val srcTarget = file("akka-js-actor-stream/shared/src/main/scala")
-      IO.delete(srcTarget)
-      IO.copyDirectory(
-        trgDir / "akka-stream" / "src" / "main" / "scala",
-        srcTarget, overwrite = true)
-
-      val boilerplateTarget = file("akka-js-actor-stream/js/src/main/boilerplate")
-      IO.delete(boilerplateTarget)
-
-      IO.copyDirectory(
-        trgDir / "akka-stream" / "src" / "main" / "boilerplate",
-        boilerplateTarget, overwrite = true)
+      copyToSourceFolder(
+        akkaTargetDir.value / "akka-stream" / "src" / "main" / "scala",
+        srcTarget
+      )
+      copyToSourceFolder(
+        akkaTargetDir.value / "akka-stream" / "src" / "main" / "boilerplate",
+        file("akka-js-actor-stream/js/src/main/boilerplate")
+      )
 
       val jsSources = file("akka-js-actor-stream/js/src/main/scala")
 

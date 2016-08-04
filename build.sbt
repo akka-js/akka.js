@@ -102,6 +102,7 @@ def copyToSourceFolder(sourceDir: File, targetDir: File) = {
     sourceDir,
     targetDir,
     overwrite = true)
+  (targetDir / ".gitkeep").createNewFile
 }
 
 lazy val akkaJsActor = crossProject.in(file("akka-js-actor"))

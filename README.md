@@ -27,50 +27,11 @@ If you want to use Akka Stream:
 libraryDependencies += "eu.unicredit" %%% "akkajsactorstream" % "0.1.2-SNAPSHOT"
 ```
 
-At this point you can use most of the Akka core Api.
-Please note that you have to provide a specific configuration during ActorSystem creation.
-An example could be:
-```scala
-import com.typesafe.config.ConfigFactory
-
-val config = ConfigFactory.parseString("""
-akka {
-home = ""
-version = "2.4-SNAPSHOT"
-loggers = ["akka.event.JSDefaultLogger"]
-logging-filter = "akka.event.JSDefaultLoggingFilter"
-loggers-dispatcher = "akka.actor.default-dispatcher"
-logger-startup-timeout = 5s
-loglevel = "INFO"
-stdout-loglevel = "DEBUG"
-log-config-on-start = off
-log-dead-letters = 0
-log-dead-letters-during-shutdown = off
-
-actor {
-  provider = "akka.actor.JSLocalActorRefProvider"
-  guardian-supervisor-strategy = "akka.actor.DefaultSupervisorStrategy"
-
-  debug {
-    receive = off
-    autoreceive = off
-    lifecycle = off
-    event-stream = off
-    unhandled = off
-  }
-}
-scheduler {
-  implementation = akka.actor.EventLoopScheduler
-}
-}
-""")
-
-val system = ActorSystem("akkajsapp", config)
-```
-You now can use Akka as described in the official [docs](http://doc.akka.io/docs/akka/snapshot/scala.html).
+At this point you can use most of the Akka core Api as described in the official [docs](http://doc.akka.io/docs/akka/snapshot/scala.html).
 
 Check out the @andreaTP session at Scala Days 2016:
 [slides](https://github.com/andreaTP/sd2016.git)
+[video](https://youtu.be/OCbuOc1GRP8)
 
 ## Design documentation
 

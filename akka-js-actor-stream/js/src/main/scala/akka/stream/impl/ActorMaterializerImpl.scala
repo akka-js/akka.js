@@ -186,9 +186,9 @@ private[akka] case class ActorMaterializerImpl(
 
       private def matGraph(graph: GraphModule, effectiveAttributes: Attributes, matVal: ju.Map[Module, Any]): Unit = {
         val calculatedSettings = effectiveSettings(effectiveAttributes)
-        val (inHandlers, outHandlers, logics) = graph.assembly.materialize(effectiveAttributes, graph.matValIDs, matVal, registerSrc)
+        val (connections, logics) = graph.assembly.materialize(effectiveAttributes, graph.matValIDs, matVal, registerSrc)
 
-        val shell = new GraphInterpreterShell(graph.assembly, inHandlers, outHandlers, logics, graph.shape,
+        val shell = new GraphInterpreterShell(graph.assembly, connections, logics, graph.shape,
           calculatedSettings, ActorMaterializerImpl.this)
 
         val impl =
@@ -288,15 +288,15 @@ private[akka] class FlowNames extends Extension {
 /**
  * INTERNAL API
  */
-private[akka] object StreamSupervisor {
+object StreamSupervisor {
   def props(settings: ActorMaterializerSettings, haveShutDown: AtomicBoolean): Props =
-    Props(new StreamSupervisor(settings, haveShutDown)).withDeploy(Deploy.local)
-
-  private val actorName = SeqActorName("StreamSupervisor")
+   Props(new StreamSupervisor(settings, haveShutDown)).withDeploy(Deploy.local)
+  private[stream] val baseName = "StreamSupervisor"
+  private val actorName = SeqActorName(baseName)
   def nextName(): String = actorName.next()
 
   final case class Materialize(props: Props, name: String)
-    extends DeadLetterSuppression with NoSerializationVerificationNeeded
+   extends DeadLetterSuppression with NoSerializationVerificationNeeded
 
   /** Testing purpose */
   case object GetChildren
@@ -310,7 +310,7 @@ private[akka] object StreamSupervisor {
   case object PrintDebugDump
 }
 
-private[akka] class StreamSupervisor(settings: ActorMaterializerSettings, haveShutDown: AtomicBoolean) extends Actor {
+class StreamSupervisor(settings: ActorMaterializerSettings, haveShutDown: AtomicBoolean) extends Actor {
   import akka.stream.impl.StreamSupervisor._
 
   override def supervisorStrategy = SupervisorStrategy.stoppingStrategy

@@ -836,7 +836,6 @@ object TestKit {
     import scala.scalajs.js
     val f = scala.concurrent.Promise[Boolean]
     lazy val fn: js.Function0[Any] = { () =>
-      println("ambarabaciccicooco")
       if (!p) {
         val toSleep = stop - now
         if (toSleep <= Duration.Zero) {

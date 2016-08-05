@@ -1,5 +1,5 @@
 val akkaJsVersion = "0.1.3-SNAPSHOT"
-val akkaOriginalVersion = "v2.4.8"
+val akkaOriginalVersion = "master"
 
 parallelExecution in ThisBuild := false
 

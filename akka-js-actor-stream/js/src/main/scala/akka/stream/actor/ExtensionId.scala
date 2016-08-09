@@ -7,7 +7,6 @@ trait ExtensionId[T <: akka.actor.Extension] extends akka.actor.ExtensionId[T] {
   self: akka.actor.ExtensionIdProvider =>
 
   override def apply(system: ActorSystem): T = {
-    println("sono qui...")
     createExtension(system.asInstanceOf[ExtendedActorSystem])
   }
 }

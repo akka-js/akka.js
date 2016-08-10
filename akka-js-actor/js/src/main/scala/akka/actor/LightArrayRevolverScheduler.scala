@@ -76,6 +76,7 @@ class EventLoopScheduler(config: Config,
   }
 }
 
+@annotation.JSExport
 class LightArrayRevolverScheduler(
     config: Config,
     log: LoggingAdapter,

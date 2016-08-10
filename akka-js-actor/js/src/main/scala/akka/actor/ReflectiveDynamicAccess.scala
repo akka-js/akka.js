@@ -52,6 +52,7 @@ class JSDynamicAccess(val classLoader: ClassLoader) extends DynamicAccess {
     "akka.event.JSDefaultLogger" -> classOf[akka.event.JSDefaultLogger],
     "akka.event.JSDefaultLoggingFilter" -> classOf[akka.event.JSDefaultLoggingFilter],
     "akka.actor.EventLoopScheduler" -> classOf[akka.actor.EventLoopScheduler],
+    "akka.actor.LightArrayRevolverScheduler" -> classOf[akka.actor.LightArrayRevolverScheduler],
     "akka.actor.DefaultSupervisorStrategy" -> classOf[akka.actor.DefaultSupervisorStrategy]
   ) ++ JSDynamicAccess.additional_classes_map
 

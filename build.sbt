@@ -62,6 +62,9 @@ lazy val akkaTargetDir = settingKey[File]("akkaTargetDir")
 lazy val assembleAkkaLibrary = taskKey[Unit](
   "Checks out akka standard library from submodules/akka and then applies overrides.")
 
+lazy val fixResources = taskKey[Unit](
+  "Fix application.conf presence on first clean build.")
+
 //basically eviction rules
 def rm_clash(base: File, target: File): Unit = {
   if (base.exists &&
@@ -126,6 +129,21 @@ lazy val akkaJsActor = crossProject.in(file("akka-js-actor"))
       val jsSources = file("akka-js-actor/js/src/main/scala")
 
       rm_clash(srcTarget, jsSources)
+    },
+    fixResources := {
+      val compileConf = (resourceDirectory in Compile).value / "application.conf"
+      if (compileConf.exists)
+        IO.copyFile(
+          compileConf,
+          (classDirectory in Compile).value / "application.conf"
+        )
+      val testConf = (resourceDirectory in Test).value / "application.conf"
+      if (testConf.exists) {
+        IO.copyFile(
+          testConf,
+          (classDirectory in Test).value / "application.conf"
+        )
+      }
     }
    ).jsSettings(
     libraryDependencies ++= Seq(
@@ -149,8 +167,8 @@ lazy val akkaJsActor = crossProject.in(file("akka-js-actor"))
   ).jsSettings(sonatypeSettings : _*
   ).jsSettings(
     excludeDependencies += ("eu.unicredit" %% "akkaactorjsirpatches"),
-    compile in Compile <<= (compile in Compile) dependsOn assembleAkkaLibrary,
-    publishLocal <<= publishLocal dependsOn assembleAkkaLibrary
+    compile in Compile <<= (compile in Compile) dependsOn (assembleAkkaLibrary, fixResources),
+    publishLocal <<= publishLocal dependsOn (assembleAkkaLibrary, fixResources)
   ).enablePlugins(spray.boilerplate.BoilerplatePlugin)
 
 lazy val akkaJsActorJS = akkaJsActor.js.dependsOn(akkaJsActorIrPatches % "provided")
@@ -164,6 +182,24 @@ lazy val akkaTestkit = crossProject.in(file("akka-js-testkit"))
       "org.scalatest" %%% "scalatest" % "3.0.0" withSources (),
       "org.scala-js" %% "scalajs-test-interface" % "0.6.11" % "test"
     ),
+    akkaVersion := akkaOriginalVersion,
+    akkaTargetDir := file("akka-js-actor/js/target/") / "akkaSources" / akkaVersion.value,
+    fixResources := {
+      val compileConf = (resourceDirectory in Compile).value / "application.conf"
+      if (compileConf.exists)
+        IO.copyFile(
+          compileConf,
+          (classDirectory in Compile).value / "application.conf"
+        )
+      val testConf = (resourceDirectory in Test).value / "application.conf"
+      if (testConf.exists) {
+        IO.copyFile(
+          testConf,
+          (classDirectory in Test).value / "application.conf"
+        )
+      }
+    },
+    compile in Compile <<= (compile in Compile) dependsOn fixResources,
     scalaJSStage in Global := FastOptStage,
     publishArtifact in (Test, packageBin) := true,
     scalaJSUseRhino in Global := false,
@@ -190,6 +226,21 @@ lazy val akkaActorTest = crossProject.in(file("akka-js-actor-tests"))
       val jsSources = file("akka-js-actor-tests/js/src/test/scala")
 
       rm_clash(srcTarget, jsSources)
+    },
+    fixResources := {
+      val compileConf = (resourceDirectory in Compile).value / "application.conf"
+      if (compileConf.exists)
+        IO.copyFile(
+          compileConf,
+          (classDirectory in Compile).value / "application.conf"
+        )
+      val testConf = (resourceDirectory in Test).value / "application.conf"
+      if (testConf.exists) {
+        IO.copyFile(
+          testConf,
+          (classDirectory in Test).value / "application.conf"
+        )
+      }
     }
   ).jsSettings(
     scalaJSUseRhino in Global := false,
@@ -201,9 +252,7 @@ lazy val akkaActorTest = crossProject.in(file("akka-js-actor-tests"))
     libraryDependencies ++= Seq(
       "org.scalacheck" %%% "scalacheck" % "1.13.2" % "test"
     ),
-    excludeDependencies += ("eu.unicredit" %% "akkaactorjsirpatches"),
-    compile in Compile <<= (compile in Compile) dependsOn assembleAkkaLibrary,
-    publishLocal <<= publishLocal dependsOn assembleAkkaLibrary
+    compile in Compile <<= (compile in Compile) dependsOn (assembleAkkaLibrary, fixResources)
  ).dependsOn(akkaTestkit % "test->test")
 
 lazy val akkaActorTestJS = akkaActorTest.js

@@ -231,7 +231,6 @@ lazy val akkaJsActorStream = crossProject.in(file("akka-js-actor-stream"))
   ).jsSettings(
   libraryDependencies ++= Seq(
       "eu.unicredit" %%% "shocon" % "0.0.2-SNAPSHOT",
-      "org.scala-js" %%% "scalajs-dom" % "0.9.0",
       "org.scala-js" %%% "scalajs-java-time" % "0.1.0",
       "org.scala-lang.modules" %% "scala-java8-compat" % "0.7.0" % "provided"
     )

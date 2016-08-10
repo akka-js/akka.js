@@ -5,7 +5,9 @@
 package akka.testkit
 
 import scala.concurrent.duration.Duration
-import akka.concurrent.{ Await, CyclicBarrier, CanAwait, Awaitable }
+import scala.concurrent.{ Await, CanAwait }
+import akka.concurrent.Awaitable
+import akka.concurrent.CyclicBarrier
 import java.util.concurrent.{TimeUnit, TimeoutException }
 import akka.actor.ActorSystem
 import scala.concurrent.duration.FiniteDuration

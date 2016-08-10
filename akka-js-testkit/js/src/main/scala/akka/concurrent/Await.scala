@@ -3,7 +3,7 @@ package akka.concurrent
 import java.util.concurrent.TimeUnit
 
 import scala.util.{Try, Success, Failure }
-import scala.concurrent.Future
+import scala.concurrent.{Future, Awaitable, AwaitPermission}
 import scala.concurrent.duration.Duration
 
 import scala.scalajs.js
@@ -137,10 +137,18 @@ object ManagedEventLoop {
   manage
 }
 
+//object AwaitPermission extends CanAwait
+/*
 sealed trait CanAwait
 
 object AwaitPermission extends CanAwait
 
+trait Awaitable[T] {
+   def ready(atMost: Duration)(implicit permit: CanAwait): Awaitable.this.type
+   def result(atMost: Duration)(implicit permit: CanAwait): T
+}
+*/
+import scala.concurrent.CanAwait
 
 trait Awaitable[T] {
    def ready(atMost: Duration)(implicit permit: CanAwait): Awaitable.this.type
@@ -150,6 +158,7 @@ trait Awaitable[T] {
 case class LastRan(time: Double)
 
 object Await {
+
   def ready[T](f: Future[T], atMost: Duration): f.type = {
     result[T](f, atMost)
     f

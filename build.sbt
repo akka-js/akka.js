@@ -160,8 +160,10 @@ lazy val akkaTestkit = crossProject.in(file("akka-js-testkit"))
   .settings(
     version := akkaJsVersion
   ).jsSettings(
-    libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.0-M16-SNAP6" withSources (),
-    libraryDependencies += "org.scala-js" %% "scalajs-test-interface" % "0.6.10-SNAPSHOT" % "test",
+    libraryDependencies ++= Seq(
+      "org.scalatest" %%% "scalatest" % "3.0.0" withSources (),
+      "org.scala-js" %% "scalajs-test-interface" % "0.6.11" % "test"
+    ),
     scalaJSStage in Global := FastOptStage,
     publishArtifact in (Test, packageBin) := true,
     scalaJSUseRhino in Global := false,
@@ -229,18 +231,15 @@ lazy val akkaJsActorStream = crossProject.in(file("akka-js-actor-stream"))
       rm_clash(srcTarget, jsSources)
     }
   ).jsSettings(
-  libraryDependencies ++= Seq(
-      "eu.unicredit" %%% "shocon" % "0.0.2-SNAPSHOT",
-      "org.scala-js" %%% "scalajs-java-time" % "0.1.0",
-      "org.scala-lang.modules" %% "scala-java8-compat" % "0.7.0" % "provided"
-    )
-  ).jsSettings(
     useAnnotationAdderPluginSettings : _*
   ).jsSettings(
     publishSettings : _*
   ).dependsOn(akkaJsActor
   ).jsSettings(sonatypeSettings : _*
   ).jsSettings(
+    libraryDependencies ++= Seq(
+      "org.scala-lang.modules" %% "scala-java8-compat" % "0.7.0" % "provided"
+    ),
     excludeDependencies += ("eu.unicredit" %% "akkaactorjsirpatches"),
     compile in Compile <<= (compile in Compile) dependsOn assembleAkkaLibrary,
     publishLocal <<= publishLocal dependsOn assembleAkkaLibrary
@@ -278,11 +277,6 @@ lazy val akkaStreamTestkit = crossProject.in(file("akka-js-stream-testkit"))
     //scalaJSOptimizerOptions ~= { _.withDisableOptimizer(true) },
     preLinkJSEnv := NodeJSEnv().value,
     postLinkJSEnv := NodeJSEnv().value.withSourceMap(true),
-    libraryDependencies ++= Seq(
-      "org.scalatest" %%% "scalatest" % "3.0.0-M16-SNAP6" % "test",
-      "org.scalacheck" %%% "scalacheck" % "1.13.2" % "test",
-      "org.scala-lang.modules" %% "scala-java8-compat" % "0.7.0" % "provided"
-    ),
     excludeDependencies += ("eu.unicredit" %% "akkaactorjsirpatches"),
     compile in Compile <<= (compile in Compile) dependsOn assembleAkkaLibrary,
     publishLocal <<= publishLocal dependsOn assembleAkkaLibrary
@@ -309,17 +303,15 @@ lazy val akkaStreamTestkit = crossProject.in(file("akka-js-stream-testkit"))
        rm_clash(srcTarget, jsSources)
      }
    ).jsSettings(
+     libraryDependencies ++= Seq(
+       "org.scalacheck" %%% "scalacheck" % "1.13.2" % "test"
+     ),
      scalaJSUseRhino in Global := false,
      scalaJSStage in Global := FastOptStage,
      publishArtifact in (Test, packageBin) := true,
      //scalaJSOptimizerOptions ~= { _.withDisableOptimizer(true) },
      preLinkJSEnv := NodeJSEnv().value,
-     postLinkJSEnv := NodeJSEnv().value.withSourceMap(true),
-     libraryDependencies ++= Seq(
-       "org.scalatest" %%% "scalatest" % "3.0.0-M16-SNAP6" % "test",
-       "org.scalacheck" %%% "scalacheck" % "1.13.2" % "test",
-       "org.scala-lang.modules" %% "scala-java8-compat" % "0.7.0" % "provided"
-    )
+     postLinkJSEnv := NodeJSEnv().value.withSourceMap(true)
   ).jsSettings(
        excludeDependencies += ("eu.unicredit" %% "akkaactorjsirpatches"),
        compile in Compile <<= (compile in Compile) dependsOn assembleAkkaLibrary,

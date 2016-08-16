@@ -1,5 +1,5 @@
-val akkaJsVersion = "0.1.3-SNAPSHOT"
-val akkaOriginalVersion = "master"
+val akkaJsVersion = "0.2.0"
+val akkaOriginalVersion = "v2.4.9-RC2"
 
 parallelExecution in ThisBuild := false
 
@@ -61,6 +61,9 @@ lazy val akkaTargetDir = settingKey[File]("akkaTargetDir")
 
 lazy val assembleAkkaLibrary = taskKey[Unit](
   "Checks out akka standard library from submodules/akka and then applies overrides.")
+
+lazy val fixResources = taskKey[Unit](
+  "Fix application.conf presence on first clean build.")
 
 //basically eviction rules
 def rm_clash(base: File, target: File): Unit = {
@@ -126,10 +129,25 @@ lazy val akkaJsActor = crossProject.in(file("akka-js-actor"))
       val jsSources = file("akka-js-actor/js/src/main/scala")
 
       rm_clash(srcTarget, jsSources)
+    },
+    fixResources := {
+      val compileConf = (resourceDirectory in Compile).value / "application.conf"
+      if (compileConf.exists)
+        IO.copyFile(
+          compileConf,
+          (classDirectory in Compile).value / "application.conf"
+        )
+      val testConf = (resourceDirectory in Test).value / "application.conf"
+      if (testConf.exists) {
+        IO.copyFile(
+          testConf,
+          (classDirectory in Test).value / "application.conf"
+        )
+      }
     }
    ).jsSettings(
     libraryDependencies ++= Seq(
-      "eu.unicredit" %%% "shocon" % "0.0.3-SNAPSHOT",
+      "eu.unicredit" %%% "shocon" % "0.1.1",
       "org.scala-js" %%% "scalajs-java-time" % "0.1.0",
       "org.scala-lang.modules" %% "scala-java8-compat" % "0.7.0" % "provided"
     ),

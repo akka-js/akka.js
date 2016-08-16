@@ -19,15 +19,16 @@ Then add to your JS project configuration:
 ```scala
 resolvers += Resolver.sonatypeRepo("snapshots")
 
-libraryDependencies += "eu.unicredit" %%% "akkajsactor" % "0.1.2-SNAPSHOT"
+libraryDependencies += "eu.unicredit" %%% "akkajsactor" % "0.2.0"
 ```
 
 If you want to use Akka Stream:
 ```scala
-libraryDependencies += "eu.unicredit" %%% "akkajsactorstream" % "0.1.2-SNAPSHOT"
+libraryDependencies += "eu.unicredit" %%% "akkajsactorstream" % "0.2.0"
 ```
 
-At this point you can use most of the Akka core Api as described in the official [docs](http://doc.akka.io/docs/akka/snapshot/scala.html).
+Please note that Akka.js 0.2.0 is shipped from Akka 2.4.9-RC2.
+At this point you can use most of the Akka core Api as described in the official [docs](http://doc.akka.io/docs/akka/2.4.9-RC2/scala.html).
 
 Check out the @andreaTP session at Scala Days 2016:
 [slides](https://github.com/andreaTP/sd2016.git)

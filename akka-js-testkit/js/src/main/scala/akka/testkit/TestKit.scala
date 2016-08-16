@@ -113,7 +113,7 @@ trait TestKitBase {
   import TestActor.{ Message, RealMessage, NullMessage }
 
   implicit val system: ActorSystem
-  val testKitSettings = TestKitSettings //@note IMPLEMENT IN SCALA.JS TestKitExtension(system)
+  val testKitSettings = TestKitExtension(system)
 
   // @note IMPLEMENT IN SCALA.JS private val queue = new LinkedBlockingDeque[Message]()
   private val queue = new scala.collection.mutable.Queue[Message]()
@@ -863,7 +863,7 @@ object TestKit {
    */
   @deprecated("Use JavaTestKit.dilated", "2.3")
   def dilated(duration: Duration, system: ActorSystem): Duration =
-    duration * TestKitSettings/** @note IMPLEMENT IN SCALA.JS TestKitExtension(system)*/.TestTimeFactor
+    duration * TestKitExtension(system).TestTimeFactor
 
   /**
    * Shut down an actor system and wait for termination.

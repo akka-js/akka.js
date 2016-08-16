@@ -96,14 +96,23 @@ abstract class EventFilter(occurrences: Int) {
    */
   def intercept[T](code: ⇒ T)(implicit system: ActorSystem): T = {
     system.eventStream publish TestEvent.Mute(this)
-    val leeway = TestKitSettings.TestEventFilterLeeway // @note IMPLEMENT IN SCALA.JS TestKitExtension(system).TestEventFilterLeeway
+    val leeway = TestKitExtension(system).TestEventFilterLeeway.dilated
     try {
-      val result = code
+      val result = try {
+        code
+      } catch {
+        case ex: Throwable =>
+          println("\n\n\n")
+          println("throws...")
+          println("\n\n\n")
+          system.eventStream publish ex
+          null.asInstanceOf[T]
+      }
       if (!awaitDone(leeway))
         if (todo > 0)
-          throw new AssertionError("Timeout (" + leeway + ") waiting for " + todo + " messages on " + this)
+          throw new AssertionError(s"timeout ($leeway) waiting for $todo messages on $this")
         else
-          throw new AssertionError("Received " + (-todo) + " messages too many on " + this)
+          throw new AssertionError(s"received ${-todo} excess messages on $this")
       result
     } finally system.eventStream publish TestEvent.UnMute(this)
   }

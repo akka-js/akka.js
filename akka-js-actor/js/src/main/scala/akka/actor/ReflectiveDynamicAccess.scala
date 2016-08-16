@@ -49,9 +49,12 @@ class JSDynamicAccess(val classLoader: ClassLoader) extends DynamicAccess {
   private val classes_map: mutable.HashMap[String, Class[_]] = mutable.HashMap(
     "akka.actor.LocalActorRefProvider" -> classOf[akka.actor.LocalActorRefProvider],
     "akka.actor.JSLocalActorRefProvider" -> classOf[akka.actor.JSLocalActorRefProvider],
+    "akka.event.Logging$DefaultLogger" -> classOf[akka.event.JSDefaultLogger],
     "akka.event.JSDefaultLogger" -> classOf[akka.event.JSDefaultLogger],
+    "akka.event.DefaultLoggingFilter" -> classOf[akka.event.JSDefaultLoggingFilter],
     "akka.event.JSDefaultLoggingFilter" -> classOf[akka.event.JSDefaultLoggingFilter],
     "akka.actor.EventLoopScheduler" -> classOf[akka.actor.EventLoopScheduler],
+    "akka.actor.LightArrayRevolverScheduler" -> classOf[akka.actor.LightArrayRevolverScheduler],
     "akka.actor.DefaultSupervisorStrategy" -> classOf[akka.actor.DefaultSupervisorStrategy]
   ) ++ JSDynamicAccess.additional_classes_map
 

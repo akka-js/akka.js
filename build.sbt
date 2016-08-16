@@ -1,8 +1,6 @@
 val akkaJsVersion = "0.2.0"
 val akkaOriginalVersion = "v2.4.9-RC2"
 
-parallelExecution in ThisBuild := false
-
 val commonSettings = Seq(
     scalaVersion := "2.11.8",
     organization := "eu.unicredit",
@@ -18,6 +16,8 @@ val commonSettings = Seq(
       Resolver.typesafeRepo("releases"),
       Resolver.sonatypeRepo("snapshots")
     ),
+    parallelExecution in Global := false,
+    sources in doc in Compile := Nil,
     scalaJSStage in Global := FastOptStage,
     cancelable in Global := true
 )
@@ -104,7 +104,8 @@ def copyToSourceFolder(sourceDir: File, targetDir: File) = {
   IO.copyDirectory(
     sourceDir,
     targetDir,
-    overwrite = true)
+    overwrite = true,
+    preserveLastModified = true)
   (targetDir / ".gitkeep").createNewFile
 }
 
@@ -167,8 +168,9 @@ lazy val akkaJsActor = crossProject.in(file("akka-js-actor"))
   ).jsSettings(sonatypeSettings : _*
   ).jsSettings(
     excludeDependencies += ("eu.unicredit" %% "akkaactorjsirpatches"),
-    compile in Compile <<= (compile in Compile) dependsOn assembleAkkaLibrary,
-    publishLocal <<= publishLocal dependsOn assembleAkkaLibrary
+    compile in Compile <<= (compile in Compile) dependsOn (assembleAkkaLibrary, fixResources),
+    publishLocal <<= publishLocal dependsOn (assembleAkkaLibrary, fixResources),
+    PgpKeys.publishSigned <<= PgpKeys.publishSigned dependsOn (assembleAkkaLibrary, fixResources)
   ).enablePlugins(spray.boilerplate.BoilerplatePlugin)
 
 lazy val akkaJsActorJS = akkaJsActor.js.dependsOn(akkaJsActorIrPatches % "provided")
@@ -247,21 +249,36 @@ lazy val akkaJsActorStream = crossProject.in(file("akka-js-actor-stream"))
       val jsSources = file("akka-js-actor-stream/js/src/main/scala")
 
       rm_clash(srcTarget, jsSources)
+    },
+    fixResources := {
+      val compileConf = (resourceDirectory in Compile).value / "application.conf"
+      if (compileConf.exists)
+        IO.copyFile(
+          compileConf,
+          (classDirectory in Compile).value / "application.conf"
+        )
+      val testConf = (resourceDirectory in Test).value / "application.conf"
+      if (testConf.exists) {
+        IO.copyFile(
+          testConf,
+          (classDirectory in Test).value / "application.conf"
+        )
+      }
     }
   ).jsSettings(
     useAnnotationAdderPluginSettings : _*
   ).jsSettings(
     publishSettings : _*
-  ).dependsOn(akkaJsActor
   ).jsSettings(sonatypeSettings : _*
   ).jsSettings(
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-java8-compat" % "0.7.0" % "provided"
     ),
     excludeDependencies += ("eu.unicredit" %% "akkaactorjsirpatches"),
-    compile in Compile <<= (compile in Compile) dependsOn assembleAkkaLibrary,
-    publishLocal <<= publishLocal dependsOn assembleAkkaLibrary
-  ).enablePlugins(spray.boilerplate.BoilerplatePlugin)
+    compile in Compile <<= (compile in Compile) dependsOn (assembleAkkaLibrary, fixResources),
+    publishLocal <<= publishLocal dependsOn (assembleAkkaLibrary, fixResources),
+    PgpKeys.publishSigned <<= PgpKeys.publishSigned dependsOn (assembleAkkaLibrary, fixResources, BoilerplatePlugin.autoImport.boilerplateGenerate)
+  ).enablePlugins(spray.boilerplate.BoilerplatePlugin).dependsOn(akkaJsActor)
 
 lazy val akkaJsActorStreamJS = akkaJsActorStream.js
 

@@ -356,6 +356,57 @@ lazy val akkaStreamTestkit = crossProject.in(file("akka-js-stream-testkit"))
 
   lazy val akkaStreamTestJS = akkaStreamTest.js
 
+
+  lazy val akkaJsActorRemote = crossProject.in(file("akka-js-actor-remote"))
+    .settings(commonSettings : _*)
+    .settings(
+      version := akkaJsVersion,
+      akkaVersion := akkaOriginalVersion,
+      akkaTargetDir := file("akka-js-actor/js/target/") / "akkaSources" / akkaVersion.value,
+      assembleAkkaLibrary := {
+        getAkkaSources(akkaTargetDir.value, akkaVersion.value)
+        val srcTarget = file("akka-js-actor-remote/shared/src/main/scala")
+        copyToSourceFolder(
+          akkaTargetDir.value / "akka-remote" / "src" / "main" / "scala",
+          srcTarget
+        )
+
+        val jsSources = file("akka-js-actor-remote/js/src/main/scala")
+
+        rm_clash(srcTarget, jsSources)
+      },
+      fixResources := {
+        val compileConf = (resourceDirectory in Compile).value / "application.conf"
+        if (compileConf.exists)
+          IO.copyFile(
+            compileConf,
+            (classDirectory in Compile).value / "application.conf"
+          )
+        val testConf = (resourceDirectory in Test).value / "application.conf"
+        if (testConf.exists) {
+          IO.copyFile(
+            testConf,
+            (classDirectory in Test).value / "application.conf"
+          )
+        }
+      }
+    ).jsSettings(
+      useAnnotationAdderPluginSettings : _*
+    ).jsSettings(
+      publishSettings : _*
+    ).jsSettings(sonatypeSettings : _*
+    ).jsSettings(
+      //libraryDependencies ++= Seq(
+      //  "org.scala-lang.modules" %% "scala-java8-compat" % "0.7.0" % "provided"
+      //),
+      excludeDependencies += ("eu.unicredit" %% "akkaactorjsirpatches"),
+      compile in Compile <<= (compile in Compile) dependsOn (assembleAkkaLibrary, fixResources),
+      publishLocal <<= publishLocal dependsOn (assembleAkkaLibrary, fixResources),
+      PgpKeys.publishSigned <<= PgpKeys.publishSigned dependsOn (assembleAkkaLibrary, fixResources, BoilerplatePlugin.autoImport.boilerplateGenerate)
+    ).enablePlugins(spray.boilerplate.BoilerplatePlugin).dependsOn(akkaJsActor)
+
+  lazy val akkaJsActorRemoteJS = akkaJsActorRemote.js
+
 //COMPILER PLUGINS SECTION
 
 //add scala.js annotations to proper classes
@@ -406,5 +457,6 @@ lazy val root = project.in(file(".")).settings(commonSettings: _*)
     akkaActorTestJS,
     akkaJsActorStreamJS,
     akkaStreamTestkitJS,
-    akkaStreamTestJS
+    akkaStreamTestJS,
+    akkaJsActorRemoteJS
   )

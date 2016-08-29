@@ -356,7 +356,7 @@ lazy val akkaStreamTestkit = crossProject.in(file("akka-js-stream-testkit"))
 
   lazy val akkaStreamTestJS = akkaStreamTest.js
 
-
+  import com.trueaccord.scalapb.{ScalaPbPlugin => PB}
   lazy val akkaJsActorRemote = crossProject.in(file("akka-js-actor-remote"))
     .settings(commonSettings : _*)
     .settings(
@@ -369,6 +369,12 @@ lazy val akkaStreamTestkit = crossProject.in(file("akka-js-stream-testkit"))
         copyToSourceFolder(
           akkaTargetDir.value / "akka-remote" / "src" / "main" / "scala",
           srcTarget
+        )
+
+        val protoTarget = file("akka-js-actor-remote/js/src/main/protobuf")
+        copyToSourceFolder(
+          akkaTargetDir.value / "akka-remote" / "src" / "main" / "protobuf",
+          protoTarget
         )
 
         val jsSources = file("akka-js-actor-remote/js/src/main/scala")
@@ -395,15 +401,23 @@ lazy val akkaStreamTestkit = crossProject.in(file("akka-js-stream-testkit"))
     ).jsSettings(
       publishSettings : _*
     ).jsSettings(sonatypeSettings : _*
+    ).jsSettings(PB.protobufSettings: _*
     ).jsSettings(
-      //libraryDependencies ++= Seq(
+      PB.runProtoc in PB.protobufConfig := (args =>
+        com.github.os72.protocjar.Protoc.runProtoc("-v300" +: args.toArray)),
+      //PB.javaConversions in PB.protobufConfig := true,
+      //excludeFilter in unmanagedSources := HiddenFileFilter || "*.java",
+      //excludeFilter in sourceManaged := HiddenFileFilter || "*.java",
+      libraryDependencies ++= Seq(
+        "com.trueaccord.scalapb" %%% "scalapb-runtime" % "0.5.34",
+        "com.trueaccord.scalapb" %%% "scalapb-runtime" % "0.5.34" % PB.protobufConfig
       //  "org.scala-lang.modules" %% "scala-java8-compat" % "0.7.0" % "provided"
-      //),
+      ),
       excludeDependencies += ("eu.unicredit" %% "akkaactorjsirpatches"),
       compile in Compile <<= (compile in Compile) dependsOn (assembleAkkaLibrary, fixResources),
       publishLocal <<= publishLocal dependsOn (assembleAkkaLibrary, fixResources),
       PgpKeys.publishSigned <<= PgpKeys.publishSigned dependsOn (assembleAkkaLibrary, fixResources, BoilerplatePlugin.autoImport.boilerplateGenerate)
-    ).enablePlugins(spray.boilerplate.BoilerplatePlugin).dependsOn(akkaJsActor)
+    ).dependsOn(akkaJsActor)
 
   lazy val akkaJsActorRemoteJS = akkaJsActorRemote.js
 

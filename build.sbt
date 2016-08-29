@@ -403,8 +403,12 @@ lazy val akkaStreamTestkit = crossProject.in(file("akka-js-stream-testkit"))
     ).jsSettings(sonatypeSettings : _*
     ).jsSettings(PB.protobufSettings: _*
     ).jsSettings(
+      scalacOptions ++= Seq(
+        "-feature", "-language:implicitConversions"
+      ),
       PB.runProtoc in PB.protobufConfig := (args =>
         com.github.os72.protocjar.Protoc.runProtoc("-v300" +: args.toArray)),
+      maxErrors := 1,
       //PB.javaConversions in PB.protobufConfig := true,
       //excludeFilter in unmanagedSources := HiddenFileFilter || "*.java",
       //excludeFilter in sourceManaged := HiddenFileFilter || "*.java",

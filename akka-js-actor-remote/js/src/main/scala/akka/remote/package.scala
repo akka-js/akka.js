@@ -4,6 +4,9 @@ import com.google.protobuf.ByteString
 
 package object remote {
 
+  implicit def fromGoogleToAkka(bs: com.google.protobuf.ByteString) =
+    bs.asInstanceOf[akka.protobuf.ByteString]
+
   import akka.remote.WireFormats.SerializedMessage
   implicit class SerializedMessageHelper(m: SerializedMessage) {
     def getMessage() = m.message
@@ -98,5 +101,10 @@ package object remote {
 
   implicit class DaemonMsgCreateDataStaticHelper(d: DaemonMsgCreateData.type) {
     def newBuilder = DaemonMsgCreateData()
+  }
+
+  object AkkaHandshakeInfo {
+
+    type Builder = akka.remote.WireFormats.AkkaHandshakeInfo
   }
 }

@@ -16,4 +16,6 @@ package object protobuf {
 
   object ByteString extends ByteStringImpl
 
+  class InvalidProtocolBufferException(ex: java.io.IOException)
+      extends com.google.protobuf.InvalidProtocolBufferException(ex)
 }

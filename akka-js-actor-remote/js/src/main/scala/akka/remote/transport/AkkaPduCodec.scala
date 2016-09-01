@@ -147,7 +147,7 @@ private[remote] object AkkaPduProtobufCodec extends AkkaPduCodec {
 
   override def constructAssociate(info: HandshakeInfo): ByteString = {
     val handshakeInfo = AkkaHandshakeInfo().withOrigin(serializeAddress(info.origin)).withUid(info.uid)
-    info.cookie foreach handshakeInfo.withCookie(true)
+    info.cookie foreach (_ => handshakeInfo.withCookie("true"))
     constructControlMessagePdu(WireFormats.CommandType.ASSOCIATE, Some(handshakeInfo))
   }
 
@@ -167,8 +167,8 @@ private[remote] object AkkaPduProtobufCodec extends AkkaPduCodec {
   override def decodePdu(raw: ByteString): AkkaPdu = {
     try {
       val pdu = AkkaProtocolMessage.parseFrom(raw.toArray)
-      if (pdu.hasPayload) Payload(ByteString(pdu.getPayload.asReadOnlyByteBuffer()))
-      else if (pdu.hasInstruction) decodeControlPdu(pdu.getInstruction)
+      if (pdu.payload.isDefined) Payload(ByteString(pdu.getPayload.asReadOnlyByteBuffer()))
+      else if (pdu.instruction.isDefined) decodeControlPdu(pdu.getInstruction)
       else throw new PduCodecException("Error decoding Akka PDU: Neither message nor control message were contained", null)
     } catch {
       case e: InvalidProtocolBufferException ⇒ throw new PduCodecException("Decoding PDU failed.", e)
@@ -181,22 +181,22 @@ private[remote] object AkkaPduProtobufCodec extends AkkaPduCodec {
     localAddress: Address): (Option[Ack], Option[Message]) = {
     val ackAndEnvelope = AckAndEnvelopeContainer.parseFrom(raw.toArray)
 
-    val ackOption = if (ackAndEnvelope.hasAck) {
+    val ackOption = if (ackAndEnvelope.ack.isDefined) {
       import scala.collection.JavaConverters._
-      Some(Ack(SeqNo(ackAndEnvelope.getAck.getCumulativeAck), ackAndEnvelope.getAck.getNacksList.asScala.map(SeqNo(_)).toSet))
+      Some(Ack(SeqNo(ackAndEnvelope.ack.get.cumulativeAck), ackAndEnvelope.ack.get.nacks.map(SeqNo(_)).toSet))
     } else None
 
-    val messageOption = if (ackAndEnvelope.hasEnvelope) {
+    val messageOption = if (ackAndEnvelope.envelope.isDefined) {
       val msgPdu = ackAndEnvelope.getEnvelope
       Some(Message(
-        recipient = provider.resolveActorRefWithLocalAddress(msgPdu.getRecipient.getPath, localAddress),
-        recipientAddress = AddressFromURIString(msgPdu.getRecipient.getPath),
-        serializedMessage = msgPdu.getMessage,
+        recipient = provider.resolveActorRefWithLocalAddress(msgPdu.recipient.path, localAddress),
+        recipientAddress = AddressFromURIString(msgPdu.recipient.path),
+        serializedMessage = msgPdu.message,
         senderOption =
-          if (msgPdu.hasSender) Some(provider.resolveActorRefWithLocalAddress(msgPdu.getSender.getPath, localAddress))
+          if (msgPdu.sender.isDefined) Some(provider.resolveActorRefWithLocalAddress(msgPdu.sender.get.path, localAddress))
           else None,
         seqOption =
-          if (msgPdu.hasSeq) Some(SeqNo(msgPdu.getSeq)) else None))
+          if (msgPdu.seq.isDefined) Some(SeqNo(msgPdu.seq.get)) else None))
     } else None
 
     (ackOption, messageOption)
@@ -204,14 +204,14 @@ private[remote] object AkkaPduProtobufCodec extends AkkaPduCodec {
 
   private def decodeControlPdu(controlPdu: AkkaControlMessage): AkkaPdu = {
 
-    controlPdu.getCommandType match {
-      case CommandType.ASSOCIATE if controlPdu.hasHandshakeInfo ⇒
+    controlPdu.commandType match {
+      case CommandType.ASSOCIATE if controlPdu.handshakeInfo.isDefined ⇒
         val handshakeInfo = controlPdu.getHandshakeInfo
-        val cookie = if (handshakeInfo.hasCookie) Some(handshakeInfo.getCookie) else None
+        val cookie = if (handshakeInfo.cookie.isDefined) Some(handshakeInfo.cookie.get) else None
         Associate(
           HandshakeInfo(
-            decodeAddress(handshakeInfo.getOrigin),
-            handshakeInfo.getUid.toInt, // 64 bits are allocated in the wire formats, but we use only 32 for now
+            decodeAddress(handshakeInfo.origin),
+            handshakeInfo.uid.toInt, // 64 bits are allocated in the wire formats, but we use only 32 for now
             cookie))
       case CommandType.DISASSOCIATE               ⇒ Disassociate(AssociationHandle.Unknown)
       case CommandType.DISASSOCIATE_SHUTTING_DOWN ⇒ Disassociate(AssociationHandle.Shutdown)
@@ -223,32 +223,32 @@ private[remote] object AkkaPduProtobufCodec extends AkkaPduCodec {
   }
 
   private def decodeAddress(encodedAddress: AddressData): Address =
-    Address(encodedAddress.getProtocol, encodedAddress.getSystem, encodedAddress.getHostname, encodedAddress.getPort)
+    Address(encodedAddress.protocol.get, encodedAddress.system, encodedAddress.hostname, encodedAddress.port)
 
   private def constructControlMessagePdu(
     code:          WireFormats.CommandType,
     handshakeInfo: Option[AkkaHandshakeInfo]): ByteString = {
 
-    val controlMessageBuilder = AkkaControlMessage.newBuilder()
-    controlMessageBuilder.setCommandType(code)
-    handshakeInfo foreach controlMessageBuilder.withHandshakeInfo(true)
+    val controlMessageBuilder = AkkaControlMessage()
+    controlMessageBuilder.withCommandType(code)
+    handshakeInfo foreach controlMessageBuilder.withHandshakeInfo
 
-    ByteString.ByteString1C(AkkaProtocolMessage.newBuilder().setInstruction(controlMessageBuilder.build).build.toByteArray) //Reuse Byte Array (naughty!)
+    ByteString.ByteString1C(AkkaProtocolMessage().withInstruction(controlMessageBuilder.update()).update().toByteArray) //Reuse Byte Array (naughty!)
   }
 
   private def serializeActorRef(defaultAddress: Address, ref: ActorRef): ActorRefData = {
-    ActorRefData.newBuilder.setPath(
-      if (ref.path.address.host.isDefined) ref.path.toSerializationFormat else ref.path.toSerializationFormatWithAddress(defaultAddress)).build()
+    ActorRefData().withPath(
+      if (ref.path.address.host.isDefined) ref.path.toSerializationFormat else ref.path.toSerializationFormatWithAddress(defaultAddress)).update()
   }
 
   private def serializeAddress(address: Address): AddressData = address match {
     case Address(protocol, system, Some(host), Some(port)) ⇒
-      AddressData.newBuilder
-        .setHostname(host)
-        .setPort(port)
-        .setSystem(system)
-        .setProtocol(protocol)
-        .build()
+      AddressData()
+        .withHostname(host)
+        .withPort(port)
+        .withSystem(system)
+        .withProtocol(protocol)
+        .update()
     case _ ⇒ throw new IllegalArgumentException(s"Address [${address}] could not be serialized: host or port missing.")
   }
 

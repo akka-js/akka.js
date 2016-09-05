@@ -1,5 +1,5 @@
-val akkaJsVersion = "0.2.1-SNAPSHOT"
-val akkaOriginalVersion = "master"
+val akkaJsVersion = "0.2.4.9"
+val akkaOriginalVersion = "v2.4.9"
 
 val commonSettings = Seq(
     scalaVersion := "2.11.8",
@@ -148,7 +148,7 @@ lazy val akkaJsActor = crossProject.in(file("akka-js-actor"))
     }
    ).jsSettings(
     libraryDependencies ++= Seq(
-      "eu.unicredit" %%% "shocon" % "0.1.1",
+      "eu.unicredit" %%% "shocon" % "0.1.2",
       "org.scala-js" %%% "scalajs-java-time" % "0.1.0",
       "org.scala-lang.modules" %% "scala-java8-compat" % "0.7.0" % "provided"
     ),

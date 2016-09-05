@@ -17,17 +17,17 @@ Otherwise, if you want to start from scratch:
 First of all you need to setup a new [Scala.js project](https://www.scala-js.org/doc/project/).
 Then add to your JS project configuration:
 ```scala
-resolvers += Resolver.sonatypeRepo("snapshots")
+resolvers += Resolver.sonatypeRepo("releases")
 
-libraryDependencies += "eu.unicredit" %%% "akkajsactor" % "0.2.0"
+libraryDependencies += "eu.unicredit" %%% "akkajsactor" % "0.2.4.9"
 ```
 
 If you want to use Akka Stream:
 ```scala
-libraryDependencies += "eu.unicredit" %%% "akkajsactorstream" % "0.2.0"
+libraryDependencies += "eu.unicredit" %%% "akkajsactorstream" % "0.2.4.9"
 ```
 
-Please note that Akka.js 0.2.0 is shipped from Akka 2.4.9-RC2.
+Please note that Akka.js 0.2.4.9 is shipped from the stable Akka 2.4.9.
 At this point you can use most of the Akka core Api as described in the official [docs](http://doc.akka.io/docs/akka/2.4.9-RC2/scala.html).
 
 Check out the @andreaTP session at Scala Days 2016:

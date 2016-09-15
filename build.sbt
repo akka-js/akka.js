@@ -356,6 +356,53 @@ lazy val akkaStreamTestkit = crossProject.in(file("akka-js-stream-testkit"))
 
   lazy val akkaStreamTestJS = akkaStreamTest.js
 
+  lazy val akkaJsTyped = crossProject.in(file("akka-js-typed"))
+    .settings(commonSettings : _*)
+    .settings(
+      version := akkaJsVersion,
+      akkaVersion := akkaOriginalVersion,
+      akkaTargetDir := file("akka-js-actor/js/target/") / "akkaSources" / akkaVersion.value,
+      assembleAkkaLibrary := {
+        getAkkaSources(akkaTargetDir.value, akkaVersion.value)
+        val srcTarget = file("akka-js-typed/shared/src/main/scala")
+        copyToSourceFolder(
+          akkaTargetDir.value / "akka-typed" / "src" / "main" / "scala",
+          srcTarget
+        )
+
+        val jsSources = file("akka-js-typed/js/src/main/scala")
+
+        //rm_clash(srcTarget, jsSources)
+      },
+      fixResources := {
+        val compileConf = (resourceDirectory in Compile).value / "application.conf"
+        if (compileConf.exists)
+          IO.copyFile(
+            compileConf,
+            (classDirectory in Compile).value / "application.conf"
+          )
+        val testConf = (resourceDirectory in Test).value / "application.conf"
+        if (testConf.exists) {
+          IO.copyFile(
+            testConf,
+            (classDirectory in Test).value / "application.conf"
+          )
+        }
+      }
+    ).jsSettings(
+      useAnnotationAdderPluginSettings : _*
+    ).jsSettings(
+      publishSettings : _*
+    ).jsSettings(sonatypeSettings : _*
+    ).jsSettings(
+      excludeDependencies += ("eu.unicredit" %% "akkaactorjsirpatches"),
+      compile in Compile <<= (compile in Compile) dependsOn (assembleAkkaLibrary, fixResources),
+      publishLocal <<= publishLocal dependsOn (assembleAkkaLibrary, fixResources),
+      PgpKeys.publishSigned <<= PgpKeys.publishSigned dependsOn (assembleAkkaLibrary, fixResources, BoilerplatePlugin.autoImport.boilerplateGenerate)
+    ).dependsOn(akkaJsActor)
+
+  lazy val akkaJsTypedJS = akkaJsTyped.js
+
 //COMPILER PLUGINS SECTION
 
 //add scala.js annotations to proper classes
@@ -406,5 +453,6 @@ lazy val root = project.in(file(".")).settings(commonSettings: _*)
     akkaActorTestJS,
     akkaJsActorStreamJS,
     akkaStreamTestkitJS,
-    akkaStreamTestJS
+    akkaStreamTestJS,
+    akkaJsTypedJS
   )

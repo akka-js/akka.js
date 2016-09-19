@@ -372,7 +372,7 @@ lazy val akkaStreamTestkit = crossProject.in(file("akka-js-stream-testkit"))
 
         val jsSources = file("akka-js-typed/js/src/main/scala")
 
-        //rm_clash(srcTarget, jsSources)
+        rm_clash(srcTarget, jsSources)
       },
       fixResources := {
         val compileConf = (resourceDirectory in Compile).value / "application.conf"

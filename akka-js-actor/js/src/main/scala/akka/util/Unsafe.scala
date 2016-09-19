@@ -105,6 +105,30 @@ object Unsafe {
         ret
       }
 
+      def getAndAddInt(o: Any, offset: Long, next: Int) = {
+        val key = offset.asInstanceOf[Int]
+        val ret = safeGet(unsafeVars, toAnyRef(o))
+          .map(_.get(key))
+          .flatten
+          .map(_.asInstanceOf[Int])
+          .getOrElse(0)
+
+        if (next == 0)
+          safeGet(unsafeVars, toAnyRef(o))
+            .map(_.remove(key))
+        else {
+          val old = safeGet(unsafeVars, toAnyRef(o))
+          if (old.isDefined)
+            old.get.update(key, ret + next)
+          else {
+            val in = new mutable.HashMap[Int, Any]()
+            in.update(key, next)
+            unsafeVars.set(toAnyRef(o), in)
+          }
+        }
+        ret
+      }
+
       def putObjectVolatile(o: Any, offset: Long, next: Any) = {
         val key = offset.asInstanceOf[Int]
 

@@ -128,7 +128,7 @@ private[typed] abstract class WatchableRef[-T](_p: a.ActorPath) extends ActorRef
 }
 
 private[typed] object WatchableRef {
-  val watchedByOffset = 80L //unsafe.objectFieldOffset(classOf[WatchableRef[_]].getDeclaredField("_watchedBy"))
+  val watchedByOffset = 80L//unsafe.objectFieldOffset(classOf[WatchableRef[_]].getDeclaredField("_watchedBy"))
 }
 
 /**
@@ -190,5 +190,5 @@ private[typed] class FutureRef[-T](_p: a.ActorPath, bufferSize: Int, f: Future[A
 }
 
 private[typed] object FutureRef {
-  val targetOffset = 91L //unsafe.objectFieldOffset(classOf[FutureRef[_]].getDeclaredField("akka$typed$internal$FutureRef$$_target"))
+  val targetOffset = 81L//unsafe.objectFieldOffset(classOf[FutureRef[_]].getDeclaredField("akka$typed$internal$FutureRef$$_target"))
 }

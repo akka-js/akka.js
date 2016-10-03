@@ -1,5 +1,5 @@
 val akkaJsVersion = "0.2.4.10-SNAPSHOT"
-val akkaOriginalVersion = "master"
+val akkaOriginalVersion = "v2.4.11"
 
 val commonSettings = Seq(
     scalaVersion := "2.11.8",
@@ -372,7 +372,7 @@ lazy val akkaStreamTestkit = crossProject.in(file("akka-js-stream-testkit"))
 
         val jsSources = file("akka-js-typed/js/src/main/scala")
 
-        rm_clash(srcTarget, jsSources)
+          rm_clash(srcTarget, jsSources)
       },
       fixResources := {
         val compileConf = (resourceDirectory in Compile).value / "application.conf"
@@ -399,7 +399,7 @@ lazy val akkaStreamTestkit = crossProject.in(file("akka-js-stream-testkit"))
       compile in Compile <<= (compile in Compile) dependsOn (assembleAkkaLibrary, fixResources),
       publishLocal <<= publishLocal dependsOn (assembleAkkaLibrary, fixResources),
       PgpKeys.publishSigned <<= PgpKeys.publishSigned dependsOn (assembleAkkaLibrary, fixResources, BoilerplatePlugin.autoImport.boilerplateGenerate)
-    ).dependsOn(akkaJsActor)
+    ).dependsOn(akkaJsActor, akkaTestkit)
 
   lazy val akkaJsTypedJS = akkaJsTyped.js
 

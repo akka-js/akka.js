@@ -214,6 +214,9 @@ private[akka] case class ActorMaterializerImpl(
 
     session.materialize().asInstanceOf[Mat]
   }
+  
+  override def makeLogger(logSource: Class[_]): LoggingAdapter =
+    Logging(system, logSource)
 
   override lazy val executionContext: ExecutionContextExecutor = dispatchers.lookup(settings.dispatcher match {
     case Deploy.NoDispatcherGiven ⇒ Dispatchers.DefaultDispatcherId

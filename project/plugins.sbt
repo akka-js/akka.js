@@ -1,4 +1,4 @@
-addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.12")
+addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.13")
 
 addSbtPlugin("eu.unicredit" % "sbt-scalajs-ir-patch-plugin" % "0.0.1-SNAPSHOT")
 
@@ -17,4 +17,4 @@ logLevel := Level.Warn
 resolvers += "Typesafe repository" at "http://repo.typesafe.com/typesafe/releases/"
 resolvers += "Sonatype-Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
 
-libraryDependencies += "org.scala-js" %% "scalajs-env-selenium" % "0.1.3"
+//libraryDependencies += "org.scala-js" %% "scalajs-env-selenium" % "0.1.3"

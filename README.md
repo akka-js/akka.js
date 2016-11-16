@@ -17,16 +17,16 @@ Otherwise, if you want to start from scratch:
 First of all you need to setup a new [Scala.js project](https://www.scala-js.org/doc/project/).
 Then add to your JS project configuration:
 ```scala
-libraryDependencies += "eu.unicredit" %%% "akkajsactor" % "0.2.4.11"
+libraryDependencies += "eu.unicredit" %%% "akkajsactor" % "0.2.4.12"
 ```
 
 If you want to use Akka Stream:
 ```scala
-libraryDependencies += "eu.unicredit" %%% "akkajsactorstream" % "0.2.4.11"
+libraryDependencies += "eu.unicredit" %%% "akkajsactorstream" % "0.2.4.12"
 ```
 
-Please note that Akka.js 0.2.4.11 is shipped from the stable Akka 2.4.11.
-At this point you can use most of the Akka core Api as described in the official [docs](http://doc.akka.io/docs/akka/2.4.11/scala.html).
+Please note that Akka.js 0.2.4.12 is shipped from the stable Akka 2.4.12.
+At this point you can use most of the Akka core Api as described in the official [docs](http://doc.akka.io/docs/akka/2.4.12/scala.html).
 
 Check out the @andreaTP session at Scala Days 2016:
 [slides](https://github.com/andreaTP/sd2016.git)

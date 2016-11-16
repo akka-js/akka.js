@@ -1,8 +1,9 @@
-val akkaJsVersion = "0.2.4.12-SNAPSHOT"
+val akkaJsVersion = "0.2.4.12"
 val akkaOriginalVersion = "v2.4.12"
 
 val commonSettings = Seq(
-    scalaVersion := "2.11.8",
+    scalaVersion := "2.12.0",
+    crossScalaVersions  := Seq("2.11.8"),
     organization := "eu.unicredit",
     scalacOptions ++= Seq(
         "-deprecation",
@@ -148,7 +149,7 @@ lazy val akkaJsActor = crossProject.in(file("akka-js-actor"))
     }
    ).jsSettings(
     libraryDependencies ++= Seq(
-      "eu.unicredit" %%% "shocon" % "0.1.1",
+      "eu.unicredit" %%% "shocon" % "0.1.4",
       "org.scala-js" %%% "scalajs-java-time" % "0.2.0",
       "org.scala-lang.modules" %% "scala-java8-compat" % "0.8.0" % "provided"
     ),
@@ -182,13 +183,12 @@ lazy val akkaTestkit = crossProject.in(file("akka-js-testkit"))
   ).jsSettings(
     libraryDependencies ++= Seq(
       "org.scalatest" %%% "scalatest" % "3.0.0" withSources (),
-      "org.scala-js" %% "scalajs-test-interface" % "0.6.11" % "test"
+      "org.scala-js" %% "scalajs-test-interface" % "0.6.13" % "test"
     ),
     scalaJSStage in Global := FastOptStage,
-    publishArtifact in (Test, packageBin) := true,
-    scalaJSUseRhino in Global := false,
-    preLinkJSEnv := NodeJSEnv().value,
-    postLinkJSEnv := NodeJSEnv().value.withSourceMap(true)
+    publishArtifact in (Test, packageBin) := true//,
+    //preLinkJSEnv := jsEnv.value,
+    //postLinkJSEnv := jsEnv.value.withSourceMap(true)
   ).dependsOn(akkaJsActor)
 
 lazy val akkaTestkitJS = akkaTestkit.js.dependsOn(akkaJsActorJS)
@@ -212,14 +212,13 @@ lazy val akkaActorTest = crossProject.in(file("akka-js-actor-tests"))
       rm_clash(srcTarget, jsSources)
     }
   ).jsSettings(
-    scalaJSUseRhino in Global := false,
     scalaJSStage in Global := FastOptStage,
     publishArtifact in (Test, packageBin) := true,
     //scalaJSOptimizerOptions ~= { _.withDisableOptimizer(true) },
-    preLinkJSEnv := NodeJSEnv().value,
-    postLinkJSEnv := NodeJSEnv().value.withSourceMap(true),
+    //preLinkJSEnv := jsEnv.value,
+    //postLinkJSEnv := jsEnv.value.withSourceMap(true),
     libraryDependencies ++= Seq(
-      "org.scalacheck" %%% "scalacheck" % "1.13.2" % "test"
+      "org.scalacheck" %%% "scalacheck" % "1.13.4" % "test"
     ),
     excludeDependencies += ("eu.unicredit" %% "akkaactorjsirpatches"),
     compile in Compile <<= (compile in Compile) dependsOn assembleAkkaLibrary,
@@ -306,12 +305,11 @@ lazy val akkaStreamTestkit = crossProject.in(file("akka-js-stream-testkit"))
       rm_clash(srcTarget, jsSources)
     }
   ).jsSettings(
-    scalaJSUseRhino in Global := false,
     scalaJSStage in Global := FastOptStage,
     publishArtifact in (Test, packageBin) := true,
     //scalaJSOptimizerOptions ~= { _.withDisableOptimizer(true) },
-    preLinkJSEnv := NodeJSEnv().value,
-    postLinkJSEnv := NodeJSEnv().value.withSourceMap(true),
+    //preLinkJSEnv := jsEnv.value,
+    //postLinkJSEnv := jsEnv.value.withSourceMap(true),
     excludeDependencies += ("eu.unicredit" %% "akkaactorjsirpatches"),
     compile in Compile <<= (compile in Compile) dependsOn assembleAkkaLibrary,
     publishLocal <<= publishLocal dependsOn assembleAkkaLibrary
@@ -339,14 +337,13 @@ lazy val akkaStreamTestkit = crossProject.in(file("akka-js-stream-testkit"))
      }
    ).jsSettings(
      libraryDependencies ++= Seq(
-       "org.scalacheck" %%% "scalacheck" % "1.13.2" % "test"
+       "org.scalacheck" %%% "scalacheck" % "1.13.4" % "test"
      ),
-     scalaJSUseRhino in Global := false,
      scalaJSStage in Global := FastOptStage,
-     publishArtifact in (Test, packageBin) := true,
+     publishArtifact in (Test, packageBin) := true
      //scalaJSOptimizerOptions ~= { _.withDisableOptimizer(true) },
-     preLinkJSEnv := NodeJSEnv().value,
-     postLinkJSEnv := NodeJSEnv().value.withSourceMap(true)
+     //preLinkJSEnv := jsEnv.value,
+     //postLinkJSEnv := jsEnv.value.withSourceMap(true)
   ).jsSettings(
        excludeDependencies += ("eu.unicredit" %% "akkaactorjsirpatches"),
        compile in Compile <<= (compile in Compile) dependsOn assembleAkkaLibrary,

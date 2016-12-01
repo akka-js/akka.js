@@ -22,9 +22,7 @@ import akka.actor.DeadLetter
 import akka.actor.Terminated
 
 import scala.scalajs.js
-import js.Dynamic.{global => g}
 import scala.concurrent.Promise
-import org.scalatest.concurrent.ScalaFutures._
 
 object TestActor {
   type Ignore = Option[PartialFunction[Any, Boolean]]
@@ -279,12 +277,16 @@ trait TestKitBase {
 
     val f = Promise[Boolean]
 
-    def poll(t: Duration) {
+    import system.dispatcher
+
+    def poll(t: Duration): Unit = {
       if (!p) {
         try {
           assert(now < stop, s"timeout ${_max} expired: $message")
 
-          g.setTimeout(poll((stop - now) min interval), t.toMillis)
+          system.scheduler.scheduleOnce(t.toMillis millis){
+            poll((stop - now) min interval)
+          }
         } catch {
           case NonFatal(e) => f.failure(e)
         }
@@ -293,12 +295,11 @@ trait TestKitBase {
       }
     }
 
-    g.setTimeout(poll(_max min interval), 0)
+    system.scheduler.scheduleOnce(0 millis){
+      poll(_max min interval)
+    }
 
-    val result = f.future
-
-    result.isReadyWithin(_max)
-    result.value
+    Await.result(f.future, _max)
   }
 
   /**
@@ -318,7 +319,9 @@ trait TestKitBase {
 
     val f = Promise[Boolean]
 
-    def poll(t: Duration) {
+    import system.dispatcher
+
+    def poll(t: Duration): Unit = {
       val failed =
         try { a; false } catch {
           case NonFatal(e) ⇒
@@ -331,16 +334,17 @@ trait TestKitBase {
             }
         }
       if (failed) {
-        g.setTimeout(poll((stop - now) min interval), t.toMillis)
+        system.scheduler.scheduleOnce(t.toMillis millis){
+          poll((stop - now) min interval)
+        }
       }
     }
 
-    g.setTimeout(poll(_max min interval), 0)
+    system.scheduler.scheduleOnce(0 millis){
+      poll(_max min interval)
+    }
 
-    val result = f.future
-
-    result.isReadyWithin(_max)
-    result.value
+    Await.result(f.future, _max)
   }
 
   /**
@@ -722,7 +726,9 @@ trait TestKitBase {
 
     val f = Promise[Message]
 
-    lazy val fn: js.Function0[Unit] = { () =>
+    import system.dispatcher
+
+    def fn(): Unit =
       try {
         val res = queue.pollFirst()
         f.success(res)
@@ -732,17 +738,13 @@ trait TestKitBase {
           if (toSleep <= Duration.Zero)
             f.failure(new AssertionError(s"timeout $max expired"))
           else
-            g.setTimeout(fn, 0)
+            system.scheduler.scheduleOnce(0 millis)(fn)
        }
-    }
 
-    g.setTimeout(fn, 0)
+    system.scheduler.scheduleOnce(0 millis)(fn)
 
     try {
-      val result = f.future
-
-      result.isReadyWithin(max)
-      result.value.get.get
+      Await.result(f.future, max)
     } catch {
       case NonFatal(e) =>
         null.asInstanceOf[Message]
@@ -879,6 +881,8 @@ class TestKit(_system: ActorSystem) extends { implicit val system = _system } wi
 object TestKit {
   private[testkit] val testActorId = new AtomicInteger(0)
 
+  //Scala.js???
+  lazy val system = ActorSystem()
   /**
    * Await until the given condition evaluates to `true` or the timeout
    * expires, whichever comes first.
@@ -888,6 +892,8 @@ object TestKit {
 
    val f = Promise[Boolean]
 
+   import system.dispatcher
+
    def poll(): Unit = {
     if (!p) {
       val toSleep = stop - now
@@ -896,17 +902,14 @@ object TestKit {
           else
             f.failure(new AssertionError(s"timeout $max expired"))
         } else {
-          g.setTimeout(poll(), (toSleep min interval).toMillis)
+          system.scheduler.scheduleOnce((toSleep min interval).toMillis millis)(poll())
         }
       } else f.success(true)
    }
 
-    g.setTimeout(poll(), 0)
+   system.scheduler.scheduleOnce(0 millis)(poll())
 
-    val result = f.future
-
-    result.isReadyWithin(max)
-    result.value.get.get
+   Await.result(f.future, max)
   }
 
   /**
@@ -927,9 +930,10 @@ object TestKit {
     actorSystem.terminate()
     try {
       val result = actorSystem.whenTerminated
-
+/*
       result.isReadyWithin(duration)
       result.value
+*/
     } catch {
     //try Await.ready(actorSystem.whenTerminated, duration) catch {
       case _: TimeoutException ⇒

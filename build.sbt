@@ -203,19 +203,34 @@ lazy val akkaTestkit = crossProject.in(file("akka-js-testkit"))
       val jsTestSources = file("akka-js-testkit/js/src/test/scala")
 
       rm_clash(testTarget, jsTestSources)
+    },
+    fixResources := {
+      val compileConf = (resourceDirectory in Compile).value / "application.conf"
+      if (compileConf.exists)
+        IO.copyFile(
+          compileConf,
+          (classDirectory in Compile).value / "application.conf"
+        )
+      val testConf = (resourceDirectory in Test).value / "application.conf"
+      if (testConf.exists) {
+        IO.copyFile(
+          testConf,
+          (classDirectory in Test).value / "application.conf"
+        )
+      }
     }
   ).jsSettings(
     libraryDependencies ++= Seq(
-      "org.scalatest" %%% "scalatest" % "3.0.0" withSources ()//,
-      //"org.scala-js" %% "scalajs-test-interface" % "0.6.13" % "test"
+      "org.scalatest" %%% "scalatest" % "3.0.0" withSources ()
     ),
     scalaJSStage in Global := FastOptStage,
     publishArtifact in (Test, packageBin) := true,
     //preLinkJSEnv := jsEnv.value,
     //postLinkJSEnv := jsEnv.value.withSourceMap(true)
     excludeDependencies += ("eu.unicredit" %% "akkaactorjsirpatches"),
-    compile in Compile <<= (compile in Compile) dependsOn assembleAkkaLibrary,
-    publishLocal <<= publishLocal dependsOn assembleAkkaLibrary
+    compile in Compile <<= (compile in Compile) dependsOn (assembleAkkaLibrary, fixResources),
+    publishLocal <<= publishLocal dependsOn (assembleAkkaLibrary, fixResources),
+    PgpKeys.publishSigned <<= PgpKeys.publishSigned dependsOn (assembleAkkaLibrary, fixResources)
   ).dependsOn(akkaJsActor)
 
 lazy val akkaTestkitJS = akkaTestkit.js.dependsOn(akkaJsActorJS)

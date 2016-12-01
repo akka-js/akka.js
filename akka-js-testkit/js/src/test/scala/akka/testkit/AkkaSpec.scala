@@ -21,23 +21,11 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.Span
 
 object AkkaSpec {
-  val testConf: Config = ConfigFactory.parseString("""
-      akka {
-        loggers = ["akka.testkit.TestEventListener"]
-        loglevel = "WARNING"
-        stdout-loglevel = "WARNING"
-        actor {
-          default-dispatcher {
-            executor = "fork-join-executor"
-            fork-join-executor {
-              parallelism-min = 8
-              parallelism-factor = 2.0
-              parallelism-max = 8
-            }
-          }
-        }
-      }
-                                                    """)
+  val testConf: Config = ConfigFactory.load()
+
+  akka.actor.JSDynamicAccess.injectClass(
+    "akka.testkit.TestEventListener" -> classOf[akka.testkit.TestEventListener]
+  )
 
   def mapToConfig(map: Map[String, Any]): Config = {
     import scala.collection.JavaConverters._
@@ -45,6 +33,7 @@ object AkkaSpec {
   }
 
   def getCallerName(clazz: Class[_]): String = {
+    /*
     val s = (Thread.currentThread.getStackTrace map (_.getClassName) drop 1)
       .dropWhile(_ matches "(java.lang.Thread|.*AkkaSpec.?$|.*StreamSpec.?$)")
     val reduced = s.lastIndexWhere(_ == clazz.getName) match {
@@ -52,6 +41,8 @@ object AkkaSpec {
       case z  ⇒ s drop (z + 1)
     }
     reduced.head.replaceFirst(""".*\.""", "").replaceAll("[^a-zA-Z_0-9]", "_")
+    */
+    java.util.UUID.randomUUID.toString.replace("-","")
   }
 
 }
@@ -71,7 +62,20 @@ abstract class AkkaSpec(_system: ActorSystem)
 
   def this(configMap: Map[String, _]) = this(AkkaSpec.mapToConfig(configMap))
 
-  def this() = this(ActorSystem(AkkaSpec.getCallerName(getClass), AkkaSpec.testConf))
+  //def this() = this(ActorSystem(AkkaSpec.getCallerName(getClass), AkkaSpec.testConf))
+  def this() = {
+    this({
+      ManagedEventLoop.manage
+      val sys = ActorSystem(AkkaSpec.getCallerName(getClass), AkkaSpec.testConf)
+      val p = scala.concurrent.Promise[Unit]
+      import sys.dispatcher
+      sys.scheduler.scheduleOnce(0 millis){
+        p.success(())
+      }
+      Await.result(p.future, 10 seconds)
+      sys
+    })
+  }
 
   val log: LoggingAdapter = Logging(system, this.getClass)
 
@@ -98,8 +102,7 @@ abstract class AkkaSpec(_system: ActorSystem)
   def spawn(dispatcherId: String = Dispatchers.DefaultDispatcherId)(body: ⇒ Unit): Unit =
     Future(body)(system.dispatchers.lookup(dispatcherId))
 
-  /*override*/
-  def expectedTestDuration: FiniteDuration = 60 seconds
+  /*override*/ def expectedTestDuration: FiniteDuration = 60 seconds
 
   def muteDeadLetters(messageClasses: Class[_]*)(sys: ActorSystem = system): Unit =
     if (!sys.log.isDebugEnabled) {

@@ -149,7 +149,7 @@ lazy val akkaJsActor = crossProject.in(file("akka-js-actor"))
     }
    ).jsSettings(
     libraryDependencies ++= Seq(
-      "eu.unicredit" %%% "shocon" % "0.1.4",
+      "eu.unicredit" %%% "shocon" % "0.1.5-SNAPSHOT",
       "org.scala-js" %%% "scalajs-java-time" % "0.2.0",
       "org.scala-lang.modules" %% "scala-java8-compat" % "0.8.0" % "provided"
     ),
@@ -179,16 +179,43 @@ lazy val akkaJsActorJS = akkaJsActor.js.dependsOn(akkaJsActorIrPatches % "provid
 lazy val akkaTestkit = crossProject.in(file("akka-js-testkit"))
   .settings(commonSettings: _*)
   .settings(
-    version := akkaJsVersion
+    version := akkaJsVersion,
+    akkaVersion := akkaOriginalVersion,
+    akkaTargetDir := file("akka-js-actor/js/target/") / "akkaSources" / akkaVersion.value,
+    assembleAkkaLibrary := {
+      getAkkaSources(akkaTargetDir.value, akkaVersion.value)
+      val srcTarget = file("akka-js-testkit/shared/src/main/scala")
+      copyToSourceFolder(
+        akkaTargetDir.value / "akka-testkit" / "src" / "main" / "scala",
+        srcTarget
+      )
+
+      val jsSources = file("akka-js-testkit/js/src/main/scala")
+
+      rm_clash(srcTarget, jsSources)
+
+      val testTarget = file("akka-js-testkit/shared/src/test/scala")
+      copyToSourceFolder(
+        akkaTargetDir.value / "akka-testkit" / "src" / "test" / "scala",
+        testTarget
+      )
+
+      val jsTestSources = file("akka-js-testkit/js/src/test/scala")
+
+      rm_clash(testTarget, jsTestSources)
+    }
   ).jsSettings(
     libraryDependencies ++= Seq(
-      "org.scalatest" %%% "scalatest" % "3.0.0" withSources (),
-      "org.scala-js" %% "scalajs-test-interface" % "0.6.13" % "test"
+      "org.scalatest" %%% "scalatest" % "3.0.0" withSources ()//,
+      //"org.scala-js" %% "scalajs-test-interface" % "0.6.13" % "test"
     ),
     scalaJSStage in Global := FastOptStage,
-    publishArtifact in (Test, packageBin) := true//,
+    publishArtifact in (Test, packageBin) := true,
     //preLinkJSEnv := jsEnv.value,
     //postLinkJSEnv := jsEnv.value.withSourceMap(true)
+    excludeDependencies += ("eu.unicredit" %% "akkaactorjsirpatches"),
+    compile in Compile <<= (compile in Compile) dependsOn assembleAkkaLibrary,
+    publishLocal <<= publishLocal dependsOn assembleAkkaLibrary
   ).dependsOn(akkaJsActor)
 
 lazy val akkaTestkitJS = akkaTestkit.js.dependsOn(akkaJsActorJS)

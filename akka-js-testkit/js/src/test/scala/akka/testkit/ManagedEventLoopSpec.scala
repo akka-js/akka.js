@@ -40,6 +40,56 @@ class ManagedEventLoopSpec extends WordSpec with Matchers with BeforeAndAfterAll
       }
 
       Await.result(p.future, timeout * 2) should be(true)
+
+      system.terminate
+      Await.result(system.whenTerminated, 10 seconds)
     }
+
+    "await multiple results" in {
+
+      val timeout = 1 second
+      val p1 = Promise[Boolean]
+      val p2 = Promise[Boolean]
+
+      val system = ActorSystem()
+
+      import system.dispatcher
+      system.scheduler.scheduleOnce(timeout){
+        p1.success(true)
+        system.scheduler.scheduleOnce(timeout){
+          p2.success(true)
+        }
+      }
+
+      Await.result(p1.future, timeout * 2) should be(true)
+      Await.result(p2.future, timeout * 4) should be(true)
+
+      system.terminate
+      Await.result(system.whenTerminated, 10 seconds)
+    }
+
+    "await multiple results in different order" in {
+
+      val timeout = 1 second
+      val p1 = Promise[Boolean]
+      val p2 = Promise[Boolean]
+
+      val system = ActorSystem()
+
+      import system.dispatcher
+      system.scheduler.scheduleOnce(timeout){
+        p2.success(true)
+        system.scheduler.scheduleOnce(timeout){
+          p1.success(true)
+        }
+      }
+
+      Await.result(p1.future, timeout * 4) should be(true)
+      Await.result(p2.future, timeout * 4) should be(true)
+
+      system.terminate
+      Await.result(system.whenTerminated, 10 seconds)
+    }
+
   }
 }

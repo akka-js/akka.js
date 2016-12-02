@@ -90,9 +90,11 @@ object TestActor {
   }
 
   // make creator serializable, for VerifySerializabilitySpec
-  def props(queue: /*Blocking*/Deque[Message]): Props = Props(classOf[TestActor], queue)
+  //def props(queue: /*Blocking*/Deque[Message]): Props = Props(classOf[TestActor], queue)
+  def props(queue: /*Blocking*/Deque[Message]): Props = Props(new TestActor(queue))
 }
 
+@js.annotation.JSExport
 class TestActor(queue: /*Blocking*/Deque[TestActor.Message]) extends Actor {
   import TestActor._
 
@@ -146,6 +148,21 @@ trait TestKitBase {
   import TestActor.{ Message, RealMessage, NullMessage, Spawn }
 
   implicit val system: ActorSystem
+
+  //here be dragons!!!
+  TestKit.initialization(() => system)
+
+  def await() = {
+    //Scala.JS tweak let see if we can fix it in a more structured way...
+    import system.dispatcher
+    val p = scala.concurrent.Promise[Unit]
+    system.scheduler.scheduleOnce(10 millis){
+      p.success(())
+    }
+    Await.result(p.future, 30 millis)
+    //go on normally now...
+  }
+
   val testKitSettings = TestKitExtension(system)
 
   private val queue = new ArrayDeque[Message]()
@@ -167,7 +184,8 @@ trait TestKitBase {
     val impl = system.asInstanceOf[ExtendedActorSystem]
     val ref = impl.systemActorOf(
       TestActor.props(queue)
-        .withDispatcher(CallingThreadDispatcher.Id),
+        //.withDispatcher(CallingThreadDispatcher.Id),
+        .withDispatcher("akka.actor.default-dispatcher"),
       "%s-%d".format(testActorName, TestKit.testActorId.incrementAndGet))
     awaitCond(ref match {
       case r: RepointableRef ⇒ r.isStarted
@@ -272,6 +290,7 @@ trait TestKitBase {
    * which uses the configuration entry "akka.test.timefactor".
    */
   def awaitCond(p: ⇒ Boolean, max: Duration = Duration.Undefined, interval: Duration = 100.millis, message: String = "") {
+    println("awaitCond1")
     val _max = remainingOrDilated(max)
     val stop = now + _max
 
@@ -314,6 +333,7 @@ trait TestKitBase {
    * which uses the configuration entry "akka.test.timefactor".
    */
   def awaitAssert(a: ⇒ Any, max: Duration = Duration.Undefined, interval: Duration = 100.millis) {
+    println("awaitAssert")
     val _max = remainingOrDilated(max)
     val stop = now + _max
 
@@ -722,6 +742,7 @@ trait TestKitBase {
 
   /* --- */
   private def pollFirst(max: Duration): Message = {
+    println("pollFirst")
     val stop = System.nanoTime().nanos + max
 
     val f = Promise[Message]
@@ -731,14 +752,16 @@ trait TestKitBase {
     def fn(): Unit =
       try {
         val res = queue.pollFirst()
+        assert(res != null)
         f.success(res)
       } catch {
         case e: Throwable =>
           val toSleep = stop - now
-          if (toSleep <= Duration.Zero)
+          if (toSleep <= Duration.Zero) {
             f.failure(new AssertionError(s"timeout $max expired"))
-          else
-            system.scheduler.scheduleOnce(0 millis)(fn)
+          } else {
+            system.scheduler.scheduleOnce(1 millis)(fn)
+          }
        }
 
     system.scheduler.scheduleOnce(0 millis)(fn)
@@ -881,18 +904,45 @@ class TestKit(_system: ActorSystem) extends { implicit val system = _system } wi
 object TestKit {
   private[testkit] val testActorId = new AtomicInteger(0)
 
-  //Scala.js???
-  lazy val system = ActorSystem()
+  def initialization(systemCreator: () => ActorSystem): ActorSystem = {
+    akka.actor.JSDynamicAccess.injectClass(
+      "akka.testkit.TestEventListener" -> classOf[akka.testkit.TestEventListener]
+    )
+    akka.actor.JSDynamicAccess.injectClass(
+      "akka.testkit.EchoActor" -> classOf[akka.testkit.EchoActor]
+    )
+    akka.actor.JSDynamicAccess.injectClass(
+      "akka.testkit.BlackholeActor" -> classOf[akka.testkit.BlackholeActor]
+    )
+    akka.actor.JSDynamicAccess.injectClass(
+      "akka.testkit.ForwardActor" -> classOf[akka.testkit.ForwardActor]
+    )
+
+    ManagedEventLoop.manage
+    val sys = systemCreator()
+    val p = scala.concurrent.Promise[Unit]
+    import sys.dispatcher
+    sys.scheduler.scheduleOnce(0 millis){
+      p.success(())
+    }
+    Await.result(p.future, 10 seconds)
+    system = sys
+    sys
+  }
+
+  var system: ActorSystem = _
   /**
    * Await until the given condition evaluates to `true` or the timeout
    * expires, whichever comes first.
    */
   def awaitCond(p: ⇒ Boolean, max: Duration, interval: Duration = 100.millis, noThrow: Boolean = false): Boolean = {
+    println("awaitCond2")
    val stop = now + max
 
    val f = Promise[Boolean]
 
-   import system.dispatcher
+   val inner_system = system
+   import inner_system.dispatcher
 
    def poll(): Unit = {
     if (!p) {
@@ -928,14 +978,8 @@ object TestKit {
     duration:             Duration    = 10.seconds,
     verifySystemShutdown: Boolean     = false): Unit = {
     actorSystem.terminate()
-    try {
-      val result = actorSystem.whenTerminated
-/*
-      result.isReadyWithin(duration)
-      result.value
-*/
-    } catch {
-    //try Await.ready(actorSystem.whenTerminated, duration) catch {
+
+    try Await.ready(actorSystem.whenTerminated, duration) catch {
       case _: TimeoutException ⇒
         val msg = "Failed to stop [%s] within [%s] \n%s".format(actorSystem.name, duration,
           actorSystem.asInstanceOf[ActorSystemImpl].printTree)

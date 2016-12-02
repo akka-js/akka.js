@@ -1,6 +1,7 @@
 /**
  * Copyright (C) 2009-2016 Lightbend Inc. <http://www.lightbend.com>
  */
+/*
 package akka.testkit
 
 import language.postfixOps
@@ -15,7 +16,7 @@ import akka.actor.DeadLetter
 import akka.pattern.ask
 
 class AkkaSpecSpec extends WordSpec with Matchers {
-/*
+
   "An AkkaSpec" must {
 
     "warn about unhandled messages" in {
@@ -95,5 +96,6 @@ class AkkaSpecSpec extends WordSpec with Matchers {
       }
     }
   }
-*/
+
 }
+*/

@@ -23,10 +23,6 @@ import org.scalatest.time.Span
 object AkkaSpec {
   val testConf: Config = ConfigFactory.load()
 
-  akka.actor.JSDynamicAccess.injectClass(
-    "akka.testkit.TestEventListener" -> classOf[akka.testkit.TestEventListener]
-  )
-
   def mapToConfig(map: Map[String, Any]): Config = {
     import scala.collection.JavaConverters._
     ConfigFactory.parseMap(map.asJava)
@@ -54,27 +50,24 @@ abstract class AkkaSpec(_system: ActorSystem)
 
   implicit val patience = PatienceConfig(testKitSettings.DefaultTimeout.duration, Span(100, org.scalatest.time.Millis))
 
-  def this(config: Config) = this(ActorSystem(
-    AkkaSpec.getCallerName(getClass),
-    ConfigFactory.load(config.withFallback(AkkaSpec.testConf))))
+  def this(config: Config) = this(
+    TestKit.initialization(() =>
+      ActorSystem(
+      AkkaSpec.getCallerName(getClass),
+      ConfigFactory.load(config.withFallback(AkkaSpec.testConf))))
+    )
 
   def this(s: String) = this(ConfigFactory.parseString(s))
 
   def this(configMap: Map[String, _]) = this(AkkaSpec.mapToConfig(configMap))
 
+  // here be dragons to initialize everything for Scala.Js
   //def this() = this(ActorSystem(AkkaSpec.getCallerName(getClass), AkkaSpec.testConf))
   def this() = {
-    this({
-      ManagedEventLoop.manage
-      val sys = ActorSystem(AkkaSpec.getCallerName(getClass), AkkaSpec.testConf)
-      val p = scala.concurrent.Promise[Unit]
-      import sys.dispatcher
-      sys.scheduler.scheduleOnce(0 millis){
-        p.success(())
-      }
-      Await.result(p.future, 10 seconds)
-      sys
-    })
+    this(
+      TestKit.initialization(() =>
+        ActorSystem(AkkaSpec.getCallerName(getClass), AkkaSpec.testConf))
+    )
   }
 
   val log: LoggingAdapter = Logging(system, this.getClass)

@@ -149,7 +149,7 @@ lazy val akkaJsActor = crossProject.in(file("akka-js-actor"))
     }
    ).jsSettings(
     libraryDependencies ++= Seq(
-      "eu.unicredit" %%% "shocon" % "0.1.5-SNAPSHOT",
+      "eu.unicredit" %%% "shocon" % "0.1.5",
       "org.scala-js" %%% "scalajs-java-time" % "0.2.0",
       "org.scala-lang.modules" %% "scala-java8-compat" % "0.8.0" % "provided"
     ),
@@ -219,7 +219,9 @@ lazy val akkaTestkit = crossProject.in(file("akka-js-testkit"))
         )
       }
     }
-  ).jsSettings(
+  ).jsSettings(publishSettings : _*)
+  .jsSettings(sonatypeSettings : _*)
+  .jsSettings(
     libraryDependencies ++= Seq(
       "org.scalatest" %%% "scalatest" % "3.0.0" withSources ()
     ),

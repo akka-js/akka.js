@@ -10,17 +10,17 @@ import scala.util.Try
 import java.util.concurrent.atomic.AtomicInteger
 
 class TestProbeSpec extends AkkaSpec with DefaultTimeout {
-/*
+
   "A TestProbe" must {
 
     "reply to futures" in {
       val tk = TestProbe()
       val future = tk.ref ? "hello"
       tk.expectMsg(0 millis, "hello") // TestActor runs on CallingThreadDispatcher
+      System.exit(0)
       tk.lastMessage.sender ! "world"
       future should be('completed)
-      //Await.result(future, timeout.duration) should ===("world")
-      Await.result(future, timeout.duration) should be("world")
+      Await.result(future, timeout.duration) should ===("world")
     }
 
     "reply to messages" in {
@@ -172,5 +172,4 @@ class TestProbeSpec extends AkkaSpec with DefaultTimeout {
       probe.ref.path.name should startWith("testProbe")
     }
   }
-*/
 }

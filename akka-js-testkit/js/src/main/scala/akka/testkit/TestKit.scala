@@ -149,8 +149,7 @@ trait TestKitBase {
 
   implicit val system: ActorSystem
 
-  //here be dragons!!!
-  TestKit.initialization(() => system)
+  TestKit.initialization(system)
 
   def await() = {
     //Scala.JS tweak let see if we can fix it in a more structured way...
@@ -290,7 +289,6 @@ trait TestKitBase {
    * which uses the configuration entry "akka.test.timefactor".
    */
   def awaitCond(p: ⇒ Boolean, max: Duration = Duration.Undefined, interval: Duration = 100.millis, message: String = "") {
-    println("awaitCond1")
     val _max = remainingOrDilated(max)
     val stop = now + _max
 
@@ -307,7 +305,11 @@ trait TestKitBase {
             poll((stop - now) min interval)
           }
         } catch {
-          case NonFatal(e) => f.failure(e)
+          case e: AssertionError =>
+            f.failure(e)
+          case NonFatal(e) =>
+            f.failure(e)
+            throw e
         }
       } else {
         f.success(true)
@@ -333,7 +335,6 @@ trait TestKitBase {
    * which uses the configuration entry "akka.test.timefactor".
    */
   def awaitAssert(a: ⇒ Any, max: Duration = Duration.Undefined, interval: Duration = 100.millis) {
-    println("awaitAssert")
     val _max = remainingOrDilated(max)
     val stop = now + _max
 
@@ -742,7 +743,6 @@ trait TestKitBase {
 
   /* --- */
   private def pollFirst(max: Duration): Message = {
-    println("pollFirst")
     val stop = System.nanoTime().nanos + max
 
     val f = Promise[Message]
@@ -899,12 +899,14 @@ trait TestKitBase {
  *
  * @since 1.1
  */
-class TestKit(_system: ActorSystem) extends { implicit val system = _system } with TestKitBase
+class TestKit(_system: => ActorSystem) extends { implicit val system = TestKit.initialization(_system) } with TestKitBase
 
 object TestKit {
   private[testkit] val testActorId = new AtomicInteger(0)
 
-  def initialization(systemCreator: () => ActorSystem): ActorSystem = {
+  var system: ActorSystem = _
+
+  def initialization(_sys: => ActorSystem): ActorSystem = {
     akka.actor.JSDynamicAccess.injectClass(
       "akka.testkit.TestEventListener" -> classOf[akka.testkit.TestEventListener]
     )
@@ -919,24 +921,24 @@ object TestKit {
     )
 
     ManagedEventLoop.manage
-    val sys = systemCreator()
-    val p = scala.concurrent.Promise[Unit]
+
+    val sys = _sys
+
+    val p = scala.concurrent.Promise[ActorSystem]
+
     import sys.dispatcher
     sys.scheduler.scheduleOnce(0 millis){
-      p.success(())
+      TestKit.system = sys
+      p.success(sys)
     }
     Await.result(p.future, 10 seconds)
-    system = sys
     sys
   }
-
-  var system: ActorSystem = _
   /**
    * Await until the given condition evaluates to `true` or the timeout
    * expires, whichever comes first.
    */
   def awaitCond(p: ⇒ Boolean, max: Duration, interval: Duration = 100.millis, noThrow: Boolean = false): Boolean = {
-    println("awaitCond2")
    val stop = now + max
 
    val f = Promise[Boolean]

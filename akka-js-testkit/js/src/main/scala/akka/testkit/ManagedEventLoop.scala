@@ -3,7 +3,8 @@ package akka.testkit
 import java.util.concurrent.TimeUnit
 
 import scala.util.{Try, Success, Failure }
-import scala.concurrent.Future
+import scala.concurrent.{Future, Promise}
+import scala.concurrent.duration._
 import scala.concurrent.duration.Duration
 
 import scala.scalajs.js
@@ -14,10 +15,10 @@ import scala.collection.mutable.{ Queue, ArrayBuffer }
 
 object ManagedEventLoop {
 
-  /*private */val jsSetTimeout = global.setTimeout
-  /*private */val jsSetInterval = global.setInterval
-  /*private */val jsClearTimeout = global.clearTimeout
-  /*private */val jsClearInterval = global.clearInterval
+  private val jsSetTimeout = global.setTimeout
+  private val jsSetInterval = global.setInterval
+  private val jsClearTimeout = global.clearTimeout
+  private val jsClearInterval = global.clearInterval
 
   def timer() = Duration(System.currentTimeMillis, TimeUnit.MILLISECONDS)
 
@@ -156,10 +157,8 @@ object Await {
   def ready[T](awaitable: Awaitable[T], atMost: Duration): awaitable.type =
     awaitable.ready(atMost)(AwaitPermission)
 
-  def result[T](f: Future[T]): T = {
-    import scala.concurrent.duration._
+  def result[T](f: Future[T]): T =
     result[T](f, Duration.Inf)
- }
 
   def result[T](f: Future[T], atMost: Duration): T = {
     val initTime = ManagedEventLoop.timer()
@@ -195,7 +194,6 @@ object Await {
 }
 
 class CyclicBarrier(val c: Int) {
-  import scala.concurrent.Promise
   private var counter = c
   private var closed = Promise[Int]
 
@@ -218,7 +216,6 @@ class CyclicBarrier(val c: Int) {
 }
 
 class CountDownLatch(val c: Int) {
-  import scala.concurrent.Promise
   private var counter = c
   private var closed = Promise[Int]
 

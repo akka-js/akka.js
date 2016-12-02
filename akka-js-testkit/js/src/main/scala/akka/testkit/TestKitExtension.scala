@@ -15,7 +15,7 @@ akka{
   test {
     # factor by which to scale timeouts during tests, e.g. to account for shared
     # build system load
-    timefactor =  2.0
+    timefactor =  3.0
 
     # duration of EventFilter.intercept waits after the block is finished until
     # all required messages are received

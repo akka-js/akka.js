@@ -176,7 +176,7 @@ lazy val akkaJsActor = crossProject.in(file("akka-js-actor"))
 
 lazy val akkaJsActorJS = akkaJsActor.js.dependsOn(akkaJsActorIrPatches % "provided")
 
-lazy val akkaTestkit = crossProject.in(file("akka-js-testkit"))
+lazy val akkaJsTestkit = crossProject.in(file("akka-js-testkit"))
   .settings(commonSettings: _*)
   .settings(
     version := akkaJsVersion,
@@ -221,6 +221,7 @@ lazy val akkaTestkit = crossProject.in(file("akka-js-testkit"))
     }
   ).jsSettings(publishSettings : _*)
   .jsSettings(sonatypeSettings : _*)
+  .jsSettings(useAnnotationAdderPluginSettings : _*)
   .jsSettings(
     libraryDependencies ++= Seq(
       "org.scalatest" %%% "scalatest" % "3.0.0" withSources ()
@@ -235,7 +236,7 @@ lazy val akkaTestkit = crossProject.in(file("akka-js-testkit"))
     PgpKeys.publishSigned <<= PgpKeys.publishSigned dependsOn (assembleAkkaLibrary, fixResources)
   ).dependsOn(akkaJsActor)
 
-lazy val akkaTestkitJS = akkaTestkit.js.dependsOn(akkaJsActorJS)
+lazy val akkaJsTestkitJS = akkaJsTestkit.js.dependsOn(akkaJsActorJS)
 
 lazy val akkaActorTest = crossProject.in(file("akka-js-actor-tests"))
   .settings(commonSettings: _*)
@@ -267,7 +268,7 @@ lazy val akkaActorTest = crossProject.in(file("akka-js-actor-tests"))
     excludeDependencies += ("eu.unicredit" %% "akkaactorjsirpatches"),
     compile in Compile <<= (compile in Compile) dependsOn assembleAkkaLibrary,
     publishLocal <<= publishLocal dependsOn assembleAkkaLibrary
- ).dependsOn(akkaTestkit % "test->test")
+ ).dependsOn(akkaJsTestkit % "test->test")
 
 lazy val akkaActorTestJS = akkaActorTest.js
 
@@ -357,7 +358,7 @@ lazy val akkaStreamTestkit = crossProject.in(file("akka-js-stream-testkit"))
     excludeDependencies += ("eu.unicredit" %% "akkaactorjsirpatches"),
     compile in Compile <<= (compile in Compile) dependsOn assembleAkkaLibrary,
     publishLocal <<= publishLocal dependsOn assembleAkkaLibrary
- ).dependsOn(akkaJsActorStream, akkaTestkit)
+ ).dependsOn(akkaJsActorStream, akkaJsTestkit)
 
  lazy val akkaStreamTestkitJS = akkaStreamTestkit.js
 
@@ -443,7 +444,7 @@ lazy val root = project.in(file(".")).settings(commonSettings: _*)
   .aggregate(
     akkaJsActorIrPatches,
     akkaJsActorJS,
-    akkaTestkitJS,
+    akkaJsTestkitJS,
     akkaActorTestJS,
     akkaJsActorStreamJS,
     akkaStreamTestkitJS,

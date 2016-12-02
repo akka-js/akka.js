@@ -43,7 +43,7 @@ object AkkaSpec {
 
 }
 
-abstract class AkkaSpec(_system: ActorSystem)
+abstract class AkkaSpec(_system: => ActorSystem)
   extends TestKit(_system) with WordSpecLike with Matchers with BeforeAndAfterAll
   //with WatchedByCoroner
   with ConversionCheckedTripleEquals with ScalaFutures {
@@ -51,24 +51,16 @@ abstract class AkkaSpec(_system: ActorSystem)
   implicit val patience = PatienceConfig(testKitSettings.DefaultTimeout.duration, Span(100, org.scalatest.time.Millis))
 
   def this(config: Config) = this(
-    TestKit.initialization(() =>
-      ActorSystem(
+    ActorSystem(
       AkkaSpec.getCallerName(getClass),
-      ConfigFactory.load(config.withFallback(AkkaSpec.testConf))))
-    )
+      ConfigFactory.load(config.withFallback(AkkaSpec.testConf)))
+  )
 
   def this(s: String) = this(ConfigFactory.parseString(s))
 
   def this(configMap: Map[String, _]) = this(AkkaSpec.mapToConfig(configMap))
 
-  // here be dragons to initialize everything for Scala.Js
-  //def this() = this(ActorSystem(AkkaSpec.getCallerName(getClass), AkkaSpec.testConf))
-  def this() = {
-    this(
-      TestKit.initialization(() =>
-        ActorSystem(AkkaSpec.getCallerName(getClass), AkkaSpec.testConf))
-    )
-  }
+  def this() = this(ActorSystem(AkkaSpec.getCallerName(getClass), AkkaSpec.testConf))
 
   val log: LoggingAdapter = Logging(system, this.getClass)
 

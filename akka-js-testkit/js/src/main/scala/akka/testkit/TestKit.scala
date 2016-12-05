@@ -338,19 +338,18 @@ trait TestKitBase {
     val _max = remainingOrDilated(max)
     val stop = now + _max
 
-    val f = Promise[Boolean]
+    val f = Promise[Unit]
 
     import system.dispatcher
 
     def poll(t: Duration): Unit = {
       val failed =
-        try { a; false } catch {
+        try { a; f.success(()); false } catch {
           case NonFatal(e) ⇒
             if ((now + t) >= stop) {
               f.failure(e)
               throw e
             } else {
-              f.success(true)
               true
             }
         }

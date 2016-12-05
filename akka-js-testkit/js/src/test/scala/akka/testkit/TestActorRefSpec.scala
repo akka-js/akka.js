@@ -294,7 +294,6 @@ class TestActorRefSpec extends AkkaSpec("disp1.type=Dispatcher") with BeforeAndA
       expectMsg("workDone")
     }
 
-/* These doesn't work now...
     "not throw an exception when parent is passed in the apply" in {
       EventFilter[RuntimeException](occurrences = 1, message = "expected") intercept {
         val parent = TestProbe()
@@ -308,6 +307,7 @@ class TestActorRefSpec extends AkkaSpec("disp1.type=Dispatcher") with BeforeAndA
         child ! 1
       }
     }
+
     "not throw an exception when child is created through childActorOf" in {
       EventFilter[RuntimeException](occurrences = 1, message = "expected") intercept {
         val parent = TestProbe()
@@ -321,7 +321,6 @@ class TestActorRefSpec extends AkkaSpec("disp1.type=Dispatcher") with BeforeAndA
         child ! 1
       }
     }
-*/
   }
 
   "A TestActorRef Companion Object" must {

@@ -3,49 +3,23 @@
  */
 package akka.testkit
 
-import com.typesafe.config.{Config, ConfigFactory}
+import com.typesafe.config.Config
 import akka.util.Timeout
 import akka.actor.{ ExtensionId, ActorSystem, Extension, ExtendedActorSystem }
 import scala.concurrent.duration.FiniteDuration
 
 object TestKitExtension extends ExtensionId[TestKitSettings] {
-  //should make it right!
-  val defaultTestConfig = """
-akka{
-  test {
-    # factor by which to scale timeouts during tests, e.g. to account for shared
-    # build system load
-    timefactor =  3.0
-
-    # duration of EventFilter.intercept waits after the block is finished until
-    # all required messages are received
-    filter-leeway = 3s
-
-    # duration to wait in expectMsg and friends outside of within() block
-    # by default
-    single-expect-default = 3s
-
-    # The timeout that is added as an implicit by DefaultTimeout trait
-    default-timeout = 5s
-
-    calling-thread-dispatcher {
-      type = akka.testkit.CallingThreadDispatcherConfigurator
-    }
-  }
-}
-  """
-
   override def get(system: ActorSystem): TestKitSettings = super.get(system)
-  def createExtension(system: ExtendedActorSystem): TestKitSettings = {
-    new TestKitSettings(system.settings.config.withFallback(ConfigFactory.parseString(defaultTestConfig)))
-  }
+  def createExtension(system: ExtendedActorSystem): TestKitSettings = new TestKitSettings(system.settings.config)
 
-  override def apply(system: ActorSystem): TestKitSettings = {
-    createExtension(system.asInstanceOf[ExtendedActorSystem])
-  }
+  //hack to keep things working
+  override def apply(system: ActorSystem) = createExtension(system.asInstanceOf[ExtendedActorSystem])
 }
 
-class TestKitSettings(val config: Config) extends Extension {
+class TestKitSettings(val _config: Config) extends Extension {
+
+  //There is a bug around here :-S
+  val config = com.typesafe.config.ConfigFactory.load()
 
   import akka.util.Helpers._
 

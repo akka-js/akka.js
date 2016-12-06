@@ -8,7 +8,7 @@ import akka.stream._
 import akka.stream.testkit._
 import akka.stream.testkit.scaladsl.TestSink
 import akka.util.ByteString
-import akka.concurrent.Await
+import akka.testkit.Await
 import scala.concurrent.duration._
 import scala.util.Random
 import scala.util.control.NoStackTrace

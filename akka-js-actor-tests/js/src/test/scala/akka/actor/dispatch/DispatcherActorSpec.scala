@@ -3,11 +3,11 @@ package akka.actor.dispatch
 import language.postfixOps
 
 import java.util.concurrent.TimeUnit
-import akka.concurrent.CountDownLatch
+import akka.testkit.CountDownLatch
 import java.util.concurrent.atomic.{ AtomicBoolean }
 import akka.testkit.{ AkkaSpec }
 import akka.actor.{ Props, Actor }
-import akka.concurrent.Await
+import akka.testkit.Await
 import scala.concurrent.duration._
 import akka.testkit.DefaultTimeout
 import akka.pattern.ask

@@ -4,7 +4,7 @@ import akka.testkit._
 import akka.actor._
 import akka.routing._
 import java.util.concurrent.atomic.AtomicInteger
-import akka.concurrent.Await
+import akka.testkit.Await
 
 class ListenerSpec extends AkkaSpec {
 

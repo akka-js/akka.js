@@ -6,7 +6,7 @@ package akka.actor
 
 import language.postfixOps
 import akka.testkit._
-import akka.concurrent.Await
+import akka.testkit.Await
 import scala.concurrent.duration._
 import akka.util.Timeout
 import scala.concurrent.Future

@@ -11,7 +11,7 @@ import akka.{ Die, Ping }
 import akka.testkit.TestEvent._
 import akka.testkit._
 import java.util.concurrent.atomic.AtomicInteger
-import akka.concurrent.Await
+import akka.testkit.Await
 import akka.pattern.ask
 import com.typesafe.config.ConfigFactory
 import akka.dispatch.MailboxType

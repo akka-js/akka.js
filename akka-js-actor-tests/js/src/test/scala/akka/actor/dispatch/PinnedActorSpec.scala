@@ -1,13 +1,13 @@
 package akka.actor.dispatch
 
 import java.util.concurrent.TimeUnit
-import akka.concurrent.CountDownLatch
+import akka.testkit.CountDownLatch
 
 import akka.testkit._
 import akka.actor.{ Props, Actor }
 import akka.testkit.AkkaSpec
 import org.scalatest.BeforeAndAfterEach
-import akka.concurrent.Await
+import akka.testkit.Await
 import akka.pattern.ask
 
 object PinnedActorSpec {

@@ -11,7 +11,7 @@ import akka.stream.testkit.Utils._
 import akka.stream.testkit.{ TestPublisher, TestSubscriber }
 import akka.stream._
 import scala.concurrent.duration._
-import akka.concurrent.Await
+import akka.testkit.Await
 import scala.concurrent.Future
 import akka.testkit.AkkaSpec
 

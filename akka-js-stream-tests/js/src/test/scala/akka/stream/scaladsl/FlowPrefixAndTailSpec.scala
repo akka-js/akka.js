@@ -4,7 +4,7 @@
 package akka.stream.scaladsl
 
 import scala.collection.immutable
-import akka.concurrent.Await
+import akka.testkit.Await
 import scala.concurrent.duration._
 import scala.util.control.NoStackTrace
 import akka.stream._

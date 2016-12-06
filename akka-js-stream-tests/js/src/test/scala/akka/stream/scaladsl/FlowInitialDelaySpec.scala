@@ -3,7 +3,7 @@ package akka.stream.scaladsl
 import java.util.concurrent.TimeoutException
 import akka.stream.{ ActorMaterializer, ActorMaterializerSettings }
 import akka.stream.testkit.{ Utils, TestSubscriber }
-import akka.concurrent.Await
+import akka.testkit.Await
 import scala.concurrent.duration._
 import akka.testkit.AkkaSpec
 

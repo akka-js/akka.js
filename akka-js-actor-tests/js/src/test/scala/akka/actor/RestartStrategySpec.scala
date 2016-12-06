@@ -7,7 +7,7 @@ package akka.actor
 import language.postfixOps
 
 import java.lang.Thread.sleep
-import akka.concurrent.Await
+import akka.testkit.Await
 import akka.testkit.TestEvent._
 import akka.testkit.EventFilter
 import akka.testkit.AkkaSpec

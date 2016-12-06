@@ -8,7 +8,7 @@ import akka.stream.ActorMaterializer
 import akka.testkit.AkkaSpec
 import scala.concurrent.duration._
 
-import akka.concurrent.Await
+import akka.testkit.Await
 
 class SubscriberSourceSpec extends AkkaSpec {
 

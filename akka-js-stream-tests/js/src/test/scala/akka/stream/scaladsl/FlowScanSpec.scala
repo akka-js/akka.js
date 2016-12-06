@@ -10,7 +10,7 @@ import akka.testkit.AkkaSpec
 import akka.stream.testkit.Utils._
 
 import scala.collection.immutable
-import akka.concurrent.Await
+import akka.testkit.Await
 import scala.concurrent.duration._
 import java.util.concurrent.ThreadLocalRandom.{ current ⇒ random }
 

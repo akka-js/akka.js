@@ -7,7 +7,7 @@ import java.util.Comparator
 import org.scalatest.Matchers
 import scala.concurrent.Future
 import akka.testkit.AkkaSpec
-import akka.concurrent.Await
+import akka.testkit.Await
 import scala.util.Random
 import akka.testkit.DefaultTimeout
 

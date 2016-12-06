@@ -6,7 +6,7 @@ package akka.stream.scaladsl
 import akka.stream.testkit.TwoStreamsSetup
 import akka.stream._
 
-import akka.concurrent.Await
+import akka.testkit.Await
 import scala.concurrent.duration._
 
 class GraphMergePreferredSpec extends TwoStreamsSetup {

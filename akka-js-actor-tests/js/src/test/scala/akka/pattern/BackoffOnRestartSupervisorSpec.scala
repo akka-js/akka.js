@@ -5,7 +5,7 @@
 package akka.pattern
 
 import java.util.concurrent.TimeUnit
-import akka.concurrent.CountDownLatch
+import akka.testkit.CountDownLatch
 
 import akka.pattern.TestActor.NormalException
 import akka.testkit.{ ImplicitSender, AkkaSpec, TestProbe, filterException }

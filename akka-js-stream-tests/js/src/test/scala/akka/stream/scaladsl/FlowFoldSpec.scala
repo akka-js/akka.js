@@ -5,7 +5,7 @@ package akka.stream.scaladsl
 
 import akka.NotUsed
 
-import akka.concurrent.Await
+import akka.testkit.Await
 import scala.util.control.NoStackTrace
 
 import akka.stream.ActorMaterializer

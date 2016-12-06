@@ -10,8 +10,8 @@ import akka.testkit._
 import akka.util.Timeout
 import scala.concurrent.duration._
 // @note IMPLEMENT IN SCALA.JS
-import akka.concurrent.Await
-import akka.concurrent.ManagedEventLoop
+import akka.testkit.Await
+import akka.testkit.ManagedEventLoop
 import java.lang.IllegalStateException
 import scala.concurrent.Promise
 import akka.pattern.ask

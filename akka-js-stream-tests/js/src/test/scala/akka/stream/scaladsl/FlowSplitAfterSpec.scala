@@ -11,7 +11,7 @@ import akka.stream.testkit.TestPublisher
 import akka.stream.testkit.TestSubscriber
 import akka.stream.testkit.Utils._
 import org.reactivestreams.Publisher
-import akka.concurrent.Await
+import akka.testkit.Await
 import scala.concurrent.duration._
 import akka.stream.StreamSubscriptionTimeoutSettings
 import akka.stream.StreamSubscriptionTimeoutTerminationMode

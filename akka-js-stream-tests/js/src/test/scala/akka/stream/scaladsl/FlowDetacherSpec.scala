@@ -7,7 +7,7 @@ import org.scalactic.ConversionCheckedTripleEquals
 import org.scalatest.concurrent.ScalaFutures
 import akka.testkit.AkkaSpec
 import akka.stream._
-import akka.concurrent.Await
+import akka.testkit.Await
 import scala.concurrent.duration._
 import akka.stream.testkit.scaladsl.TestSink
 import akka.stream.testkit.Utils

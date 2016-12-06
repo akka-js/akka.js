@@ -9,7 +9,7 @@ import akka.stream.testkit.{ BaseTwoStreamsSetup, TestPublisher, TestSubscriber 
 import org.reactivestreams.Publisher
 
 import scala.concurrent.duration._
-import akka.concurrent.Await
+import akka.testkit.Await
 import scala.concurrent.Promise
 import akka.NotUsed
 

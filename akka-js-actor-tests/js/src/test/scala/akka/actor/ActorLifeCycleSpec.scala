@@ -14,8 +14,8 @@ import akka.testkit._
 import scala.concurrent.duration._
 import java.util.concurrent.atomic._
 // @note IMPLEMENT IN SCALA.JS import scala.concurrent.Await
-import akka.concurrent.Await
-import akka.concurrent.ManagedEventLoop
+import akka.testkit.Await
+import akka.testkit.ManagedEventLoop
 import akka.pattern.ask
 import java.util.UUID.{ randomUUID ⇒ newUuid }
 

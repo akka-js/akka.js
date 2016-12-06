@@ -7,7 +7,7 @@ import language.postfixOps
 
 import akka.testkit._
 import scala.concurrent.duration._
-import akka.concurrent.Await
+import akka.testkit.Await
 import akka.pattern.ask
 
 object ActorLookupSpec {

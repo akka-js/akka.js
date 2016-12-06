@@ -9,7 +9,7 @@ import language.postfixOps
 import akka.actor.{ ActorSystem, Actor, Props, ActorRef }
 import akka.testkit._
 import akka.testkit.TestEvent._
-import akka.concurrent.Await
+import akka.testkit.Await
 import scala.concurrent.duration._
 import akka.pattern.ask
 

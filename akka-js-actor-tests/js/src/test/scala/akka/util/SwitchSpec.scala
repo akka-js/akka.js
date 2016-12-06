@@ -5,7 +5,7 @@ package akka.util
 
 import org.scalatest.WordSpec
 import org.scalatest.Matchers
-import akka.concurrent.CountDownLatch
+import akka.testkit.CountDownLatch
 import java.util.concurrent.TimeUnit
 
 class SwitchSpec extends WordSpec with Matchers {

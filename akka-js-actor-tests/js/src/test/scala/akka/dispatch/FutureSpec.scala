@@ -11,7 +11,7 @@ import org.scalacheck.Arbitrary._
 import org.scalacheck.Prop._
 import akka.actor._
 import akka.testkit.{ EventFilter, filterException, AkkaSpec, DefaultTimeout, TestLatch }
-import akka.concurrent.{Awaitable, Await}
+import akka.testkit.{Awaitable, Await}
 import scala.concurrent.{Future , Promise }
 import scala.util.control.NonFatal
 import scala.concurrent.duration._

@@ -5,7 +5,7 @@ package akka.routing
 
 import java.util.concurrent.atomic.AtomicInteger
 import akka.actor.Status.Failure
-import akka.concurrent.Await
+import akka.testkit.Await
 import scala.concurrent.duration._
 import akka.actor.{ ActorRef, Props, Actor, ActorSystem }
 import akka.pattern.{ AskTimeoutException, ask }

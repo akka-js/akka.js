@@ -13,7 +13,7 @@ import akka.stream.impl.StreamLayout.Module
 import akka.util.ByteString
 
 import scala.annotation.tailrec
-import akka.concurrent.Await
+import akka.testkit.Await
 import scala.concurrent.Promise
 import scala.concurrent.duration._
 import akka.stream._

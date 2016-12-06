@@ -8,7 +8,7 @@ import language.postfixOps
 import akka.testkit._
 import scala.concurrent.duration._
 import java.util.concurrent.atomic.AtomicInteger
-import akka.concurrent.Await
+import akka.testkit.Await
 import java.util.concurrent.TimeoutException
 
 object ReceiveTimeoutSpec {

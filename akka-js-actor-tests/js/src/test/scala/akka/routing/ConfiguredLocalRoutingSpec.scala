@@ -4,7 +4,7 @@
 package akka.routing
 
 import language.postfixOps
-import akka.concurrent.Await
+import akka.testkit.Await
 import scala.concurrent.duration._
 import scala.collection.immutable
 import akka.ConfigurationException

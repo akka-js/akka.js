@@ -5,7 +5,7 @@ package akka.actor
 
 import language.postfixOps
 
-import akka.concurrent.Await
+import akka.testkit.Await
 import scala.concurrent.duration._
 import akka.testkit.{ EventFilter, AkkaSpec, ImplicitSender, DefaultTimeout }
 import akka.pattern.ask

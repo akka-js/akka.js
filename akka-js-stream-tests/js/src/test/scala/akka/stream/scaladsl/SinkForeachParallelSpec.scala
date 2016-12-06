@@ -12,7 +12,7 @@ import akka.stream.testkit.Utils._
 import akka.testkit.AkkaSpec
 import akka.testkit.{ TestLatch, TestProbe }
 
-import akka.concurrent.{Await,CountDownLatch}
+import akka.testkit.{Await,CountDownLatch}
 import scala.concurrent.duration._
 import scala.util.control.NoStackTrace
 

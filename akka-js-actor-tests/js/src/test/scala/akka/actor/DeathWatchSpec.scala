@@ -9,7 +9,7 @@ import akka.dispatch.sysmsg.{ DeathWatchNotification, Failed }
 import akka.pattern.ask
 import akka.testkit._
 import scala.concurrent.duration._
-import akka.concurrent.Await
+import akka.testkit.Await
 
 class LocalDeathWatchSpec extends AkkaSpec with ImplicitSender with DefaultTimeout with DeathWatchSpec
 

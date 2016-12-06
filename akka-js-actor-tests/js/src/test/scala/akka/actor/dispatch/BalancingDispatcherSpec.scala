@@ -1,7 +1,7 @@
 package akka.actor.dispatch
 
 import java.util.concurrent.TimeUnit
-import akka.concurrent.CountDownLatch
+import akka.testkit.CountDownLatch
 import akka.actor.{ Props, ActorRefWithCell, ActorCell, Actor }
 import akka.dispatch.Mailbox
 import akka.testkit.AkkaSpec

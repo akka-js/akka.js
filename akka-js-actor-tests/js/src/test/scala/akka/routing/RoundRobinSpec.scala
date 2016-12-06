@@ -5,7 +5,7 @@ package akka.routing
 
 import language.postfixOps
 import java.util.concurrent.atomic.AtomicInteger
-import akka.concurrent.Await
+import akka.testkit.Await
 import scala.concurrent.duration._
 import akka.actor.Props
 import akka.actor.Actor

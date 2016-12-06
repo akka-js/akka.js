@@ -2,7 +2,7 @@ package akka.stream.scaladsl
 
 import akka.NotUsed
 import scala.collection.immutable
-import akka.concurrent.Await
+import akka.testkit.Await
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import akka.stream._

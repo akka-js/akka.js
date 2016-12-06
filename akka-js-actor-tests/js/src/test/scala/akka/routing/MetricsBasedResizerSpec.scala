@@ -16,7 +16,7 @@ import OptimalSizeExploringResizer._
 import MetricsBasedResizerSpec._
 import akka.util.Timeout
 
-import akka.concurrent.Await
+import akka.testkit.Await
 import scala.concurrent.duration._
 import scala.util.{ Try, Random }
 import akka.pattern.ask

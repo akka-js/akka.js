@@ -10,7 +10,7 @@ import akka.stream.{ ActorMaterializer }
 import akka.stream.testkit.Utils._
 import akka.stream.testkit._
 import org.scalatest.concurrent.ScalaFutures
-import akka.concurrent.Await
+import akka.testkit.Await
 import scala.concurrent.duration._
 import scala.util.control.NoStackTrace
 import akka.testkit.AkkaSpec

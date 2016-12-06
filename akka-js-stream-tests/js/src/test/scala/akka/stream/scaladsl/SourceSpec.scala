@@ -6,7 +6,7 @@ package akka.stream.scaladsl
 import akka.testkit.DefaultTimeout
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{ Span, Millis }
-import akka.concurrent.Await
+import akka.testkit.Await
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.util.Failure

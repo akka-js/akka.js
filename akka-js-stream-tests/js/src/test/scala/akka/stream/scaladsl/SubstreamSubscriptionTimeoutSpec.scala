@@ -9,7 +9,7 @@ import akka.stream.testkit._
 import akka.stream.testkit.Utils._
 import akka.testkit.AkkaSpec
 
-import akka.concurrent.Await
+import akka.testkit.Await
 import scala.concurrent.duration._
 
 class SubstreamSubscriptionTimeoutSpec(conf: String) extends AkkaSpec(conf) {

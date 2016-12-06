@@ -8,7 +8,7 @@ import scala.concurrent.duration._
 import akka.stream.ActorMaterializer
 import akka.stream.testkit._
 import scala.util.control.NoStackTrace
-import akka.concurrent.Await
+import akka.testkit.Await
 import akka.stream.Supervision
 import akka.stream.impl.ReactiveStreamsCompliance
 import akka.stream.ActorAttributes

@@ -7,7 +7,7 @@ import language.postfixOps
 
 import akka.actor.{ Actor, Props }
 import scala.concurrent.Future
-import akka.concurrent.Await
+import akka.testkit.Await
 import scala.concurrent.duration._
 import akka.testkit.{ AkkaSpec, DefaultTimeout }
 import akka.pattern.{ ask, pipe }

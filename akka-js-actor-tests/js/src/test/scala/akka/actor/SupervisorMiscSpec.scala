@@ -6,9 +6,9 @@ package akka.actor
 import language.postfixOps
 
 import akka.testkit.{ filterEvents, EventFilter }
-import akka.concurrent.Await
+import akka.testkit.Await
 import java.util.concurrent.TimeUnit
-import akka.concurrent.CountDownLatch
+import akka.testkit.CountDownLatch
 import akka.testkit.AkkaSpec
 import akka.testkit.DefaultTimeout
 import akka.pattern.ask

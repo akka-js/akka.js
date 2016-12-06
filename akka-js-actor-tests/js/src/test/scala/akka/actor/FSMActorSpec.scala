@@ -7,9 +7,9 @@ package akka.actor
 import language.postfixOps
 import akka.testkit._
 import scala.concurrent.duration._
-import akka.event._
+import akka.event.Logging
 import com.typesafe.config.ConfigFactory
-import akka.concurrent.Await
+import akka.testkit.Await
 import akka.util.Timeout
 
 object FSMActorSpec {
@@ -252,8 +252,8 @@ class FSMActorSpec extends AkkaSpec(Map("akka.actor.debug.fsm" → true)) with I
 
     "log events and transitions if asked to do so" in {
       import scala.collection.JavaConverters._
-      val config = AkkaSpec.testConf(Map("akka.loglevel" → "DEBUG", "akka.actor.serialize-messages" → "off",
-        "akka.actor.debug.fsm" → true)).withFallback(system.settings.config)
+      val config = ConfigFactory.parseMap(Map("akka.loglevel" → "DEBUG", "akka.actor.serialize-messages" → "off",
+        "akka.actor.debug.fsm" → true).asJava).withFallback(system.settings.config)
       val fsmEventSystem = ActorSystem("fsmEvent", config)
       try {
         new TestKit(fsmEventSystem) {

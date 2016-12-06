@@ -9,7 +9,7 @@ import akka.actor._
 import scala.collection.immutable
 import akka.testkit._
 import scala.concurrent.duration._
-import akka.concurrent.Await
+import akka.testkit.Await
 import akka.ConfigurationException
 import com.typesafe.config.ConfigFactory
 import akka.pattern.{ ask, pipe }

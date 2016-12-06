@@ -358,7 +358,7 @@ lazy val akkaStreamTestkit = crossProject.in(file("akka-js-stream-testkit"))
     excludeDependencies += ("eu.unicredit" %% "akkaactorjsirpatches"),
     compile in Compile <<= (compile in Compile) dependsOn assembleAkkaLibrary,
     publishLocal <<= publishLocal dependsOn assembleAkkaLibrary
- ).dependsOn(akkaJsActorStream, akkaJsTestkit)
+ ).dependsOn(akkaJsActorStream, akkaJsTestkit % "*->*")
 
  lazy val akkaStreamTestkitJS = akkaStreamTestkit.js
 

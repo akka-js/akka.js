@@ -9,7 +9,7 @@ import akka.testkit.AkkaSpec
 import akka.stream.testkit.Utils._
 import scala.concurrent.duration._
 
-import akka.concurrent.Await
+import akka.testkit.Await
 
 class PublisherSinkSpec extends AkkaSpec {
 

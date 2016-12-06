@@ -7,8 +7,8 @@ import language.postfixOps
 import akka.testkit._
 import com.typesafe.config.ConfigFactory
 import scala.concurrent.{ ExecutionContext, Future }
-import akka.concurrent.Await
-import akka.concurrent.ManagedEventLoop
+import akka.testkit.Await
+import akka.testkit.ManagedEventLoop
 import scala.concurrent.duration._
 import java.util.concurrent.RejectedExecutionException
 import akka.util.Timeout

@@ -1,6 +1,6 @@
 package akka.stream.scaladsl
 
-import akka.concurrent.Await
+import akka.testkit.Await
 import scala.concurrent.duration._
 import scala.concurrent.Future
 import akka.stream.{ SourceShape, ClosedShape, ActorMaterializer, ActorMaterializerSettings }

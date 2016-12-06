@@ -14,7 +14,7 @@ import akka.stream.testkit.Utils._
 import akka.stream.testkit.scaladsl.TestSink
 import akka.testkit.AkkaSpec
 
-import akka.concurrent.Await
+import akka.testkit.Await
 import scala.concurrent.{ Promise, Future}
 import scala.concurrent.duration._
 

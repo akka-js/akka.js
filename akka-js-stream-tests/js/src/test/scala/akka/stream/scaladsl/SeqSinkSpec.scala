@@ -6,7 +6,7 @@ package akka.stream.scaladsl
 import akka.stream.{ ActorMaterializer, ActorMaterializerSettings }
 import akka.testkit.AkkaSpec
 import scala.collection.immutable
-import akka.concurrent.Await
+import akka.testkit.Await
 import scala.concurrent.Future
 import scala.concurrent.duration._
 

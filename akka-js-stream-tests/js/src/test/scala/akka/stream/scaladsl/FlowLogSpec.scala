@@ -13,7 +13,7 @@ import akka.stream._
 import akka.testkit.TestProbe
 
 import scala.concurrent.duration._
-import akka.concurrent.Await
+import akka.testkit.Await
 import scala.util.control.NoStackTrace
 import akka.testkit.AkkaSpec
 

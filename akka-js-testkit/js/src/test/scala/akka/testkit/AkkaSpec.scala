@@ -21,6 +21,10 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.Span
 
 object AkkaSpec {
+
+  akka.actor.JSDynamicAccess.injectClass(
+    "akka.testkit.TestEventListener" -> classOf[akka.testkit.TestEventListener]
+  )
   val testConf: Config = ConfigFactory.load()
 
   def mapToConfig(map: Map[String, Any]): Config = {

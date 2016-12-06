@@ -8,7 +8,7 @@ import akka.stream.Attributes.inputBuffer
 import akka.stream.Supervision.{ resumingDecider, restartingDecider }
 import akka.stream.testkit.Utils.TE
 import akka.testkit.TestLatch
-import akka.concurrent.Await
+import akka.testkit.Await
 import scala.concurrent.duration._
 import java.util.concurrent.ThreadLocalRandom
 import akka.stream._

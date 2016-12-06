@@ -10,7 +10,7 @@ import akka.stream.stage.{ InHandler, AsyncCallback, GraphStageLogic, GraphStage
 import akka.testkit.AkkaSpec
 import akka.stream.testkit.Utils._
 
-import akka.concurrent.Await
+import akka.testkit.Await
 import scala.concurrent.{Promise, Future }
 import scala.concurrent.duration._
 

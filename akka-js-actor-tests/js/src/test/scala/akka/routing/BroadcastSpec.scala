@@ -4,7 +4,7 @@
 package akka.routing
 
 import java.util.concurrent.atomic.AtomicInteger
-import akka.concurrent.Await
+import akka.testkit.Await
 import akka.actor.{ Props, Actor }
 import akka.testkit.{ TestLatch, ImplicitSender, DefaultTimeout, AkkaSpec }
 import akka.pattern.ask

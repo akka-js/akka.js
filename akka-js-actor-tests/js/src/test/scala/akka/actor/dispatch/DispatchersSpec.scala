@@ -154,8 +154,9 @@ class DispatchersSpec extends AkkaSpec(DispatchersSpec.config) with ImplicitSend
     }
 
     "throw ConfigurationException if type does not exist" in {
+      import scala.collection.JavaConverters._
       intercept[ConfigurationException] {
-        from(AkkaSpec.testConf(Map(tipe → "typedoesntexist", id → "invalid-dispatcher")).
+        from(ConfigFactory.parseMap(Map(tipe → ("typedoesntexist":Any), id → ("invalid-dispatcher":Any)).asJava).
           withFallback(defaultDispatcherConfig))
       }
     }

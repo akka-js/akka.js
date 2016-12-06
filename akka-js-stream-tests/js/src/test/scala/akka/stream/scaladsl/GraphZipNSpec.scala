@@ -7,7 +7,7 @@ import akka.stream.testkit._
 import akka.stream.testkit.Utils._
 import akka.stream._
 
-import akka.concurrent.Await
+import akka.testkit.Await
 import scala.concurrent.duration._
 import scala.collection.immutable
 

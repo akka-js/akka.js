@@ -8,7 +8,7 @@ import akka.stream.testkit.Utils._
 import org.scalactic.ConversionCheckedTripleEquals
 import akka.util.ByteString
 import akka.stream._
-import akka.concurrent.Await
+import akka.testkit.Await
 import scala.concurrent.duration._
 import scala.collection.immutable
 import akka.testkit.AkkaSpec

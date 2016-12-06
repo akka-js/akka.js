@@ -13,7 +13,7 @@ import akka.stream.{ ActorMaterializer, ActorMaterializerSettings }
 import akka.util.{ ByteString, ByteStringBuilder }
 
 import scala.collection.immutable
-import akka.concurrent.Await
+import akka.testkit.Await
 import scala.concurrent.duration._
 import java.util.concurrent.ThreadLocalRandom
 import scala.util.Random

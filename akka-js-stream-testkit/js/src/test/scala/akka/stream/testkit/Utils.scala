@@ -13,7 +13,7 @@ import akka.testkit.AkkaSpec
 object Utils {
 
   /** Sets the default-mailbox to the usual [[akka.dispatch.UnboundedMailbox]] instead of [[StreamTestDefaultMailbox]]. */
-  val UnboundedMailboxConfig = AkkaSpec.testConf("""akka.actor.default-mailbox.mailbox-type = "akka.dispatch.UnboundedMailbox"""")
+  val UnboundedMailboxConfig = ConfigFactory.parseString("""akka.actor.default-mailbox.mailbox-type = "akka.dispatch.UnboundedMailbox"""")
 
   case class TE(message: String) extends RuntimeException(message) with NoStackTrace
 

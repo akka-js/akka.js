@@ -3,7 +3,7 @@
  */
 package akka.routing
 
-import akka.concurrent.Await
+import akka.testkit.Await
 import akka.actor.Actor
 import akka.actor.ActorRef
 import akka.actor.Props

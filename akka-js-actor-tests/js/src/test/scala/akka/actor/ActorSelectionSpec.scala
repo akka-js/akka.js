@@ -10,7 +10,7 @@ import scala.concurrent.duration._
 /** @note IMPLEMENT IN SCALA.JS
 import scala.concurrent.Await
 */
-import akka.concurrent.Await
+import akka.testkit.Await
 import akka.pattern.ask
 
 class Node extends Actor {

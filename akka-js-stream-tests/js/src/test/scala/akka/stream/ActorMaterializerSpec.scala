@@ -5,7 +5,7 @@ import akka.stream.impl.{ StreamSupervisor, ActorMaterializerImpl }
 import akka.stream.scaladsl.{ Sink, Source }
 import akka.testkit.{ AkkaSpec, TestActor, ImplicitSender }
 
-import akka.concurrent.Await
+import akka.testkit.Await
 import scala.concurrent.duration._
 
 class ActorMaterializerSpec extends AkkaSpec with ImplicitSender {

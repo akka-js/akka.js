@@ -11,7 +11,7 @@ import akka.stream.testkit._
 import akka.stream.testkit.Utils._
 import akka.testkit.AkkaSpec
 
-import akka.concurrent.Await
+import akka.testkit.Await
 
 class FlowGroupedWithinSpec extends AkkaSpec with ScriptedTest {
 

@@ -7,7 +7,7 @@ import scala.concurrent.duration._
 import akka.testkit._
 import akka.testkit.TestEvent._
 // @note IMPLEMENT IN SCALA.JS import scala.concurrent.Await
-import akka.concurrent.Await
+import akka.testkit.Await
 import akka.util.Timeout
 import akka.pattern.{ ask, AskTimeoutException }
 

@@ -8,7 +8,7 @@ import akka.testkit.{ TestProbe, AkkaSpec }
 import akka.util.Timeout
 import org.scalatest.concurrent.ScalaFutures
 
-import akka.concurrent.Await
+import akka.testkit.Await
 import scala.concurrent.duration._
 import scala.util.Failure
 

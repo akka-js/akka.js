@@ -238,7 +238,7 @@ lazy val akkaJsTestkit = crossProject.in(file("akka-js-testkit"))
 
 lazy val akkaJsTestkitJS = akkaJsTestkit.js.dependsOn(akkaJsActorJS)
 
-lazy val akkaActorTest = crossProject.in(file("akka-js-actor-tests"))
+lazy val akkaJsActorTest = crossProject.in(file("akka-js-actor-tests"))
   .settings(commonSettings: _*)
   .settings(
     version := akkaJsVersion,
@@ -258,19 +258,11 @@ lazy val akkaActorTest = crossProject.in(file("akka-js-actor-tests"))
     }
   ).jsSettings(
     scalaJSStage in Global := FastOptStage,
-    publishArtifact in (Test, packageBin) := true,
-    //scalaJSOptimizerOptions ~= { _.withDisableOptimizer(true) },
-    //preLinkJSEnv := jsEnv.value,
-    //postLinkJSEnv := jsEnv.value.withSourceMap(true),
-    libraryDependencies ++= Seq(
-      "org.scalacheck" %%% "scalacheck" % "1.13.4" % "test"
-    ),
-    excludeDependencies += ("eu.unicredit" %% "akkaactorjsirpatches"),
-    compile in Compile <<= (compile in Compile) dependsOn assembleAkkaLibrary,
-    publishLocal <<= publishLocal dependsOn assembleAkkaLibrary
+    publish := {},
+    compile in Compile <<= (compile in Compile) dependsOn assembleAkkaLibrary
  ).dependsOn(akkaJsTestkit % "test->test")
 
-lazy val akkaActorTestJS = akkaActorTest.js
+lazy val akkaJsActorTestJS = akkaJsActorTest.js
 
 lazy val akkaJsActorStream = crossProject.in(file("akka-js-actor-stream"))
   .settings(commonSettings : _*)
@@ -445,7 +437,7 @@ lazy val root = project.in(file(".")).settings(commonSettings: _*)
     akkaJsActorIrPatches,
     akkaJsActorJS,
     akkaJsTestkitJS,
-    akkaActorTestJS,
+    akkaJsActorTestJS,
     akkaJsActorStreamJS,
     akkaStreamTestkitJS,
     akkaStreamTestJS

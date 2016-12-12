@@ -1,9 +1,10 @@
-package akka.concurrent
+package akka.testkit
 
 import java.util.concurrent.TimeUnit
 
 import scala.util.{Try, Success, Failure }
-import scala.concurrent.Future
+import scala.concurrent.{Future, Promise}
+import scala.concurrent.duration._
 import scala.concurrent.duration.Duration
 
 import scala.scalajs.js
@@ -133,8 +134,6 @@ object ManagedEventLoop {
       events -= event.asInstanceOf[IntervalEvent]
     }
   }
-
-  manage
 }
 
 sealed trait CanAwait
@@ -158,10 +157,8 @@ object Await {
   def ready[T](awaitable: Awaitable[T], atMost: Duration): awaitable.type =
     awaitable.ready(atMost)(AwaitPermission)
 
-  def result[T](f: Future[T]): T = {
-    import scala.concurrent.duration._
+  def result[T](f: Future[T]): T =
     result[T](f, Duration.Inf)
- }
 
   def result[T](f: Future[T], atMost: Duration): T = {
     val initTime = ManagedEventLoop.timer()
@@ -197,7 +194,6 @@ object Await {
 }
 
 class CyclicBarrier(val c: Int) {
-  import scala.concurrent.Promise
   private var counter = c
   private var closed = Promise[Int]
 
@@ -220,7 +216,6 @@ class CyclicBarrier(val c: Int) {
 }
 
 class CountDownLatch(val c: Int) {
-  import scala.concurrent.Promise
   private var counter = c
   private var closed = Promise[Int]
 

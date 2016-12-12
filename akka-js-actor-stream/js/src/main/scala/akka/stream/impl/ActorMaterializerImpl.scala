@@ -30,6 +30,7 @@ import akka.stream.impl.fusing.GraphInterpreterShell
  * ExtendedActorMaterializer used by subtypes which materializer using GraphInterpreterShell
  */
 abstract class ExtendedActorMaterializer extends ActorMaterializer {
+
   override def withNamePrefix(name: String): ExtendedActorMaterializer
 
   /**
@@ -42,7 +43,45 @@ abstract class ExtendedActorMaterializer extends ActorMaterializer {
   /**
    * INTERNAL API
    */
-  def actorOf(context: MaterializationContext, props: Props): ActorRef
+  def materialize[Mat](
+    _runnableGraph:    Graph[ClosedShape, Mat],
+    subflowFuser:      GraphInterpreterShell ⇒ ActorRef,
+    initialAttributes: Attributes): Mat
+
+  /**
+   * INTERNAL API
+   */
+  override def actorOf(context: MaterializationContext, props: Props): ActorRef = {
+    val dispatcher =
+      if (props.deploy.dispatcher == Deploy.NoDispatcherGiven) effectiveSettings(context.effectiveAttributes).dispatcher
+      else props.dispatcher
+    actorOf(props, context.stageName, dispatcher)
+  }
+
+  /**
+   * INTERNAL API
+   */
+  protected def actorOf(props: Props, name: String, dispatcher: String): ActorRef = {
+    supervisor match {
+      case ref: LocalActorRef ⇒
+        ref.underlying.attachChild(props.withDispatcher(dispatcher), name, systemService = false)
+      case ref: RepointableActorRef ⇒
+        if (!ref.isStarted) {
+          ref.point(true)
+        }
+        ref.underlying.asInstanceOf[ActorCell].attachChild(props.withDispatcher(dispatcher), name, systemService = false)
+        /*
+        if (ref.isStarted)
+          ref.underlying.asInstanceOf[ActorCell].attachChild(props.withDispatcher(dispatcher), name, systemService = false)
+        else {
+          implicit val timeout = ref.system.settings.CreationTimeout
+          val f = (supervisor ? StreamSupervisor.Materialize(props.withDispatcher(dispatcher), name)).mapTo[ActorRef]
+          Await.result(f, timeout.duration)
+        }*/
+      case unknown ⇒
+        throw new IllegalStateException(s"Stream supervisor must be a local actor, was [${unknown.getClass.getName}]")
+    }
+  }
 
   /**
    * INTERNAL API
@@ -84,7 +123,7 @@ private[akka] case class ActorMaterializerImpl(
 
   private[this] def createFlowName(): String = flowNames.next()
 
-  private val initialAttributes = Attributes(
+  private val defaultInitialAttributes = Attributes(
     Attributes.InputBuffer(settings.initialInputBufferSize, settings.maxInputBufferSize) ::
       ActorAttributes.Dispatcher(settings.dispatcher) ::
       ActorAttributes.SupervisionStrategy(settings.supervisionDecider) ::
@@ -110,11 +149,19 @@ private[akka] case class ActorMaterializerImpl(
     system.scheduler.scheduleOnce(delay, task)(executionContext)
 
   override def materialize[Mat](_runnableGraph: Graph[ClosedShape, Mat]): Mat =
-    materialize(_runnableGraph, null)
+    materialize(_runnableGraph, null, defaultInitialAttributes)
+
+  override def materialize[Mat](_runnableGraph: Graph[ClosedShape, Mat], initialAttributes: Attributes): Mat =
+    materialize(_runnableGraph, null, initialAttributes)
+
+  override def materialize[Mat](_runnableGraph: Graph[ClosedShape, Mat], subflowFuser: (GraphInterpreterShell) ⇒ ActorRef): Mat =
+    materialize(_runnableGraph, subflowFuser, defaultInitialAttributes)
 
   override def materialize[Mat](
-    _runnableGraph: Graph[ClosedShape, Mat],
-    subflowFuser:   GraphInterpreterShell ⇒ ActorRef): Mat = {
+    _runnableGraph:    Graph[ClosedShape, Mat],
+    subflowFuser:      GraphInterpreterShell ⇒ ActorRef,
+    initialAttributes: Attributes
+  ): Mat = {
     val runnableGraph =
       if (settings.autoFusing) Fusing.aggressive(_runnableGraph)
       else _runnableGraph
@@ -152,26 +199,26 @@ private[akka] case class ActorMaterializerImpl(
             assignPort(stage.inPort, processor)
             assignPort(stage.outPort, processor.asInstanceOf[Publisher[Any]])
             matVal.put(atomic, mat)
+          /*
+          case tls: TlsModule ⇒ // TODO solve this so TlsModule doesn't need special treatment here
+            val es = effectiveSettings(effectiveAttributes)
+            val props =
+              TLSActor.props(es, tls.createSSLEngine, tls.verifySession, tls.closing)
+            val impl = actorOf(props, stageName(effectiveAttributes), es.dispatcher)
+            def factory(id: Int) = new ActorPublisher[Any](impl) {
+              override val wakeUpMsg = FanOut.SubstreamSubscribePending(id)
+            }
+            val publishers = Vector.tabulate(2)(factory)
+            impl ! FanOut.ExposedPublishers(publishers)
 
-          /**case tls: TlsModule ⇒ // TODO solve this so TlsModule doesn't need special treatment here
-            * val es = effectiveSettings(effectiveAttributes)
-            * val props =
-            * TLSActor.props(es, tls.sslContext, tls.sslConfig, tls.firstSession, tls.role, tls.closing, tls.hostInfo)
-            * val impl = actorOf(props, stageName(effectiveAttributes), es.dispatcher)
-            * def factory(id: Int) = new ActorPublisher[Any](impl) {
-            * override val wakeUpMsg = FanOut.SubstreamSubscribePending(id)
-            * }
-            * val publishers = Vector.tabulate(2)(factory)
-            * impl ! FanOut.ExposedPublishers(publishers)
+            assignPort(tls.plainOut, publishers(TLSActor.UserOut))
+            assignPort(tls.cipherOut, publishers(TLSActor.TransportOut))
 
-            * assignPort(tls.plainOut, publishers(TLSActor.UserOut))
-            * assignPort(tls.cipherOut, publishers(TLSActor.TransportOut))
+            assignPort(tls.plainIn, FanIn.SubInput[Any](impl, TLSActor.UserIn))
+            assignPort(tls.cipherIn, FanIn.SubInput[Any](impl, TLSActor.TransportIn))
 
-            * assignPort(tls.plainIn, FanIn.SubInput[Any](impl, TLSActor.UserIn))
-            * assignPort(tls.cipherIn, FanIn.SubInput[Any](impl, TLSActor.TransportIn))
-
-            * matVal.put(atomic, NotUsed) **/
-
+            matVal.put(atomic, NotUsed)
+          */
           case graph: GraphModule ⇒
             matGraph(graph, effectiveAttributes, matVal)
 
@@ -215,39 +262,13 @@ private[akka] case class ActorMaterializerImpl(
     session.materialize().asInstanceOf[Mat]
   }
 
+  override def makeLogger(logSource: Class[_]): LoggingAdapter =
+    Logging(system, logSource)
+
   override lazy val executionContext: ExecutionContextExecutor = dispatchers.lookup(settings.dispatcher match {
     case Deploy.NoDispatcherGiven ⇒ Dispatchers.DefaultDispatcherId
     case other                    ⇒ other
   })
-
-  override def actorOf(context: MaterializationContext, props: Props): ActorRef = {
-    val dispatcher =
-      if (props.deploy.dispatcher == Deploy.NoDispatcherGiven) effectiveSettings(context.effectiveAttributes).dispatcher
-      else props.dispatcher
-    actorOf(props, context.stageName, dispatcher)
-  }
-
-  private[akka] def actorOf(props: Props, name: String, dispatcher: String): ActorRef = {
-    supervisor match {
-      case ref: LocalActorRef ⇒
-        ref.underlying.attachChild(props.withDispatcher(dispatcher), name, systemService = false)
-      case ref: RepointableActorRef ⇒
-        if (!ref.isStarted) {
-          ref.point(true)
-        }
-        ref.underlying.asInstanceOf[ActorCell].attachChild(props.withDispatcher(dispatcher), name, systemService = false)
-     /* case ref: RepointableActorRef ⇒
-        if (ref.isStarted)
-          ref.underlying.asInstanceOf[ActorCell].attachChild(props.withDispatcher(dispatcher), name, systemService = false)
-        else {
-          implicit val timeout = ref.system.settings.CreationTimeout
-          val f = (supervisor ? StreamSupervisor.Materialize(props.withDispatcher(dispatcher), name)).mapTo[ActorRef]
-          Await.result(f, timeout.duration)
-        } */
-      case unknown ⇒
-        throw new IllegalStateException(s"Stream supervisor must be a local actor, was [${unknown.getClass.getName}]")
-    }
-  }
 
 }
 
@@ -255,6 +276,9 @@ private[akka] class SubFusingActorMaterializerImpl(val delegate: ExtendedActorMa
   override def executionContext: ExecutionContextExecutor = delegate.executionContext
 
   override def materialize[Mat](runnable: Graph[ClosedShape, Mat]): Mat = delegate.materialize(runnable, registerShell)
+
+  override def materialize[Mat](runnable: Graph[ClosedShape, Mat], initialAttributes: Attributes): Mat =
+    delegate.materialize(runnable, registerShell, initialAttributes)
 
   override def scheduleOnce(delay: FiniteDuration, task: Runnable): Cancellable = delegate.scheduleOnce(delay, task)
 

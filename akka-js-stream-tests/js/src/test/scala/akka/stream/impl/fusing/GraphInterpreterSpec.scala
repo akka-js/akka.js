@@ -339,7 +339,7 @@ class GraphInterpreterSpec extends StreamSpec with GraphInterpreterSpecKit{
       // The cycle is now empty
       interpreter.isSuspended should be(false)
     }
-
+/*
     "implement buffer" in new TestSetup {
       val source = new UpstreamProbe[String]("source")
       val sink = new DownstreamProbe[String]("sink")
@@ -376,6 +376,7 @@ class GraphInterpreterSpec extends StreamSpec with GraphInterpreterSpecKit{
       lastEvents() should === (Set(OnComplete(sink)))
 
     }
+*/
   }
 
 }

@@ -172,7 +172,8 @@ lazy val akkaJsActor = crossProject.in(file("akka-js-actor"))
     compile in Compile <<= (compile in Compile) dependsOn (assembleAkkaLibrary, fixResources),
     publishLocal <<= publishLocal dependsOn (assembleAkkaLibrary, fixResources),
     PgpKeys.publishSigned <<= PgpKeys.publishSigned dependsOn (assembleAkkaLibrary, fixResources)
-  ).enablePlugins(spray.boilerplate.BoilerplatePlugin)
+  ).enablePlugins(spray.boilerplate.BoilerplatePlugin
+  ).disablePlugins(sbtprotoc.ProtocPlugin)
 
 lazy val akkaJsActorJS = akkaJsActor.js.dependsOn(akkaJsActorIrPatches % "provided")
 
@@ -234,7 +235,8 @@ lazy val akkaJsTestkit = crossProject.in(file("akka-js-testkit"))
     compile in Compile <<= (compile in Compile) dependsOn (assembleAkkaLibrary, fixResources),
     publishLocal <<= publishLocal dependsOn (assembleAkkaLibrary, fixResources),
     PgpKeys.publishSigned <<= PgpKeys.publishSigned dependsOn (assembleAkkaLibrary, fixResources)
-  ).dependsOn(akkaJsActor)
+  ).dependsOn(akkaJsActor
+  ).disablePlugins(sbtprotoc.ProtocPlugin)
 
 lazy val akkaJsTestkitJS = akkaJsTestkit.js.dependsOn(akkaJsActorJS)
 
@@ -268,7 +270,8 @@ lazy val akkaActorTest = crossProject.in(file("akka-js-actor-tests"))
     excludeDependencies += ("eu.unicredit" %% "akkaactorjsirpatches"),
     compile in Compile <<= (compile in Compile) dependsOn assembleAkkaLibrary,
     publishLocal <<= publishLocal dependsOn assembleAkkaLibrary
- ).dependsOn(akkaJsTestkit % "test->test")
+ ).dependsOn(akkaJsTestkit % "test->test"
+ ).disablePlugins(sbtprotoc.ProtocPlugin)
 
 lazy val akkaActorTestJS = akkaActorTest.js
 
@@ -322,7 +325,9 @@ lazy val akkaJsActorStream = crossProject.in(file("akka-js-actor-stream"))
     compile in Compile <<= (compile in Compile) dependsOn (assembleAkkaLibrary, fixResources),
     publishLocal <<= publishLocal dependsOn (assembleAkkaLibrary, fixResources),
     PgpKeys.publishSigned <<= PgpKeys.publishSigned dependsOn (assembleAkkaLibrary, fixResources, BoilerplatePlugin.autoImport.boilerplateGenerate)
-  ).enablePlugins(spray.boilerplate.BoilerplatePlugin).dependsOn(akkaJsActor)
+  ).enablePlugins(spray.boilerplate.BoilerplatePlugin
+  ).dependsOn(akkaJsActor
+  ).disablePlugins(sbtprotoc.ProtocPlugin)
 
 lazy val akkaJsActorStreamJS = akkaJsActorStream.js
 
@@ -358,7 +363,8 @@ lazy val akkaStreamTestkit = crossProject.in(file("akka-js-stream-testkit"))
     excludeDependencies += ("eu.unicredit" %% "akkaactorjsirpatches"),
     compile in Compile <<= (compile in Compile) dependsOn assembleAkkaLibrary,
     publishLocal <<= publishLocal dependsOn assembleAkkaLibrary
- ).dependsOn(akkaJsActorStream, akkaJsTestkit)
+ ).dependsOn(akkaJsActorStream, akkaJsTestkit
+ ).disablePlugins(sbtprotoc.ProtocPlugin)
 
  lazy val akkaStreamTestkitJS = akkaStreamTestkit.js
 
@@ -394,11 +400,11 @@ lazy val akkaStreamTestkit = crossProject.in(file("akka-js-stream-testkit"))
        compile in Compile <<= (compile in Compile) dependsOn assembleAkkaLibrary,
        publishLocal <<= publishLocal dependsOn assembleAkkaLibrary
 
-  ).dependsOn(akkaStreamTestkit % "test->test", akkaJsActorStream)
+  ).dependsOn(akkaStreamTestkit % "test->test", akkaJsActorStream
+  ).disablePlugins(sbtprotoc.ProtocPlugin)
 
   lazy val akkaStreamTestJS = akkaStreamTest.js
 
-  import com.trueaccord.scalapb.{ScalaPbPlugin => PB}
   lazy val akkaJsActorRemote = crossProject.in(file("akka-js-actor-remote"))
     .settings(commonSettings : _*)
     .settings(
@@ -443,20 +449,19 @@ lazy val akkaStreamTestkit = crossProject.in(file("akka-js-stream-testkit"))
     ).jsSettings(
       publishSettings : _*
     ).jsSettings(sonatypeSettings : _*
-    ).jsSettings(PB.protobufSettings: _*
     ).jsSettings(
       scalacOptions ++= Seq(
         "-feature", "-language:implicitConversions"
       ),
-      PB.runProtoc in PB.protobufConfig := (args =>
-        com.github.os72.protocjar.Protoc.runProtoc("-v300" +: args.toArray)),
-      maxErrors := 1,
+      PB.targets in Compile := Seq(
+        scalapb.gen(javaConversions = false, grpc = false) -> (sourceManaged in Compile).value
+      ),
       //PB.javaConversions in PB.protobufConfig := true,
       //excludeFilter in unmanagedSources := HiddenFileFilter || "*.java",
       //excludeFilter in sourceManaged := HiddenFileFilter || "*.java",
       libraryDependencies ++= Seq(
-        "com.trueaccord.scalapb" %%% "scalapb-runtime" % "0.5.34",
-        "com.trueaccord.scalapb" %%% "scalapb-runtime" % "0.5.34" % PB.protobufConfig
+        "com.trueaccord.scalapb" %%% "scalapb-runtime" % com.trueaccord.scalapb.compiler.Version.scalapbVersion,
+        "com.trueaccord.scalapb" %%% "scalapb-runtime" % com.trueaccord.scalapb.compiler.Version.scalapbVersion % "protobuf"
       //  "org.scala-lang.modules" %% "scala-java8-compat" % "0.7.0" % "provided"
       ),
       excludeDependencies += ("eu.unicredit" %% "akkaactorjsirpatches"),
@@ -473,10 +478,11 @@ lazy val akkaStreamTestkit = crossProject.in(file("akka-js-stream-testkit"))
 lazy val annotationAdderPlugin = Project(
     id   = "annotationAdderPlugin",
     base = file("plugins/annotation-adder-plugin")
-  ) settings (
+  ).settings(
     libraryDependencies <+= (scalaVersion)("org.scala-lang" % "scala-compiler" % _),
     publishArtifact in Compile := false
-  ) settings (commonSettings : _*)
+  ).settings(commonSettings : _*
+  ).disablePlugins(sbtprotoc.ProtocPlugin)
 
 lazy val useAnnotationAdderPluginSettings = Seq(
     scalacOptions in Compile <++= (Keys.`package` in (annotationAdderPlugin, Compile)) map { (jar: File) =>
@@ -505,7 +511,8 @@ lazy val akkaJsActorIrPatches = Project(
     },
     publishArtifact in Compile := true
   ).settings (commonSettings : _*
-  ).enablePlugins (ScalaJSPlugin)
+  ).enablePlugins (ScalaJSPlugin
+  ).disablePlugins(sbtprotoc.ProtocPlugin)
 
 
 

@@ -17,9 +17,6 @@ import java.util.{ Deque, ArrayDeque }
 import scala.util.control.NonFatal
 import scala.Some
 import java.util.concurrent.TimeUnit
-import akka.actor.IllegalActorStateException
-import akka.actor.DeadLetter
-import akka.actor.Terminated
 
 import scala.scalajs.js
 import scala.concurrent.Promise
@@ -143,6 +140,8 @@ class TestActor(queue: /*Blocking*/Deque[TestActor.Message]) extends Actor {
  * }
  * }}}
  */
+
+
 trait TestKitBase {
 
   import TestActor.{ Message, RealMessage, NullMessage, Spawn }
@@ -151,16 +150,7 @@ trait TestKitBase {
 
   TestKit.initialization(system)
 
-  def await() = {
-    //Scala.JS tweak let see if we can fix it in a more structured way...
-    import system.dispatcher
-    val p = scala.concurrent.Promise[Unit]
-    system.scheduler.scheduleOnce(10 millis){
-      p.success(())
-    }
-    Await.result(p.future, 30 millis)
-    //go on normally now...
-  }
+  def await() =  ThreadUtil.sleep(10)
 
   val testKitSettings = TestKitExtension(system)
 
@@ -814,7 +804,8 @@ trait TestKitBase {
 
   /**
    * Spawns an actor as a child of this test actor, and returns the child's ActorRef.
-   * @param props Props to create the child actor
+    *
+    * @param props Props to create the child actor
    * @param name Actor name for the child actor
    * @param supervisorStrategy Strategy should decide what to do with failures in the actor.
    */
@@ -825,7 +816,8 @@ trait TestKitBase {
 
   /**
    * Spawns an actor as a child of this test actor with an auto-generated name, and returns the child's ActorRef.
-   * @param props Props to create the child actor
+    *
+    * @param props Props to create the child actor
    * @param supervisorStrategy Strategy should decide what to do with failures in the actor.
    */
   def childActorOf(props: Props, supervisorStrategy: SupervisorStrategy): ActorRef = {
@@ -835,7 +827,8 @@ trait TestKitBase {
 
   /**
    * Spawns an actor as a child of this test actor with a stopping supervisor strategy, and returns the child's ActorRef.
-   * @param props Props to create the child actor
+    *
+    * @param props Props to create the child actor
    * @param name Actor name for the child actor
    */
   def childActorOf(props: Props, name: String): ActorRef = {
@@ -845,7 +838,8 @@ trait TestKitBase {
 
   /**
    * Spawns an actor as a child of this test actor with an auto-generated name and stopping supervisor strategy, returning the child's ActorRef.
-   * @param props Props to create the child actor
+    *
+    * @param props Props to create the child actor
    */
   def childActorOf(props: Props): ActorRef = {
     testActor ! Spawn(props, None, None)

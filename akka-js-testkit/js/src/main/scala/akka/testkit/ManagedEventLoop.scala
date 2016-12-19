@@ -227,6 +227,15 @@ class CountDownLatch(val c: Int) {
   def reset() = counter = c
 
 
+  def await(): Boolean = {
+    try {
+      Await.result(closed.future, 100 seconds)
+      true
+    } catch {
+      case e: Exception => throw e
+    }
+  }
+
   def await(timeout: Long, unit: TimeUnit): Boolean = {
     try {
       Await.result(closed.future, Duration.fromNanos(TimeUnit.NANOSECONDS.convert(timeout, unit)))

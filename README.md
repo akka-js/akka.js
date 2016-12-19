@@ -101,6 +101,10 @@ sbt akkaJsActorStreamJS/publishLocal
 Akka.Js can now compile against different versions of Akka, we check the codebase against MASTER,
 but for specific needs you can try to compile against a different Akka version by changing the akkaVersion while building.
 
+## Credits
+
+Akka.js wouldn't have been possible without the enormous support of the R&D department of UniCredit lead by Riccardo Prodam. What started as a side-project for a master thesis grew into an important open source milestone.
+
 ## License
 
 Akka.js is distributed under the

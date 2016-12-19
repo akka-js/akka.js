@@ -179,39 +179,44 @@ private[remote] class Remoting(_system: ExtendedActorSystem, _provider: RemoteAc
       case None ⇒
         log.info("Starting remoting")
         val manager: ActorRef = system.systemActorOf(
-          configureDispatcher(Props(classOf[EndpointManager], provider.remoteSettings.config, log)).withDeploy(Deploy.local),
+          configureDispatcher(Props(
+            new EndpointManager(provider.remoteSettings.config, log))
+            /*classOf[EndpointManager], provider.remoteSettings.config, log)*/).withDeploy(Deploy.local),
           Remoting.EndpointManagerName)
         endpointManager = Some(manager)
 
-        try {
-          /* to be done in Scala.JS
-          val addressesPromise: Promise[Seq[(AkkaProtocolTransport, Address)]] = Promise()
-          manager ! Listen(addressesPromise)
+        val addressesPromise: Promise[Seq[(AkkaProtocolTransport, Address)]] = Promise()
+        manager ! Listen(addressesPromise)
 
-          val transports: Seq[(AkkaProtocolTransport, Address)] = Await.result(
-            addressesPromise.future,
-            StartupTimeout.duration)
-          if (transports.isEmpty) throw new RemoteTransportException("No transport drivers were loaded.", null)
+        import _system.dispatcher
+        _system.scheduler.scheduleOnce(StartupTimeout.duration){
+          addressesPromise.tryFailure(new TimeoutException())
+        }
 
-          transportMapping = transports.groupBy {
-            case (transport, _) ⇒ transport.schemeIdentifier
-          } map { case (k, v) ⇒ k → v.toSet }
+        addressesPromise.future.onComplete{
+          case Success(transports) =>
+            if (transports.isEmpty) throw new RemoteTransportException("No transport drivers were loaded.", null)
 
-          defaultAddress = transports.head._2
-          addresses = transports.map { _._2 }.toSet
+            transportMapping = transports.groupBy {
+              case (transport, _) ⇒ transport.schemeIdentifier
+            } map { case (k, v) ⇒ k → v.toSet }
 
-          log.info("Remoting started; listening on addresses :" + addresses.mkString("[", ", ", "]"))
-          */
-          manager ! StartupFinished
-          //eventPublisher.notifyListeners(RemotingListenEvent(addresses))
+            defaultAddress = transports.head._2
+            addresses = transports.map { _._2 }.toSet
 
-        } catch {
-          case e: TimeoutException ⇒
-            notifyError("Startup timed out. This is usually related to actor system host setting or host name resolution misconfiguration.", e)
-            throw e
-          case NonFatal(e) ⇒
-            notifyError("Startup failed", e)
-            throw e
+            log.info("Remoting started; listening on addresses :" + addresses.mkString("[", ", ", "]"))
+
+            manager ! StartupFinished
+            eventPublisher.notifyListeners(RemotingListenEvent(addresses))
+          case Failure(err) =>
+          err match {
+            case e: TimeoutException ⇒
+              notifyError("Startup timed out. This is usually related to actor system host setting or host name resolution misconfiguration.", e)
+              throw e
+            case NonFatal(e) ⇒
+              notifyError("Startup failed", e)
+              throw e
+          }
         }
 
       case Some(_) ⇒
@@ -440,7 +445,7 @@ private[remote] object EndpointManager {
 /**
  * INTERNAL API
  */
-private[remote] class EndpointManager(conf: Config, log: LoggingAdapter) extends Actor
+protected[remote] class EndpointManager(conf: Config, log: LoggingAdapter) extends Actor
   with RequiresMessageQueue[UnboundedMessageQueueSemantics] {
 
   import EndpointManager._

@@ -37,6 +37,7 @@ Check out the @andreaTP session at Scala Days 2016:
 There are small caveats to keep in mind to ensure that your code will run smoothly on both Jvm and Js.
 
 ***Startup Time***
+
 On Js VM we cannot block, so to ensure your code will run AFTER the ```ActorSystem``` scheduler is started you need to run your code within a block like this:
 ```scala
 import system.dispatcher
@@ -47,6 +48,7 @@ system.scheduler.scheduleOnce(0 millis){
 ```
 
 ***Reflective Actor Instatiation***
+
 On JVM you are used instatiating your actors like:
 ```scala
 system.actorOf(Props(classOf[MyActor]))

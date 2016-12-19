@@ -328,6 +328,8 @@ lazy val akkaJsActorStreamJS = akkaJsActorStream.js
 
 lazy val akkaJsStreamTestkit = crossProject.in(file("akka-js-stream-testkit"))
   .settings(commonSettings: _*)
+  .jsSettings(publishSettings : _*)
+  .jsSettings(sonatypeSettings : _*)
   .settings(
     // parallelExecution in Test := false,
     version := akkaJsVersion,
@@ -356,8 +358,10 @@ lazy val akkaJsStreamTestkit = crossProject.in(file("akka-js-stream-testkit"))
     //preLinkJSEnv := jsEnv.value,
     //postLinkJSEnv := jsEnv.value.withSourceMap(true),
     excludeDependencies += ("org.akka-js" %% "akkaactorjsirpatches"),
-    compile in Compile <<= (compile in Compile) dependsOn assembleAkkaLibrary,
-    publishLocal <<= publishLocal dependsOn assembleAkkaLibrary
+    excludeDependencies += ("org.akka-js" %% "akkaactorjsirpatches"),
+    compile in Compile <<= (compile in Compile) dependsOn (assembleAkkaLibrary),
+    publishLocal <<= publishLocal dependsOn (assembleAkkaLibrary),
+    PgpKeys.publishSigned <<= PgpKeys.publishSigned dependsOn (assembleAkkaLibrary)
  ).dependsOn(akkaJsActorStream, akkaJsTestkit % "*->*")
 
  lazy val akkaJsStreamTestkitJS = akkaJsStreamTestkit.js

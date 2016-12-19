@@ -4,9 +4,9 @@
 
 [![Join the chat at https://gitter.im/unicredit/akka.js](https://badges.gitter.im/unicredit/akka.js.svg)](https://gitter.im/unicredit/akka.js?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-This repository is an ongoing effort to port Akka to the JavaScript runtime, thanks to [Scala.js](http://scala-js.org)
+This repository is the port of sources Akka to the JavaScript runtime, thanks to [Scala.js](http://scala-js.org)
 
-[LIVE DEMO](https://unicredit.github.io/akka.js/)
+[LIVE DEMO](http://akka-js.org)
 
 ## Use it
 
@@ -17,20 +17,31 @@ Otherwise, if you want to start from scratch:
 First of all you need to setup a new [Scala.js project](https://www.scala-js.org/doc/project/).
 Then add to your JS project configuration:
 ```scala
-libraryDependencies += "eu.unicredit" %%% "akkajsactor" % "0.2.4.14"
+libraryDependencies += "org.akka-js" %%% "akkajsactor" % "0.2.4.16"
 ```
 
 If you want to use Akka Stream:
 ```scala
-libraryDependencies += "eu.unicredit" %%% "akkajsactorstream" % "0.2.4.14"
+libraryDependencies += "org.akka-js" %%% "akkajsactorstream" % "0.2.4.16"
 ```
 
-Please note that Akka.js 0.2.4.14 is shipped from the stable Akka 2.4.14.
-At this point you can use most of the Akka core Api as described in the official [docs](http://doc.akka.io/docs/akka/2.4.14/scala.html).
+To test your code you can use:
+```scala
+libraryDependencies += "org.akka-js" %%% "akkajstestkit" % "0.2.4.16"
+libraryDependencies += "org.akka-js" %%% "akkajsstreamtestkit" % "0.2.4.16"
+```
+
+
+Please note that Akka.js 0.2.4.16 is shipped from the stable Akka 2.4.16.
+At this point you can use most of the Akka core Api as described in the official [docs](http://doc.akka.io/docs/akka/2.4.16/scala.html).
 
 Check out the @andreaTP session at Scala Days 2016:
 [slides](https://github.com/andreaTP/sd2016.git)
 [video](https://youtu.be/OCbuOc1GRP8)
+
+Or @andreaTP session at BeeScala 2016:
+[slides](https://github.com/andreaTP/beescala.git)
+[video](https://youtu.be/pO1rY5780Mg)
 
 ## Caveats
 

@@ -2,7 +2,7 @@
 
 [![Scala.js](https://www.scala-js.org/assets/badges/scalajs-0.6.8.svg)](https://www.scala-js.org)
 
-[![Join the chat at https://gitter.im/unicredit/akka.js](https://badges.gitter.im/unicredit/akka.js.svg)](https://gitter.im/unicredit/akka.js?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Join the chat at https://gitter.im/akka-js/akka.js](https://badges.gitter.im/akkajs/Lobby.svg)](https://gitter.im/akkajs/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=body_badge)
 
 This repository is the port of sources Akka to the JavaScript runtime, thanks to [Scala.js](http://scala-js.org)
 
@@ -104,6 +104,7 @@ but for specific needs you can try to compile against a different Akka version b
 ## Credits
 
 Akka.js wouldn't have been possible without the enormous support of the R&D department of UniCredit lead by Riccardo Prodam. What started as a side-project for a master thesis grew into an important open source milestone.
+Check out other projects from the unicredit team [here](https://github.com/unicredit)
 
 ## License
 

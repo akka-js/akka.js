@@ -16,6 +16,5 @@ libraryDependencies ++= Seq(
   "org.eclipse.jgit" % "org.eclipse.jgit.pgm" % "3.2.0.201312181205-r",
   "org.scala-js" %% "scalajs-tools" % scalaJsVersion,
   "org.scala-js" %% "scalajs-ir" % scalaJsVersion,
-  //"com.trueaccord.scalapb" %% "compilerplugin-shaded" % "0.5.45-p3"
-  "com.trueaccord.scalapb" %% "compilerplugin-shaded" % "0.5.46-SNAPSHOT"
+  "com.trueaccord.scalapb" %% "compilerplugin-shaded" % "0.5.46"
 )

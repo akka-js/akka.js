@@ -18,7 +18,6 @@ install:
   - npm install
 
 script:
-  - npm test
   - sbt ++$TRAVIS_SCALA_VERSION test
   # Tricks to avoid unnecessary cache updates, from
   # http://www.scala-sbt.org/0.13/docs/Travis-CI-with-sbt.html

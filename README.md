@@ -1,8 +1,8 @@
 ![Akka.Js](https://raw.githubusercontent.com/unicredit/akka.js/merge-js/logo/akkajs.png)
 
 [![Scala.js](https://www.scala-js.org/assets/badges/scalajs-0.6.8.svg)](https://www.scala-js.org)
-
 [![Join the chat at https://gitter.im/akka-js/akka.js](https://badges.gitter.im/akkajs/Lobby.svg)](https://gitter.im/akkajs/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=body_badge)
+[![Build Status](https://travis-ci.org/akka-js/akka.js.svg?branch=master)](https://travis-ci.org/akka-js/akka.js)
 
 This repository is the port of sources Akka to the JavaScript runtime, thanks to [Scala.js](http://scala-js.org)
 

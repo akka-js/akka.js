@@ -1,9 +1,9 @@
-val akkaJsVersion = "0.2.4.16"
-val akkaOriginalVersion = "v2.4.16"
+val akkaJsVersion = "0.2.4.17-SNAPSHOT"
+val akkaOriginalVersion = "v2.4.17"
 
 val commonSettings = Seq(
-    scalaVersion := "2.12.0",
-    crossScalaVersions  := Seq("2.12.0", "2.11.8"),
+    scalaVersion := "2.12.1",
+    crossScalaVersions  := Seq("2.12.1", "2.12.0", "2.11.8"),
     organization := "org.akka-js",
     scalacOptions ++= Seq(
         "-deprecation",
@@ -36,9 +36,9 @@ val publishSettings = Seq(
         </license>
       </licenses>
       <scm>
-        <connection>scm:git:github.com/unicredit/akka.js</connection>
-        <developerConnection>scm:git:git@github.com:unicredit/akka.js</developerConnection>
-        <url>github.com/unicredit/akka.js</url>
+        <connection>scm:git:github.com/akka-js/akka.js</connection>
+        <developerConnection>scm:git:git@github.com:akka-js/akka.js</developerConnection>
+        <url>github.com/akka-js/akka.js</url>
       </scm>
       <developers>
         <developer>
@@ -152,6 +152,10 @@ lazy val akkaJsActor = crossProject.in(file("akka-js-actor"))
       "eu.unicredit" %%% "shocon" % "0.1.6",
       "org.scala-js" %%% "scalajs-java-time" % "0.2.0",
       "org.scala-lang.modules" %% "scala-java8-compat" % "0.8.0" % "provided"
+    ),
+    libraryDependencies ++= Seq(
+      "org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided",
+      "org.scala-lang" % "scala-compiler" % scalaVersion.value % "provided"
     ),
     compile in Compile := {
       val analysis = (compile in Compile).value

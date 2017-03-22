@@ -17,23 +17,23 @@ Otherwise, if you want to start from scratch:
 First of all you need to setup a new [Scala.js project](https://www.scala-js.org/doc/project/).
 Then add to your JS project configuration:
 ```scala
-libraryDependencies += "org.akka-js" %%% "akkajsactor" % "0.2.4.16"
+libraryDependencies += "org.akka-js" %%% "akkajsactor" % "0.2.4.17"
 ```
 
 If you want to use Akka Stream:
 ```scala
-libraryDependencies += "org.akka-js" %%% "akkajsactorstream" % "0.2.4.16"
+libraryDependencies += "org.akka-js" %%% "akkajsactorstream" % "0.2.4.17"
 ```
 
 To test your code you can use:
 ```scala
-libraryDependencies += "org.akka-js" %%% "akkajstestkit" % "0.2.4.16"
-libraryDependencies += "org.akka-js" %%% "akkajsstreamtestkit" % "0.2.4.16"
+libraryDependencies += "org.akka-js" %%% "akkajstestkit" % "0.2.4.17"
+libraryDependencies += "org.akka-js" %%% "akkajsstreamtestkit" % "0.2.4.17"
 ```
 
 
-Please note that Akka.js 0.2.4.16 is shipped from the stable Akka 2.4.16.
-At this point you can use most of the Akka core Api as described in the official [docs](http://doc.akka.io/docs/akka/2.4.16/scala.html).
+Please note that Akka.js 0.2.4.17 is shipped from the stable Akka 2.4.17.
+At this point you can use most of the Akka core Api as described in the official [docs](http://doc.akka.io/docs/akka/2.4.17/scala.html).
 
 Check out the @andreaTP session at Scala Days 2016:
 [slides](https://github.com/andreaTP/sd2016.git)
@@ -76,6 +76,32 @@ If you really want to use the reflective one you need two steps.
   ```scala
   akka.actor.JSDynamicAccess.injectClass("StringClassNameOfT" -> classOf[T])
   ```
+
+## Add-ons
+
+Since semantics difference to Akka on JVM we include a bunch of helpers to make life easier:
+
+```scala
+akkajs.Config.default // default configuration shipped with Akka.JS
+
+akka.testkit.TestKitBase.await() // to help on waiting during tests
+akka.testkit.TestKitBase.await(duration: Long) // with configurable duration
+```
+
+To change default configuration logging level you can simply:
+
+```scala
+lazy val conf =
+  ConfigFactory
+    .parseString("""
+    akka {
+      loglevel = "DEBUG"
+      stdout-loglevel = "DEBUG"
+    }""")
+    .withFallback(akkajs.Config.default)
+
+lazy val system = ActorSystem("yourname", conf)
+```
 
 ## Design documentation
 

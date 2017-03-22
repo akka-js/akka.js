@@ -212,11 +212,11 @@ class TestActorRefSpec extends AkkaSpec("disp1.type=Dispatcher") with BeforeAndA
           def receiveT = { case "sendKill" ⇒ ref ! Kill }
         }))
 
-        await()
+        await(100)
 
         boss ! "sendKill"
 
-        await()
+        await(100)
 
         counter should ===(0)
         assertThread()

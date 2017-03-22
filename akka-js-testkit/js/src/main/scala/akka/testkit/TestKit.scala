@@ -151,6 +151,7 @@ trait TestKitBase {
   TestKit.initialization(system)
 
   def await() =  ThreadUtil.sleep(10)
+  def await(duration: Long) =  ThreadUtil.sleep(duration)
 
   val testKitSettings = TestKitExtension(system)
 

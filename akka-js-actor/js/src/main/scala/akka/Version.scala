@@ -1,5 +1,5 @@
 package akka
 
 object Version {
-  val current: String = "2.4-SNAPSHOT"
+  val current: String = "2.5-SNAPSHOT"
 }

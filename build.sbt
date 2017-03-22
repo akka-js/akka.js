@@ -89,10 +89,20 @@ def getAkkaSources(targetDir: File, version: String) = {
     IO.createDirectory(targetDir)
 
     // Clone akka source code
-    new CloneCommand()
-      .setDirectory(targetDir)
-      .setURI("https://github.com/akka/akka.git")
-      .call()
+    // retries are in place to be more travis friendly
+    var cloneRetries = 5
+    while (!cloneDone && cloneRetries > 0) {
+     try {
+       new CloneCommand()
+         .setDirectory(targetDir)
+         .setURI("https://github.com/akka/akka.git")
+         .call()
+       cloneRetries = -1
+     } catch {
+       case _ : Throwable =>
+         cloneRetries -= 1
+      }
+    }
 
     val git = Git.open(targetDir)
     //s.log.info(s"Checking out Akka source version ${version}")

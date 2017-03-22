@@ -91,7 +91,7 @@ def getAkkaSources(targetDir: File, version: String) = {
     // Clone akka source code
     // retries are in place to be more travis friendly
     var cloneRetries = 5
-    while (!cloneDone && cloneRetries > 0) {
+    while (cloneRetries > 0) {
      try {
        new CloneCommand()
          .setDirectory(targetDir)

@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit.MILLISECONDS
 
 object Patterns {
   import akka.actor.{ ActorRef, ActorSystem }
-  import akka.pattern.{ ask ⇒ scalaAsk, pipe ⇒ scalaPipe/** @note IMPLEMENT WITH SCALA.JS , gracefulStop ⇒ scalaGracefulStop, after ⇒ scalaAfter */ }
+  import akka.pattern.{ ask ⇒ scalaAsk, pipe ⇒ scalaPipe, gracefulStop ⇒ scalaGracefulStop, after ⇒ scalaAfter }
   import akka.util.Timeout
   import scala.concurrent.Future
   import scala.concurrent.duration.Duration
@@ -79,4 +79,17 @@ object Patterns {
   def ask(actor: ActorRef, message: Any, timeoutMillis: Long): Future[AnyRef] =
     scalaAsk(actor, message)(new Timeout(timeoutMillis, MILLISECONDS)).asInstanceOf[Future[AnyRef]]
 
+  /**
+   * Returns a [[scala.concurrent.Future]] that will be completed with the success or failure of the provided Callable
+   * after the specified duration.
+   */
+  def after[T](duration: FiniteDuration, scheduler: Scheduler, context: ExecutionContext, value: Callable[Future[T]]): Future[T] =
+    scalaAfter(duration, scheduler)(value.call())(context)
+
+  /**
+   * Returns a [[scala.concurrent.Future]] that will be completed with the success or failure of the provided Callable
+   * after the specified duration.
+   */
+  def after[T](duration: FiniteDuration, scheduler: Scheduler, context: ExecutionContext, value: Future[T]): Future[T] =
+    scalaAfter(duration, scheduler)(value)(context)
 }

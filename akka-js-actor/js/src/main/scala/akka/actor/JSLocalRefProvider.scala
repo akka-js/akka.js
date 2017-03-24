@@ -5,6 +5,7 @@ import akka.dispatch.{ UnboundedMessageQueueSemantics, RequiresMessageQueue, Mai
 import scala.util.control.NonFatal
 import akka.routing.{ NoRouter, JSRouterActorCreator, RoutedActorRef }
 import akka.ConfigurationException
+import scala.scalajs.reflect.annotation.EnableReflectiveInstantiation
 
 
 private[akka] object JSLocalActorRefProvider {
@@ -73,7 +74,7 @@ private[akka] object JSLocalActorRefProvider {
 
 }
 
-@scala.scalajs.js.annotation.JSExport
+@EnableReflectiveInstantiation
 class JSLocalActorRefProvider (
   _systemName: String,
   override val settings: ActorSystem.Settings,

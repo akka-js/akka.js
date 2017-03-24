@@ -7,9 +7,9 @@ import Logging._
 import akka.actor._
 import akka.dispatch.RequiresMessageQueue
 import akka.actor.ActorSystem.Settings
-import scala.scalajs.js.annotation.JSExport
+import scala.scalajs.reflect.annotation.EnableReflectiveInstantiation
 
-@JSExport
+@EnableReflectiveInstantiation
 class JSDefaultLogger() extends Actor with StdOutLogger with RequiresMessageQueue[LoggerMessageQueueSemantics] {
   override def receive: Receive = {
     case InitializeLogger(_) ⇒ sender() ! LoggerInitialized
@@ -17,7 +17,7 @@ class JSDefaultLogger() extends Actor with StdOutLogger with RequiresMessageQueu
   }
 }
 
-@JSExport
+@EnableReflectiveInstantiation
 class JSDefaultLoggingFilter(settings: Settings, eventStream: EventStream) extends LoggingFilter {
 
   def logLevel(): Logging.LogLevel = eventStream.logLevel

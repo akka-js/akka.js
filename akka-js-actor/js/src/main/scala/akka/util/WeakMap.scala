@@ -1,9 +1,10 @@
 package akka.util
 
 import scala.scalajs.js
+import scala.scalajs.js.annotation.JSGlobal
 
 @js.native
-@js.annotation.JSName("WeakMap")
+@JSGlobal("WeakMap")
 class WeakMap[K <: AnyRef, V] extends js.Object {
 
   def delete(key: K): Unit = js.native

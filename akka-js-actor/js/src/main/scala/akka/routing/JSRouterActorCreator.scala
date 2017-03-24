@@ -3,8 +3,8 @@
  */
 package akka.routing
 
-import scala.scalajs.js.annotation.JSExport
+import scala.scalajs.reflect.annotation.EnableReflectiveInstantiation
 
 //this is needed just to have a class instance public and exportable
-@JSExport
+@EnableReflectiveInstantiation
 class JSRouterActorCreator(routerConfig: RouterConfig) extends RoutedActorCell.RouterActorCreator(routerConfig)

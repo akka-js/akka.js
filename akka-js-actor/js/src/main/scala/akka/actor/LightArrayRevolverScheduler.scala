@@ -6,9 +6,9 @@ import scala.concurrent.duration.FiniteDuration
 import java.util.concurrent.ThreadFactory
 import com.typesafe.config.Config
 import akka.event.LoggingAdapter
-import scala.scalajs.js.annotation
+import scala.scalajs.reflect.annotation.EnableReflectiveInstantiation
 
-@annotation.JSExport
+@EnableReflectiveInstantiation
 class EventLoopScheduler(config: Config,
                          log: LoggingAdapter,
                          threadFactory: ThreadFactory) extends Scheduler {
@@ -76,7 +76,7 @@ class EventLoopScheduler(config: Config,
   }
 }
 
-@annotation.JSExport
+@EnableReflectiveInstantiation
 class LightArrayRevolverScheduler(
     config: Config,
     log: LoggingAdapter,

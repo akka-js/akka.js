@@ -44,8 +44,7 @@ private[akka] object Reflect {
       }
     } catch {
       case err : Throwable =>
-        //this is dirty and should be improved...
-        s"$value".equals("null") || s"$value".endsWith("deadLetters]")
+        false
     }
   }
 
@@ -76,12 +75,14 @@ private[akka] object Reflect {
     instantiate(findConstructor(clazz, args), args)
   }
 
+  import scala.scalajs.reflect._
   /**
    * INTERNAL API
    * Invokes the constructor with the given arguments.
    */
-  private[akka] def instantiate[T](constructor: js.Dynamic, args: immutable.Seq[Any]): T = {
-    try js.Dynamic.newInstance(constructor)(args.map(_.asInstanceOf[js.Any]): _*).asInstanceOf[T]
+  private[akka] def instantiate[T](constructor: InvokableConstructor, args: immutable.Seq[Any]): T = {
+    try
+      constructor.newInstance(args: _*).asInstanceOf[T]
     catch {
       case e: IllegalArgumentException ⇒
         val argString = args mkString ("[", ", ", "]")
@@ -94,11 +95,13 @@ private[akka] object Reflect {
    * Implements a primitive form of overload resolution a.k.a. finding the
    * right constructor.
    */
-  private[akka] def findConstructor[T](clazz: Class[T], args: immutable.Seq[Any]): js.Dynamic = {
-    clazz.getName.split("\\.").foldLeft(scala.scalajs.runtime.environmentInfo.exportsNamespace){
-      (prev, part) =>
-        prev.selectDynamic(part)
-      }
+  private[akka] def findConstructor[T](clazz: Class[T], args: immutable.Seq[Any]): InvokableConstructor = {
+    val ctor = scala.scalajs.reflect.Reflect.lookupInstantiatableClass(clazz.getName).getOrElse {
+      throw new InstantiationError(s"Reflect $clazz is not js instantiable class")
+    }
+    ctor.declaredConstructors.find(_.parameterTypes.size == args.size).getOrElse{
+      throw new InstantiationError(s"Reflect $clazz is not instantiable with provided args")
+    }
   }
 
   val getCallerClass: Option[Int ⇒ Class[_]] = None

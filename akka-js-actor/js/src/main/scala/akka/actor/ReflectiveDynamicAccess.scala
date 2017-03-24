@@ -6,99 +6,59 @@ import scala.util.Try
 import scala.scalajs.js.annotation
 import scala.collection.mutable
 
-object JSDynamicAccess {
-
-  protected[akka] val additional_classes_map: mutable.HashMap[String, Class[_]] = mutable.HashMap()
-
-  def injectClass[T](nc: (String, Class[T])) =
-    additional_classes_map += nc
-
-}
-
-@annotation.JSExportDescendentClasses
 class JSDynamicAccess(val classLoader: ClassLoader) extends DynamicAccess {
 
   def this() = this(null)
 
 	import scala.scalajs.js
+  import scala.scalajs.reflect._
 
-	def getRuntimeClass[A](name: String): js.Dynamic = {
+	def getRuntimeClass[A](name: String): InstantiatableClass = {
+    Reflect.lookupInstantiatableClass(name).getOrElse {
+      throw new InstantiationError(s"JSDynamicAccess $name is not js instantiable class")
+    }
+  }
 
-     val ctor =
-       name.split("\\.").foldLeft(scala.scalajs.runtime.environmentInfo.exportsNamespace){
-         (prev, part) =>
-            prev.selectDynamic(part)
-         }
-
-     ctor// @note IMPLEMENT IN SCALA.JS.asInstanceOf[Class[A]]
-  	}
-
-  	def newRuntimeInstance[A](dyn: js.Dynamic)(args: Any*): A = {
+  def newRuntimeInstance[A: ClassTag](dyn: InstantiatableClass)(args: immutable.Seq[(Class[_], AnyRef)]): A = {
      try {
-       val res = js.Dynamic.newInstance(dyn)(args.map(_.asInstanceOf[js.Any]): _*).asInstanceOf[A]
-       res
+       val constructorClasses = args.map(_._1)
+       dyn.declaredConstructors.find(_.parameterTypes == constructorClasses).map{ ctor =>
+         ctor.newInstance(args.map(_._2): _*).asInstanceOf[A]
+       }.getOrElse{
+         throw new InstantiationError(dyn.toString)
+       }
      } catch {
        case err: Exception => err.printStackTrace()
          throw err
      }
   }
 
-  /*
-  here we are waiting for Scala.js official implementation
-  */
-  private val classes_map: mutable.HashMap[String, Class[_]] = mutable.HashMap(
-    "akka.actor.LocalActorRefProvider" -> classOf[akka.actor.LocalActorRefProvider],
-    "akka.actor.JSLocalActorRefProvider" -> classOf[akka.actor.JSLocalActorRefProvider],
-    "akka.event.Logging$DefaultLogger" -> classOf[akka.event.JSDefaultLogger],
-    "akka.event.JSDefaultLogger" -> classOf[akka.event.JSDefaultLogger],
-    "akka.event.DefaultLoggingFilter" -> classOf[akka.event.JSDefaultLoggingFilter],
-    "akka.event.JSDefaultLoggingFilter" -> classOf[akka.event.JSDefaultLoggingFilter],
-    "akka.actor.EventLoopScheduler" -> classOf[akka.actor.EventLoopScheduler],
-    "akka.actor.LightArrayRevolverScheduler" -> classOf[akka.actor.LightArrayRevolverScheduler],
-    "akka.actor.DefaultSupervisorStrategy" -> classOf[akka.actor.DefaultSupervisorStrategy]
-  ) ++ JSDynamicAccess.additional_classes_map
-
-  def injectClass[T](nc: (String, Class[T])) =
-    classes_map += nc
-
   override def getClassFor[T: ClassTag](fqcn: String): Try[Class[_ <: T]] =
     Try[Class[_ <: T]]({
-      classes_map(fqcn).asInstanceOf[Class[T]]
+      getRuntimeClass(fqcn).runtimeClass.asInstanceOf[Class[_ <: T]]
     })
 
   override def createInstanceFor[T: ClassTag](clazz: Class[_], args: immutable.Seq[(Class[_], AnyRef)]): Try[T] =
     Try {
-      val types = args.map(_._1).toArray
-      val values = args.map(_._2).toArray
       val cls = getRuntimeClass[T](clazz.getName)
-      val obj =
-      	newRuntimeInstance[T](cls.asInstanceOf[js.Dynamic])(values: _ *)
+      val obj = newRuntimeInstance[T](cls)(args)
       val t = implicitly[ClassTag[T]].runtimeClass
       if (t.isInstance(obj)) obj.asInstanceOf[T] else throw new ClassCastException(clazz.getName + " is not a subtype of " + t)
     } recover
-     { case e: Exception ⇒ throw e }
+    { case e: Exception ⇒ throw e }
 
   override def createInstanceFor[T: ClassTag](fqcn: String, args: immutable.Seq[(Class[_], AnyRef)]): Try[T] =
-    getClassFor(fqcn) flatMap { c ⇒ createInstanceFor(c, args) }
+    Try {
+      newRuntimeInstance(getRuntimeClass(fqcn))(args)
+    } recover
+    { case e: Exception ⇒ throw e }
 
   override def getObjectFor[T: ClassTag](fqcn: String): Try[T] = {
-    val splitted = fqcn.split("\\.").reverse
-    val objName = {
-      val name = splitted.head
-      if (name.last == '$') name.dropRight(1)
-      else name
-    }
-    val packageName = splitted.tail.reverse
-
     Try {
-    val obj =
-        (packageName.foldLeft(scala.scalajs.runtime.environmentInfo.exportsNamespace){
-         (prev, part) =>
-            prev.selectDynamic(part)
-         }).applyDynamic(objName)()
+      Reflect.lookupLoadableModuleClass(fqcn).get.loadModule().asInstanceOf[T]
+    } recover
+    { case e: Exception ⇒ throw e }
 
-      obj.asInstanceOf[T]
-    }
   }
 }
 

@@ -55,21 +55,21 @@ object IrPatcherPlugin {
         implicit val pos = memberDef.pos
 
         memberDef match {
-          case FieldDef(ident, tpe, mutable) =>
+          case FieldDef(stat, ident, tpe, mutable) =>
             val fieldH =
               hackClassDef.defs find { md =>
                 md match {
-                  case FieldDef(hackIdent, _, _) =>
+                  case FieldDef(stat, hackIdent, _, _) =>
                     hackIdent equals ident
                   case _ => false
                 }
               }
 
             fieldH match {
-              case Some(field @ FieldDef(_, _, mut)) =>
-                FieldDef(ident, tpe, mut)
+              case Some(field @ FieldDef(stat, _, _, mut)) =>
+                FieldDef(stat, ident, tpe, mut)
               case _ =>
-                FieldDef(ident, tpe, mutable)
+                FieldDef(stat, ident, tpe, mutable)
             }
           case _ =>
             memberDef

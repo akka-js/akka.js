@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2015-2016 Lightbend Inc. <http://www.lightbend.com>
+ * Copyright (C) 2015-2017 Lightbend Inc. <http://www.lightbend.com>
  */
 package akka.stream.testkit
 
@@ -21,7 +21,6 @@ class StreamTestKitSpec extends AkkaSpec {
         .toStrict(300.millis) should ===(List(1, 2, 3, 4))
     }
 
-/*
     "#toStrict with failing source" in {
       val error = intercept[AssertionError] {
         Source.fromIterator(() ⇒ new Iterator[Int] {
@@ -41,7 +40,6 @@ class StreamTestKitSpec extends AkkaSpec {
       error.getCause.getMessage should include("Boom!")
       error.getMessage should include("List(1, 2)")
     }
-*/
 
     "#toStrict when subscription was already obtained" in {
       val p = Source(1 to 4).runWith(TestSink.probe)
@@ -130,7 +128,19 @@ class StreamTestKitSpec extends AkkaSpec {
           }
       }.getMessage should include("message matching partial function")
     }
-
+/*
+    "#expectNextWithTimeoutPF should fail after timeout when element delayed" in {
+      intercept[AssertionError] {
+        val timeout = 100 millis
+        val overTimeout = timeout + (10 millis)
+        Source.tick(overTimeout, 1 millis, 1).runWith(TestSink.probe)
+          .request(1)
+          .expectNextWithTimeoutPF(timeout, {
+            case 1 ⇒
+          })
+      }.getMessage should include("timeout")
+    }
+*/
     "#expectNextChainingPF should pass with right element" in {
       Source.single(1).runWith(TestSink.probe)
         .request(1)
@@ -156,7 +166,19 @@ class StreamTestKitSpec extends AkkaSpec {
           }
       }.getMessage should include("message matching partial function")
     }
-
+/*
+    "#expectNextChainingPF should fail after timeout when element delayed" in {
+      intercept[AssertionError] {
+        val timeout = 100 millis
+        val overTimeout = timeout + (10 millis)
+        Source.tick(overTimeout, 1 millis, 1).runWith(TestSink.probe)
+          .request(1)
+          .expectNextChainingPF(timeout, {
+            case 1 ⇒
+          })
+      }.getMessage should include("timeout")
+    }
+*/
     "#expectNextN given a number of elements" in {
       Source(1 to 4).runWith(TestSink.probe)
         .request(4)

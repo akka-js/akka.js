@@ -91,7 +91,7 @@ object TestActor {
   def props(queue: /*Blocking*/Deque[Message]): Props = Props(new TestActor(queue))
 }
 
-@js.annotation.JSExport
+@scala.scalajs.reflect.annotation.EnableReflectiveInstantiation
 class TestActor(queue: /*Blocking*/Deque[TestActor.Message]) extends Actor {
   import TestActor._
 
@@ -901,19 +901,6 @@ object TestKit {
   var system: ActorSystem = _
 
   def initialization(_sys: => ActorSystem): ActorSystem = {
-    akka.actor.JSDynamicAccess.injectClass(
-      "akka.testkit.TestEventListener" -> classOf[akka.testkit.TestEventListener]
-    )
-    akka.actor.JSDynamicAccess.injectClass(
-      "akka.testkit.EchoActor" -> classOf[akka.testkit.EchoActor]
-    )
-    akka.actor.JSDynamicAccess.injectClass(
-      "akka.testkit.BlackholeActor" -> classOf[akka.testkit.BlackholeActor]
-    )
-    akka.actor.JSDynamicAccess.injectClass(
-      "akka.testkit.ForwardActor" -> classOf[akka.testkit.ForwardActor]
-    )
-
     ManagedEventLoop.manage
 
     val sys = _sys

@@ -147,29 +147,23 @@ class TestActorRefSpec extends AkkaSpec("disp1.type=Dispatcher") with BeforeAndA
 
       counter = 4
 
-      await()
-
       clientRef ! "complex"
       clientRef ! "simple"
       clientRef ! "simple"
       clientRef ! "simple"
 
-      await()
+      await(100)
 
       counter should ===(0)
 
-      await()
-
       counter = 4
-
-      await()
 
       clientRef ! "complex2"
       clientRef ! "simple"
       clientRef ! "simple"
       clientRef ! "simple"
 
-      await()
+      await(100)
 
       counter should ===(0)
 

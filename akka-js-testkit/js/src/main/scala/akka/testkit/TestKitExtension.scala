@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2009-2016 Lightbend Inc. <http://www.lightbend.com>
+ * Copyright (C) 2009-2017 Lightbend Inc. <http://www.lightbend.com>
  */
 package akka.testkit
 
@@ -10,16 +10,12 @@ import scala.concurrent.duration.FiniteDuration
 
 object TestKitExtension extends ExtensionId[TestKitSettings] {
   override def get(system: ActorSystem): TestKitSettings = super.get(system)
-  def createExtension(system: ExtendedActorSystem): TestKitSettings = new TestKitSettings(system.settings.config)
-
-  //hack to keep things working
-  override def apply(system: ActorSystem) = createExtension(system.asInstanceOf[ExtendedActorSystem])
+  def createExtension(system: ExtendedActorSystem): TestKitSettings = //new TestKitSettings(system.settings.config)
+    //Scala.JS due to Shocon
+    new TestKitSettings(com.typesafe.config.ConfigFactory.load())
 }
 
-class TestKitSettings(val _config: Config) extends Extension {
-
-  //There is a bug around here :-S
-  val config = com.typesafe.config.ConfigFactory.load()
+class TestKitSettings(val config: Config) extends Extension {
 
   import akka.util.Helpers._
 

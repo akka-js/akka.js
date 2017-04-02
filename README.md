@@ -60,22 +60,11 @@ system.scheduler.scheduleOnce(0 millis){
 
 ***Reflective Actor Instatiation***
 
-On JVM you are used instatiating your actors like:
-```scala
-system.actorOf(Props(classOf[MyActor]))
-```
-Unfortunately this wont work out of the box on Scala.Js.
-The easiest way to fix it is to use the ```non-reflective``` constructor:
-```scala
-system.actorOf(Props(new MyActor()))
-```
-If you really want to use the reflective one you need two steps.
+Since Scala.Js 0.6.15 reflective class instatiation is perfectly supported.
 
-  - Verify that your class is exported to JavaScript properly marking it with ```JSExport``` and ensuring there are no compile-time errors (you can remove the annotation after the check)
-  - Add it to the list of dynamically loadable actors before starting the ActorSystem:
-  ```scala
-  akka.actor.JSDynamicAccess.injectClass("StringClassNameOfT" -> classOf[T])
-  ```
+***Testing***
+
+To handle *blocking* testing in test suites you cannot use modules that interact with external world.
 
 ## Add-ons
 

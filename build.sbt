@@ -161,6 +161,7 @@ lazy val akkaJsActor = crossProject.in(file("akka-js-actor"))
     libraryDependencies ++= Seq(
       "eu.unicredit" %%% "shocon" % "0.1.6",
       "org.scala-js" %%% "scalajs-java-time" % "0.2.0",
+      "io.github.cquiroz" %%% "scala-java-locales" % "0.3.3-cldr31",
       "org.scala-lang.modules" %% "scala-java8-compat" % "0.8.0" % "provided"
     ),
     libraryDependencies ++= Seq(

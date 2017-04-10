@@ -6,7 +6,7 @@ import akka.actor.dungeon.AbstractActorCell
 import akka.actor.dungeon.ChildrenContainer.EmptyChildrenContainer
 import akka.actor.FunctionRef
 
-object Unsafe {
+object Unsafe_weak_hash {
 
     val unsafeVars: WeakMap[AnyRef, mutable.HashMap[Int, Any]] =
       new WeakMap[AnyRef, mutable.HashMap[Int, Any]]()

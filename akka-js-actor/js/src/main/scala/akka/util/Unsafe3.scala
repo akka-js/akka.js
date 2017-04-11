@@ -46,11 +46,9 @@ object Unsafe /*_weak_map*/ {
 
           if ((res.isEmpty && old == fallback(offset)) ||
               (res.isDefined && res.get == old)) {
-            unsafeVars.set(toAnyRef(o),
-              obj.updated(
-                offset.asInstanceOf[Int],
-                next
-              )
+            obj.update(
+              offset.asInstanceOf[Int],
+              next
             )
             true
           } else false
@@ -70,11 +68,9 @@ object Unsafe /*_weak_map*/ {
 
           val res = obj(offset.asInstanceOf[Int])
 
-          unsafeVars.set(toAnyRef(o),
-            obj.updated(
-              offset.asInstanceOf[Int],
-              next
-            )
+          obj.update(
+            offset.asInstanceOf[Int],
+            next
           )
 
           res
@@ -93,11 +89,9 @@ object Unsafe /*_weak_map*/ {
 
           val res = obj.get(offset.asInstanceOf[Int]).getOrElse(0L)
 
-          unsafeVars.set(toAnyRef(o),
-            obj.updated(
-              offset.asInstanceOf[Int],
-              res.asInstanceOf[Long] + next
-            )
+          obj.update(
+            offset.asInstanceOf[Int],
+            res.asInstanceOf[Long] + next
           )
 
           res.asInstanceOf[Long]
@@ -116,10 +110,9 @@ object Unsafe /*_weak_map*/ {
 
           val res = obj.get(offset.asInstanceOf[Int]).getOrElse(0)
 
-          unsafeVars.set(toAnyRef(o),
-            obj.updated(offset.asInstanceOf[Int],
-              res.asInstanceOf[Int] + next
-            )
+          obj.update(
+            offset.asInstanceOf[Int],
+            res.asInstanceOf[Int] + next
           )
 
           res.asInstanceOf[Int]
@@ -134,12 +127,11 @@ object Unsafe /*_weak_map*/ {
 
       def putObjectVolatile(o: Any, offset: Long, next: Any): Unit = {
         if (unsafeVars.has(toAnyRef(o))) {
-          unsafeVars.set(toAnyRef(o),
-            unsafeVars.get(toAnyRef(o)).updated(
-              offset.asInstanceOf[Int],
-              next
-            )
-          )
+            unsafeVars.get(toAnyRef(o))
+              .update(
+                offset.asInstanceOf[Int],
+                next
+              )
         } else {
           unsafeVars.set(toAnyRef(o),
             mutable.Map[Int, Any](offset.asInstanceOf[Int] -> next)

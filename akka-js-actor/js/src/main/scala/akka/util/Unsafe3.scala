@@ -4,11 +4,12 @@ import akka.actor.dungeon.AbstractActorCell
 import akka.actor.dungeon.ChildrenContainer.EmptyChildrenContainer
 import akka.actor.FunctionRef
 import scalajs.js
+import scala.collection.mutable
 
-object Unsafe /*_weak_dictionary*/ {
+object Unsafe /*_weak_map*/ {
 
-    val unsafeVars: WeakMap[AnyRef, js.Dictionary[Any]] =
-      new WeakMap[AnyRef, js.Dictionary[Any]]()
+    val unsafeVars: WeakMap[AnyRef, mutable.Map[Int, Any]] =
+      new WeakMap[AnyRef, mutable.Map[Int, Any]]()
 
     def fallback(offset: Long) = {
       //Missing initializations...
@@ -27,39 +28,36 @@ object Unsafe /*_weak_dictionary*/ {
     final val instance = new {
 
       def getObjectVolatile(o: Any, offset: Long): AnyRef = {
-        println("6")
         if (unsafeVars.has(toAnyRef(o))) {
           val obj = unsafeVars.get(toAnyRef(o))
 
           obj.getOrElse(
-            offset.toString,
+            offset.asInstanceOf[Int],
             fallback(offset)
           ).asInstanceOf[AnyRef]
         } else fallback(offset).asInstanceOf[AnyRef]
       }
 
       def compareAndSwapObject(o: Any, offset: Long, old: Any, next: Any): Boolean = {
-        println("5")
         if (unsafeVars.has(toAnyRef(o))) {
           val obj = unsafeVars.get(toAnyRef(o))
 
-          val res = obj.get(offset.toString)
+          val res = obj.get(offset.asInstanceOf[Int])
 
           if ((res.isEmpty && old == fallback(offset)) ||
               (res.isDefined && res.get == old)) {
-
             unsafeVars.set(toAnyRef(o),
               obj.updated(
-                offset.toString,
+                offset.asInstanceOf[Int],
                 next
-              ).asInstanceOf[js.Dictionary[Any]]
+              )
             )
             true
           } else false
         } else {
           if (old == fallback(offset)) {
             unsafeVars.set(toAnyRef(o),
-              js.Dictionary(offset.toString -> next)
+              mutable.Map[Int, Any](offset.asInstanceOf[Int] -> next)
             )
             true
           } else false
@@ -67,23 +65,22 @@ object Unsafe /*_weak_dictionary*/ {
       }
 
       def getAndSetObject(o: Any, offset: Long, next: Any): Any = {
-        println("4")
         if (unsafeVars.has(toAnyRef(o))) {
           val obj = unsafeVars.get(toAnyRef(o))
 
-          val res = obj(offset.toString)
+          val res = obj(offset.asInstanceOf[Int])
 
           unsafeVars.set(toAnyRef(o),
             obj.updated(
-              offset.toString,
+              offset.asInstanceOf[Int],
               next
-            ).asInstanceOf[js.Dictionary[Any]]
+            )
           )
 
           res
         } else {
           unsafeVars.set(toAnyRef(o),
-            js.Dictionary(offset.toString -> next)
+            mutable.Map[Int, Any](offset.asInstanceOf[Int] -> next)
           )
 
           fallback(offset)
@@ -91,24 +88,22 @@ object Unsafe /*_weak_dictionary*/ {
       }
 
       def getAndAddLong(o: Any, offset: Long, next: Long): Long = {
-        println("3")
         if (unsafeVars.has(toAnyRef(o))) {
           val obj = unsafeVars.get(toAnyRef(o))
 
-          val res = obj(offset.toString)
+          val res = obj.get(offset.asInstanceOf[Int]).getOrElse(0L)
 
           unsafeVars.set(toAnyRef(o),
-            res.updated(
-              offset.toString,
+            obj.updated(
+              offset.asInstanceOf[Int],
               res.asInstanceOf[Long] + next
-            ).asInstanceOf[js.Dictionary[Any]]
+            )
           )
 
           res.asInstanceOf[Long]
         } else {
-          unsafeVars.set(
-            toAnyRef(o),
-            js.Dictionary[Any](offset.toString -> next)
+          unsafeVars.set(toAnyRef(o),
+            mutable.Map[Int, Any](offset.asInstanceOf[Int] -> next)
           )
 
           0L
@@ -116,22 +111,21 @@ object Unsafe /*_weak_dictionary*/ {
       }
 
       def getAndAddInt(o: Any, offset: Long, next: Int): Int = {
-        println("2")
         if (unsafeVars.has(toAnyRef(o))) {
           val obj = unsafeVars.get(toAnyRef(o))
 
-          val res = obj(offset.toString)
+          val res = obj.get(offset.asInstanceOf[Int]).getOrElse(0)
 
           unsafeVars.set(toAnyRef(o),
-            res.updated(offset.toString,
+            obj.updated(offset.asInstanceOf[Int],
               res.asInstanceOf[Int] + next
-            ).asInstanceOf[js.Dictionary[Any]]
+            )
           )
 
           res.asInstanceOf[Int]
         } else {
           unsafeVars.set(toAnyRef(o),
-            js.Dictionary[Any](offset.toString -> next)
+            mutable.Map[Int, Any](offset.asInstanceOf[Int] -> next)
           )
 
           0
@@ -139,18 +133,16 @@ object Unsafe /*_weak_dictionary*/ {
       }
 
       def putObjectVolatile(o: Any, offset: Long, next: Any): Unit = {
-        println("1")
         if (unsafeVars.has(toAnyRef(o))) {
           unsafeVars.set(toAnyRef(o),
             unsafeVars.get(toAnyRef(o)).updated(
-              offset.toString,
+              offset.asInstanceOf[Int],
               next
-            ).asInstanceOf[js.Dictionary[Any]]
+            )
           )
         } else {
-          unsafeVars.set(
-            toAnyRef(o),
-            js.Dictionary(offset.toString -> next)
+          unsafeVars.set(toAnyRef(o),
+            mutable.Map[Int, Any](offset.asInstanceOf[Int] -> next)
           )
         }
       }

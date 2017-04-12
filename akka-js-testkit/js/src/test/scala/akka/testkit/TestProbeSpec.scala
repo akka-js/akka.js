@@ -28,11 +28,17 @@ class TestProbeSpec extends AkkaSpec with DefaultTimeout {
     "reply to messages" in {
       val tk1 = TestProbe()
       val tk2 = TestProbe()
+
+      await()
+
       tk1.ref.!("hello")(tk2.ref)
 
       await()
 
       tk1.expectMsg(0 millis, "hello")
+
+      await()
+
       tk1.lastMessage.sender ! "world"
 
       await()
@@ -43,11 +49,17 @@ class TestProbeSpec extends AkkaSpec with DefaultTimeout {
     "properly send and reply to messages" in {
       val probe1 = TestProbe()
       val probe2 = TestProbe()
+
+      await()
+
       probe1.send(probe2.ref, "hello")
 
       await()
 
       probe2.expectMsg(0 millis, "hello")
+
+      await()
+
       probe2.lastMessage.sender ! "world"
 
       await()

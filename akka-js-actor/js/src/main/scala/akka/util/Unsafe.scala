@@ -1,15 +1,15 @@
 package akka.util
 
-import scala.collection.mutable
-
 import akka.actor.dungeon.AbstractActorCell
 import akka.actor.dungeon.ChildrenContainer.EmptyChildrenContainer
 import akka.actor.FunctionRef
+import scalajs.js
+import scala.collection.mutable
 
 object Unsafe {
 
-    val unsafeVars: WeakMap[AnyRef, mutable.HashMap[Int, Any]] =
-      new WeakMap[AnyRef, mutable.HashMap[Int, Any]]()
+    val unsafeVars: WeakMap[AnyRef, mutable.Map[Int, Any]] =
+      new WeakMap[AnyRef, mutable.Map[Int, Any]]()
 
     def fallback(offset: Long) = {
       //Missing initializations...
@@ -25,125 +25,123 @@ object Unsafe {
     def toAnyRef(a: Any): AnyRef =
       a.asInstanceOf[AnyRef]
 
-    def safeGet(m: WeakMap[AnyRef, mutable.HashMap[Int, Any]], k: AnyRef):
-      Option[mutable.HashMap[Int, Any]] = {
-      if (m.has(k)) Some(m.get(k))
-      else None
-    }
-
     final val instance = new {
 
+      @inline
       def getObjectVolatile(o: Any, offset: Long): AnyRef = {
-        safeGet(unsafeVars, toAnyRef(o))
-          .map(_.get(offset.asInstanceOf[Int]))
-          .flatten
-          .getOrElse(fallback(offset)).asInstanceOf[AnyRef]
+        if (unsafeVars.has(toAnyRef(o))) {
+          val obj = unsafeVars.get(toAnyRef(o))
+
+          obj.getOrElse(
+            offset.asInstanceOf[Int],
+            fallback(offset)
+          ).asInstanceOf[AnyRef]
+        } else fallback(offset).asInstanceOf[AnyRef]
       }
 
-      def compareAndSwapObject(o: Any, offset: Long, old: Any, next: Any) = {
-        val key = offset.asInstanceOf[Int]
-        if (next == null)
-          safeGet(unsafeVars, toAnyRef(o))
-            .map(_.remove(key))
-        else {
-          val old = safeGet(unsafeVars, toAnyRef(o))
-          if (old.isDefined)
-            old.get.update(key, next)
-          else {
-            val in = new mutable.HashMap[Int, Any]()
-            in.update(key, next)
-            unsafeVars.set(toAnyRef(o), in)
-          }
+      @inline
+      def compareAndSwapObject(o: Any, offset: Long, old: Any, next: Any): Boolean = {
+        if (unsafeVars.has(toAnyRef(o))) {
+          val obj = unsafeVars.get(toAnyRef(o))
+
+          val res = obj.get(offset.asInstanceOf[Int])
+
+          if ((res.isEmpty && old == fallback(offset)) ||
+              (res.isDefined && res.get == old)) {
+            obj.update(
+              offset.asInstanceOf[Int],
+              next
+            )
+            true
+          } else false
+        } else {
+          if (old == fallback(offset)) {
+            unsafeVars.set(toAnyRef(o),
+              mutable.Map[Int, Any](offset.asInstanceOf[Int] -> next)
+            )
+            true
+          } else false
         }
-        true
       }
 
-      def getAndSetObject(o: Any, offset: Long, next: Any) = {
-        val key = offset.asInstanceOf[Int]
-        val ret = safeGet(unsafeVars, toAnyRef(o))
-          .map(_.get(key))
-          .flatten
-          .getOrElse(fallback(offset))
+      @inline
+      def getAndSetObject(o: Any, offset: Long, next: Any): Any = {
+        if (unsafeVars.has(toAnyRef(o))) {
+          val obj = unsafeVars.get(toAnyRef(o))
 
-        if (next == null)
-          safeGet(unsafeVars, toAnyRef(o))
-            .map(_.remove(key))
-        else {
-          val old = safeGet(unsafeVars, toAnyRef(o))
-          if (old.isDefined)
-            old.get.update(key, next)
-          else {
-            val in = new mutable.HashMap[Int, Any]()
-            in.update(key, next)
-            unsafeVars.set(toAnyRef(o), in)
-          }
+          val res = obj(offset.asInstanceOf[Int])
+
+          obj.update(
+            offset.asInstanceOf[Int],
+            next
+          )
+
+          res
+        } else {
+          unsafeVars.set(toAnyRef(o),
+            mutable.Map[Int, Any](offset.asInstanceOf[Int] -> next)
+          )
+
+          fallback(offset)
         }
-        ret
       }
 
-      def getAndAddLong(o: Any, offset: Long, next: Long) = {
-        val key = offset.asInstanceOf[Int]
-        val ret = safeGet(unsafeVars, toAnyRef(o))
-          .map(_.get(key))
-          .flatten
-          .map(_.asInstanceOf[Long])
-          .getOrElse(0L)
+      @inline
+      def getAndAddLong(o: Any, offset: Long, next: Long): Long = {
+        if (unsafeVars.has(toAnyRef(o))) {
+          val obj = unsafeVars.get(toAnyRef(o))
 
-        if (next == 0L)
-          safeGet(unsafeVars, toAnyRef(o))
-            .map(_.remove(key))
-        else {
-          val old = safeGet(unsafeVars, toAnyRef(o))
-          if (old.isDefined)
-            old.get.update(key, ret + next)
-          else {
-            val in = new mutable.HashMap[Int, Any]()
-            in.update(key, next)
-            unsafeVars.set(toAnyRef(o), in)
-          }
+          val res = obj.get(offset.asInstanceOf[Int]).getOrElse(0L)
+
+          obj.update(
+            offset.asInstanceOf[Int],
+            res.asInstanceOf[Long] + next
+          )
+
+          res.asInstanceOf[Long]
+        } else {
+          unsafeVars.set(toAnyRef(o),
+            mutable.Map[Int, Any](offset.asInstanceOf[Int] -> next)
+          )
+
+          0L
         }
-        ret
       }
 
-      def getAndAddInt(o: Any, offset: Long, next: Int) = {
-        val key = offset.asInstanceOf[Int]
-        val ret = safeGet(unsafeVars, toAnyRef(o))
-          .map(_.get(key))
-          .flatten
-          .map(_.asInstanceOf[Int])
-          .getOrElse(0)
+      @inline
+      def getAndAddInt(o: Any, offset: Long, next: Int): Int = {
+        if (unsafeVars.has(toAnyRef(o))) {
+          val obj = unsafeVars.get(toAnyRef(o))
 
-        if (next == 0)
-          safeGet(unsafeVars, toAnyRef(o))
-            .map(_.remove(key))
-        else {
-          val old = safeGet(unsafeVars, toAnyRef(o))
-          if (old.isDefined)
-            old.get.update(key, ret + next)
-          else {
-            val in = new mutable.HashMap[Int, Any]()
-            in.update(key, next)
-            unsafeVars.set(toAnyRef(o), in)
-          }
+          val res = obj.get(offset.asInstanceOf[Int]).getOrElse(0)
+
+          obj.update(
+            offset.asInstanceOf[Int],
+            res.asInstanceOf[Int] + next
+          )
+
+          res.asInstanceOf[Int]
+        } else {
+          unsafeVars.set(toAnyRef(o),
+            mutable.Map[Int, Any](offset.asInstanceOf[Int] -> next)
+          )
+
+          0
         }
-        ret
       }
 
-      def putObjectVolatile(o: Any, offset: Long, next: Any) = {
-        val key = offset.asInstanceOf[Int]
-
-        if (next == null)
-          safeGet(unsafeVars, toAnyRef(o))
-            .map(_.remove(key))
-        else {
-          val old = safeGet(unsafeVars, toAnyRef(o))
-          if (old.isDefined)
-            old.get.update(key, next)
-          else {
-            val in = new mutable.HashMap[Int, Any]()
-            in.update(key, next)
-            unsafeVars.set(toAnyRef(o), in)
-          }
+      @inline
+      def putObjectVolatile(o: Any, offset: Long, next: Any): Unit = {
+        if (unsafeVars.has(toAnyRef(o))) {
+            unsafeVars.get(toAnyRef(o))
+              .update(
+                offset.asInstanceOf[Int],
+                next
+              )
+        } else {
+          unsafeVars.set(toAnyRef(o),
+            mutable.Map[Int, Any](offset.asInstanceOf[Int] -> next)
+          )
         }
       }
     }

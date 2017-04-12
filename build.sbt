@@ -183,9 +183,9 @@ lazy val akkaJsActor = crossProject.in(file("akka-js-actor"))
   ).jsSettings(sonatypeSettings : _*
   ).jsSettings(
     excludeDependencies += ("org.akka-js" %% "akkaactorjsirpatches"),
-    compile in Compile <<= (compile in Compile) dependsOn (assembleAkkaLibrary, fixResources),
-    publishLocal <<= publishLocal dependsOn (assembleAkkaLibrary, fixResources),
-    PgpKeys.publishSigned <<= PgpKeys.publishSigned dependsOn (assembleAkkaLibrary, fixResources)
+    compile in Compile ~= {t => fixResources; assembleAkkaLibrary; t},
+    publishLocal ~= {t => fixResources; assembleAkkaLibrary; t},
+    PgpKeys.publishSigned ~= {t => fixResources; assembleAkkaLibrary; t}
   ).enablePlugins(spray.boilerplate.BoilerplatePlugin)
 
 lazy val akkaJsActorJS = akkaJsActor.js.dependsOn(akkaJsActorIrPatches % "provided")
@@ -245,9 +245,9 @@ lazy val akkaJsTestkit = crossProject.in(file("akka-js-testkit"))
     //preLinkJSEnv := jsEnv.value,
     //postLinkJSEnv := jsEnv.value.withSourceMap(true)
     excludeDependencies += ("org.akka-js" %% "akkaactorjsirpatches"),
-    compile in Compile <<= (compile in Compile) dependsOn (assembleAkkaLibrary, fixResources),
-    publishLocal <<= publishLocal dependsOn (assembleAkkaLibrary, fixResources),
-    PgpKeys.publishSigned <<= PgpKeys.publishSigned dependsOn (assembleAkkaLibrary, fixResources)
+    compile in Compile ~= {t => fixResources; assembleAkkaLibrary; t},
+    publishLocal ~= {t => fixResources; assembleAkkaLibrary; t},
+    PgpKeys.publishSigned ~= {t => fixResources; assembleAkkaLibrary; t}
   ).dependsOn(akkaJsActor)
 
 lazy val akkaJsTestkitJS = akkaJsTestkit.js.dependsOn(akkaJsActorJS)
@@ -280,8 +280,8 @@ lazy val akkaActorTest = crossProject.in(file("akka-js-actor-tests"))
       "org.scalacheck" %%% "scalacheck" % "1.13.4" % "test"
     ),
     excludeDependencies += ("org.akka-js" %% "akkaactorjsirpatches"),
-    compile in Compile <<= (compile in Compile) dependsOn assembleAkkaLibrary,
-    publishLocal <<= publishLocal dependsOn assembleAkkaLibrary
+    compile in Compile ~= {t => assembleAkkaLibrary; t},
+    publishLocal ~= {t => assembleAkkaLibrary; t}
  ).dependsOn(akkaJsTestkit % "test->test")
 
 lazy val akkaActorTestJS = akkaActorTest.js
@@ -333,9 +333,9 @@ lazy val akkaJsActorStream = crossProject.in(file("akka-js-actor-stream"))
       "org.scala-lang.modules" %% "scala-java8-compat" % "0.8.0" % "provided"
     ),
     excludeDependencies += ("org.akka-js" %% "akkaactorjsirpatches"),
-    compile in Compile <<= (compile in Compile) dependsOn (assembleAkkaLibrary, fixResources),
-    publishLocal <<= publishLocal dependsOn (assembleAkkaLibrary, fixResources),
-    PgpKeys.publishSigned <<= PgpKeys.publishSigned dependsOn (assembleAkkaLibrary, fixResources, BoilerplatePlugin.autoImport.boilerplateGenerate)
+    compile in Compile ~= {t => fixResources; assembleAkkaLibrary; t},
+    publishLocal ~= {t => fixResources; assembleAkkaLibrary; t},
+    PgpKeys.publishSigned ~= {t => fixResources; assembleAkkaLibrary; t}
   ).enablePlugins(spray.boilerplate.BoilerplatePlugin).dependsOn(akkaJsActor)
 
 lazy val akkaJsActorStreamJS = akkaJsActorStream.js
@@ -372,10 +372,9 @@ lazy val akkaJsStreamTestkit = crossProject.in(file("akka-js-stream-testkit"))
     //preLinkJSEnv := jsEnv.value,
     //postLinkJSEnv := jsEnv.value.withSourceMap(true),
     excludeDependencies += ("org.akka-js" %% "akkaactorjsirpatches"),
-    excludeDependencies += ("org.akka-js" %% "akkaactorjsirpatches"),
-    compile in Compile <<= (compile in Compile) dependsOn (assembleAkkaLibrary),
-    publishLocal <<= publishLocal dependsOn (assembleAkkaLibrary),
-    PgpKeys.publishSigned <<= PgpKeys.publishSigned dependsOn (assembleAkkaLibrary)
+    compile in Compile ~= {t => assembleAkkaLibrary; t},
+    publishLocal ~= {t => assembleAkkaLibrary; t},
+    PgpKeys.publishSigned ~= {t => assembleAkkaLibrary; t}
  ).dependsOn(akkaJsActorStream, akkaJsTestkit % "*->*")
 
  lazy val akkaJsStreamTestkitJS = akkaJsStreamTestkit.js
@@ -409,9 +408,8 @@ lazy val akkaJsStreamTestkit = crossProject.in(file("akka-js-stream-testkit"))
      //postLinkJSEnv := jsEnv.value.withSourceMap(true)
   ).jsSettings(
        excludeDependencies += ("org.akka-js" %% "akkaactorjsirpatches"),
-       compile in Compile <<= (compile in Compile) dependsOn assembleAkkaLibrary,
-       publishLocal <<= publishLocal dependsOn assembleAkkaLibrary
-
+       compile in Compile ~= {t => assembleAkkaLibrary; t},
+       publishLocal ~= {t => assembleAkkaLibrary; t}
   ).dependsOn(akkaJsStreamTestkit % "test->test", akkaJsActorStream)
 
   lazy val akkaStreamTestJS = akkaStreamTest.js
@@ -423,14 +421,14 @@ lazy val annotationAdderPlugin = Project(
     id   = "annotationAdderPlugin",
     base = file("plugins/annotation-adder-plugin")
   ) settings (
-    libraryDependencies <+= (scalaVersion)("org.scala-lang" % "scala-compiler" % _),
+    libraryDependencies += ("org.scala-lang" % "scala-compiler" % scalaVersion.value),
     publishArtifact in Compile := false
   ) settings (commonSettings : _*)
 
 lazy val useAnnotationAdderPluginSettings = Seq(
-    scalacOptions in Compile <++= (Keys.`package` in (annotationAdderPlugin, Compile)) map { (jar: File) =>
-       Seq("-Xplugin:" + jar.getAbsolutePath)
-    }
+    scalacOptions in Compile += (
+      "-Xplugin:" + (Keys.`package` in (annotationAdderPlugin, Compile)).value.getAbsolutePath.toString
+    )
   )
 
 //SCALAJS IR PATCHER SECTION

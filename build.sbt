@@ -414,6 +414,66 @@ lazy val akkaJsStreamTestkit = crossProject.in(file("akka-js-stream-testkit"))
 
   lazy val akkaStreamTestJS = akkaStreamTest.js
 
+  lazy val akkaJsActorPersistence = crossProject.in(file("akka-js-actor-persistence"))
+    .settings(commonSettings : _*)
+    .settings(
+      version := akkaJsVersion,
+      akkaVersion := akkaOriginalVersion,
+      akkaTargetDir := file("akka-js-actor/js/target/") / "akkaSources" / akkaVersion.value,
+      assembleAkkaLibrary := {
+        getAkkaSources(akkaTargetDir.value, akkaVersion.value)
+        val srcTarget = file("akka-js-actor-persistence/shared/src/main/scala")
+        copyToSourceFolder(
+          akkaTargetDir.value / "akka-persistence" / "src" / "main" / "scala",
+          srcTarget
+        )
+        copyToSourceFolder(
+          akkaTargetDir.value / "akka-persistence" / "src" / "main" / "protobuf",
+          file("akka-js-actor-persistence/js/src/main/protobuf")
+        )
+
+        val jsSources = file("akka-js-actor-persistence/js/src/main/scala")
+
+        rm_clash(srcTarget, jsSources)
+      },
+      fixResources := {
+        val compileConf = (resourceDirectory in Compile).value / "application.conf"
+        if (compileConf.exists)
+          IO.copyFile(
+            compileConf,
+            (classDirectory in Compile).value / "application.conf"
+          )
+        val testConf = (resourceDirectory in Test).value / "application.conf"
+        if (testConf.exists) {
+          IO.copyFile(
+            testConf,
+            (classDirectory in Test).value / "application.conf"
+          )
+        }
+      }
+    ).jsSettings(
+      useAnnotationAdderPluginSettings : _*
+    ).jsSettings(
+      publishSettings : _*
+    ).jsSettings(sonatypeSettings : _*
+    ).jsSettings(
+      libraryDependencies ++= Seq(
+        "org.scala-lang.modules" %% "scala-java8-compat" % "0.8.0" % "provided"
+      ),
+      PB.targets in Compile := Seq(
+        scalapb.gen(javaConversions = false, grpc = false) -> (sourceManaged in Compile).value
+      ),
+      libraryDependencies ++= Seq(
+        "com.trueaccord.scalapb" %%% "scalapb-runtime" % com.trueaccord.scalapb.compiler.Version.scalapbVersion % "protobuf"
+      ),
+      excludeDependencies += ("org.akka-js" %% "akkaactorjsirpatches"),
+      compile in Compile := {(compile in Compile).dependsOn(assembleAkkaLibrary, fixResources).value},
+      publishLocal := {publishLocal.dependsOn(assembleAkkaLibrary, fixResources).value},
+      PgpKeys.publishSigned := {PgpKeys.publishSigned.dependsOn(assembleAkkaLibrary, fixResources).value}
+    ).enablePlugins(spray.boilerplate.BoilerplatePlugin).dependsOn(akkaJsActor)
+
+  lazy val akkaJsActorPersistenceJS = akkaJsActorPersistence.js
+
 //COMPILER PLUGINS SECTION
 
 //add scala.js annotations to proper classes
@@ -464,5 +524,6 @@ lazy val root = project.in(file(".")).settings(commonSettings: _*)
     akkaActorTestJS,
     akkaJsActorStreamJS,
     akkaJsStreamTestkitJS,
-    akkaStreamTestJS
+    akkaStreamTestJS,
+    akkaJsActorPersistenceJS
   )

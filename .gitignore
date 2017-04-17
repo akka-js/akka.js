@@ -12,3 +12,5 @@ akka-js-stream-testkit/shared/src/test/scala/akka
 akka-js-stream-testkit/shared/src/main/scala/akka
 akka-js-testkit/shared/src/test/scala/akka
 akka-js-testkit/shared/src/main/scala/akka
+akka-js-actor-persistence/shared/src/main/scala/akka
+akka-js-actor-persistence/js/src/main/protobuf/*.proto

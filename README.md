@@ -17,23 +17,23 @@ Otherwise, if you want to start from scratch:
 First of all you need to setup a new [Scala.js project](https://www.scala-js.org/doc/project/).
 Then add to your JS project configuration:
 ```scala
-libraryDependencies += "org.akka-js" %%% "akkajsactor" % "0.2.4.17"
+libraryDependencies += "org.akka-js" %%% "akkajsactor" % "1.2.5.0"
 ```
 
 If you want to use Akka Stream:
 ```scala
-libraryDependencies += "org.akka-js" %%% "akkajsactorstream" % "0.2.4.17"
+libraryDependencies += "org.akka-js" %%% "akkajsactorstream" % "1.2.5.0"
 ```
 
 To test your code you can use:
 ```scala
-libraryDependencies += "org.akka-js" %%% "akkajstestkit" % "0.2.4.17"
-libraryDependencies += "org.akka-js" %%% "akkajsstreamtestkit" % "0.2.4.17"
+libraryDependencies += "org.akka-js" %%% "akkajstestkit" % "1.2.5.0"
+libraryDependencies += "org.akka-js" %%% "akkajsstreamtestkit" % "1.2.5.0"
 ```
 
 
-Please note that Akka.js 0.2.4.17 is shipped from the stable Akka 2.4.17.
-At this point you can use most of the Akka core Api as described in the official [docs](http://doc.akka.io/docs/akka/2.4.17/scala.html).
+Please note that Akka.js 1.2.5.0 is shipped from the stable Akka 2.5.0.
+At this point you can use most of the Akka core Api as described in the official [docs](http://doc.akka.io/docs/akka/2.5.0/scala.html).
 
 Check out the @andreaTP session at Scala Days 2016:
 [slides](https://github.com/andreaTP/sd2016.git)
@@ -42,6 +42,9 @@ Check out the @andreaTP session at Scala Days 2016:
 Or @andreaTP session at BeeScala 2016:
 [slides](https://github.com/andreaTP/beescala.git)
 [video](https://youtu.be/pO1rY5780Mg)
+
+@andreaTP at ScalaUA 2017:
+[slides](https://github.com/andreaTP/scalaua.git)
 
 ## Caveats
 

@@ -52,12 +52,18 @@ class MessageSerializer(val system: ExtendedActorSystem) extends BaseSerializer 
    * message's payload to a matching `akka.serialization.Serializer`.
    */
   def toBinary(o: AnyRef): Array[Byte] = o match {
-    case p: PersistentRepr              ⇒ persistentMessageBuilder(p).build().toByteArray
-    case a: AtomicWrite                 ⇒ atomicWriteBuilder(a).build().toByteArray
-    case a: AtLeastOnceDeliverySnapshot ⇒ atLeastOnceDeliverySnapshotBuilder(a).build.toByteArray
-    case s: StateChangeEvent            ⇒ stateChangeBuilder(s).build.toByteArray
-    case p: PersistentFSMSnapshot[Any]  ⇒ persistentFSMSnapshotBuilder(p).build.toByteArray
-    case _                              ⇒ throw new IllegalArgumentException(s"Can't serialize object of type ${o.getClass}")
+    case p: PersistentRepr              ⇒
+      persistentMessageBuilder(p).toByteArray
+    case a: AtomicWrite                 ⇒
+      atomicWriteBuilder(a).toByteArray
+    case a: AtLeastOnceDeliverySnapshot ⇒
+      atLeastOnceDeliverySnapshotBuilder(a).toByteArray
+    case s: StateChangeEvent            ⇒
+      stateChangeBuilder(s).toByteArray
+    case p: PersistentFSMSnapshot[Any]  ⇒
+      persistentFSMSnapshotBuilder(p).toByteArray
+    case _                              ⇒
+      throw new IllegalArgumentException(s"Can't serialize object of type ${o.getClass}")
   }
 
   /**
@@ -81,44 +87,46 @@ class MessageSerializer(val system: ExtendedActorSystem) extends BaseSerializer 
   // toBinary helpers
   //
 
-  def atLeastOnceDeliverySnapshotBuilder(snap: AtLeastOnceDeliverySnapshot): mf.AtLeastOnceDeliverySnapshot.Builder = {
-    val builder = mf.AtLeastOnceDeliverySnapshot.newBuilder
-    builder.setCurrentDeliveryId(snap.currentDeliveryId)
-    snap.unconfirmedDeliveries.foreach { unconfirmed ⇒
-      val unconfirmedBuilder =
-        mf.AtLeastOnceDeliverySnapshot.UnconfirmedDelivery.newBuilder.
-          setDeliveryId(unconfirmed.deliveryId).
-          setDestination(unconfirmed.destination.toString).
-          setPayload(persistentPayloadBuilder(unconfirmed.message.asInstanceOf[AnyRef]))
-      builder.addUnconfirmedDeliveries(unconfirmedBuilder)
-    }
-    builder
+  def atLeastOnceDeliverySnapshotBuilder(snap: AtLeastOnceDeliverySnapshot): mf.AtLeastOnceDeliverySnapshot = {
+    mf.AtLeastOnceDeliverySnapshot(
+      currentDeliveryId = snap.currentDeliveryId,
+      unconfirmedDeliveries = snap.unconfirmedDeliveries.map { unconfirmed ⇒
+          mf.AtLeastOnceDeliverySnapshot.UnconfirmedDelivery(
+            deliveryId = unconfirmed.deliveryId,
+            destination = unconfirmed.destination.toString,
+            payload = persistentPayloadBuilder(unconfirmed.message.asInstanceOf[AnyRef])
+          )
+      }
+    )
   }
 
-  private[persistence] def stateChangeBuilder(stateChange: StateChangeEvent): mf.PersistentStateChangeEvent.Builder = {
-    val builder = mf.PersistentStateChangeEvent.newBuilder.setStateIdentifier(stateChange.stateIdentifier)
-    stateChange.timeout match {
-      case None          ⇒ builder
-      case Some(timeout) ⇒ builder.setTimeoutNanos(timeout.toNanos)
-    }
+  private[persistence] def stateChangeBuilder(stateChange: StateChangeEvent): mf.PersistentStateChangeEvent = {
+    mf.PersistentStateChangeEvent(
+      stateIdentifier = stateChange.stateIdentifier,
+      timeoutNanos = stateChange.timeout match {
+        case None          ⇒ None
+        case Some(timeout) ⇒ Some(timeout.toNanos)
+      }
+    )
   }
 
-  private[persistence] def persistentFSMSnapshotBuilder(persistentFSMSnapshot: PersistentFSMSnapshot[Any]): mf.PersistentFSMSnapshot.Builder = {
-    val builder = mf.PersistentFSMSnapshot.newBuilder
-      .setStateIdentifier(persistentFSMSnapshot.stateIdentifier)
-      .setData(persistentPayloadBuilder(persistentFSMSnapshot.data.asInstanceOf[AnyRef]))
-    persistentFSMSnapshot.timeout match {
-      case None          ⇒ builder
-      case Some(timeout) ⇒ builder.setTimeoutNanos(timeout.toNanos)
-    }
+  private[persistence] def persistentFSMSnapshotBuilder(persistentFSMSnapshot: PersistentFSMSnapshot[Any]): mf.PersistentFSMSnapshot = {
+    mf.PersistentFSMSnapshot(
+      stateIdentifier = persistentFSMSnapshot.stateIdentifier,
+      data = persistentPayloadBuilder(persistentFSMSnapshot.data.asInstanceOf[AnyRef]),
+      timeoutNanos = persistentFSMSnapshot.timeout match {
+        case None          ⇒ None
+        case Some(timeout) ⇒ Some(timeout.toNanos)
+      }
+    )
   }
 
   def atLeastOnceDeliverySnapshot(atLeastOnceDeliverySnapshot: mf.AtLeastOnceDeliverySnapshot): AtLeastOnceDeliverySnapshot = {
     import scala.collection.JavaConverters._
     val unconfirmedDeliveries = new VectorBuilder[UnconfirmedDelivery]()
-    atLeastOnceDeliverySnapshot.getUnconfirmedDeliveriesList().iterator().asScala foreach { next ⇒
-      unconfirmedDeliveries += UnconfirmedDelivery(next.getDeliveryId, ActorPath.fromString(next.getDestination),
-        payload(next.getPayload))
+    atLeastOnceDeliverySnapshot.unconfirmedDeliveries foreach { next ⇒
+      unconfirmedDeliveries += UnconfirmedDelivery(next.deliveryId, ActorPath.fromString(next.destination),
+        payload(next.payload))
     }
 
     AtLeastOnceDeliverySnapshot(

@@ -13,7 +13,7 @@
 * limitmjations under the License.
 */
 
-package unicredit
+package org.akkajs
 
 import java.io.File
 import org.scalajs.core.ir._
@@ -42,6 +42,14 @@ object IrPatcherPlugin {
             !classDef.defs.exists { md =>
               md match {
                 case MethodDef(_, ident, _, _, _) =>
+                  ident equals hackIdent
+                case _ => false
+              }
+            }
+          case FieldDef(_, hackIdent, _, _) =>
+            !classDef.defs.exists { md =>
+              md match {
+                case FieldDef(_, ident, _, _) =>
                   ident equals hackIdent
                 case _ => false
               }

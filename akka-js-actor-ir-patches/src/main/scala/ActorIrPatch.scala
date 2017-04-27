@@ -15,6 +15,7 @@ trait Props {}
 
 private[akka] class ActorCell {
   final var props: Props = null
+  var unsafe: Array[AnyRef] = null
 }
 
 private[akka] object LocalActorRefProvider {
@@ -28,4 +29,8 @@ private[akka] object LocalActorRefProvider {
     implicit var context: ActorContext = null
     implicit final var self: ActorRef = null
   }
+}
+
+private[akka] class RepointableActorRef {
+  var unsafe: Array[AnyRef] = null
 }

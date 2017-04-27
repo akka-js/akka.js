@@ -5,6 +5,6 @@
 package akka.actor;
 
 object AbstractActorRef {
-    final val cellOffset = 0L
-    final val lookupOffset = 1L
+    final val cellOffset = 0
+    final val lookupOffset = 1
 }

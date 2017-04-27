@@ -5,8 +5,8 @@
 package akka.actor.dungeon
 
 object AbstractActorCell {
-    val mailboxOffset = 10
-    val childrenOffset = 11
-    val nextNameOffset = 12
-    val functionRefsOffset = 13
+    val mailboxOffset = 2
+    val childrenOffset = 3
+    val nextNameOffset = 4
+    val functionRefsOffset = 5
 }

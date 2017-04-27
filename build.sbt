@@ -1,4 +1,4 @@
-val akkaJsVersion = "1.2.5.0"
+val akkaJsVersion = "1.2.5.0-SNAPSHOT"
 val akkaOriginalVersion = "v2.5.0"
 
 val commonSettings = Seq(
@@ -172,7 +172,7 @@ lazy val akkaJsActor = crossProject.in(file("akka-js-actor"))
       val classDir = (classDirectory in Compile).value
       val configFile = (baseDirectory in Compile).value / ".." / ".." / "config" / "ir_patch.config"
 
-      unicredit.IrPatcherPlugin.patchThis(classDir, configFile)
+      org.akkajs.IrPatcherPlugin.patchThis(classDir, configFile)
 
       analysis
     }

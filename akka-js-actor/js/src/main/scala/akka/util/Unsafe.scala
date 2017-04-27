@@ -8,141 +8,107 @@ import scala.collection.mutable
 
 object Unsafe {
 
-    val unsafeVars: WeakMap[AnyRef, mutable.Map[Int, Any]] =
-      new WeakMap[AnyRef, mutable.Map[Int, Any]]()
-
-    def fallback(offset: Long) = {
-      //Missing initializations...
-      if (offset == AbstractActorCell.childrenOffset)
-        EmptyChildrenContainer
-      else if (offset == AbstractActorCell.nextNameOffset)
-        0L
-      else if (offset == AbstractActorCell.functionRefsOffset)
-        Map.empty[String, FunctionRef]
-      else null
+    type WithUnsafe = {
+      var unsafe: Array[AnyRef]
     }
 
-    def toAnyRef(a: Any): AnyRef =
-      a.asInstanceOf[AnyRef]
+    def fallback(offset: Int): AnyRef = {
+      //Missing initializations...
+      {
+        if (offset == AbstractActorCell.childrenOffset)
+          EmptyChildrenContainer
+        else if (offset == AbstractActorCell.nextNameOffset)
+          0L
+        else if (offset == AbstractActorCell.functionRefsOffset)
+          Map.empty[String, FunctionRef]
+        else null
+      }.asInstanceOf[AnyRef]
+    }
+
+    @inline
+    def initIfNull(o: Any) = {
+      if (o.asInstanceOf[WithUnsafe].unsafe eq null)
+        o.asInstanceOf[WithUnsafe].unsafe = new Array[AnyRef](10)
+    }
 
     final val instance = new {
 
       @inline
-      def getObjectVolatile(o: Any, offset: Long): AnyRef = {
-        if (unsafeVars.has(toAnyRef(o))) {
-          val obj = unsafeVars.get(toAnyRef(o))
+      def getObjectVolatile(o: Any, offset: Int): AnyRef = {
+        initIfNull(o)
 
-          obj.getOrElse(
-            offset.asInstanceOf[Int],
-            fallback(offset)
-          ).asInstanceOf[AnyRef]
-        } else fallback(offset).asInstanceOf[AnyRef]
-      }
-
-      @inline
-      def compareAndSwapObject(o: Any, offset: Long, old: Any, next: Any): Boolean = {
-        if (unsafeVars.has(toAnyRef(o))) {
-          val obj = unsafeVars.get(toAnyRef(o))
-
-          val res = obj.get(offset.asInstanceOf[Int])
-
-          if ((res.isEmpty && old == fallback(offset)) ||
-              (res.isDefined && res.get == old)) {
-            obj.update(
-              offset.asInstanceOf[Int],
-              next
-            )
-            true
-          } else false
-        } else {
-          if (old == fallback(offset)) {
-            unsafeVars.set(toAnyRef(o),
-              mutable.Map[Int, Any](offset.asInstanceOf[Int] -> next)
-            )
-            true
-          } else false
-        }
-      }
-
-      @inline
-      def getAndSetObject(o: Any, offset: Long, next: Any): Any = {
-        if (unsafeVars.has(toAnyRef(o))) {
-          val obj = unsafeVars.get(toAnyRef(o))
-
-          val res = obj(offset.asInstanceOf[Int])
-
-          obj.update(
-            offset.asInstanceOf[Int],
-            next
-          )
-
-          res
-        } else {
-          unsafeVars.set(toAnyRef(o),
-            mutable.Map[Int, Any](offset.asInstanceOf[Int] -> next)
-          )
-
+        Option(o.asInstanceOf[WithUnsafe].unsafe(offset)).getOrElse(
           fallback(offset)
+        )
+      }
+
+      @inline
+      def compareAndSwapObject(o: Any, offset: Int, old: Any, next: Any): Boolean = {
+        initIfNull(o)
+        //println("qui "+offset+"  "+ next)
+        //println(o.asInstanceOf[WithUnsafe].unsafe)
+        //println(o.asInstanceOf[WithUnsafe].unsafe(offset))
+
+        Option(o.asInstanceOf[WithUnsafe].unsafe(offset)) match {
+          case Some(x) if x == old =>
+            //println("1")
+            o.asInstanceOf[WithUnsafe].unsafe(offset) = next.asInstanceOf[AnyRef]
+            true
+          case None if old == fallback(offset) =>
+            //println("2")
+            o.asInstanceOf[WithUnsafe].unsafe(offset) = next.asInstanceOf[AnyRef]
+            true
+          case _ =>
+            //println("old "+old )
+            //println("true "+(old == null))
+            //println("undef "+ js.isUndefined(old))
+            false
         }
       }
 
       @inline
-      def getAndAddLong(o: Any, offset: Long, next: Long): Long = {
-        if (unsafeVars.has(toAnyRef(o))) {
-          val obj = unsafeVars.get(toAnyRef(o))
+      def getAndSetObject(o: Any, offset: Int, next: Any): Any = {
+        initIfNull(o)
 
-          val res = obj.get(offset.asInstanceOf[Int]).getOrElse(0L)
+        val res =
+          Option(o.asInstanceOf[WithUnsafe].unsafe(offset)).getOrElse(fallback(offset))
 
-          obj.update(
-            offset.asInstanceOf[Int],
-            res.asInstanceOf[Long] + next
-          )
+        o.asInstanceOf[WithUnsafe].unsafe(offset) = next.asInstanceOf[AnyRef]
 
-          res.asInstanceOf[Long]
-        } else {
-          unsafeVars.set(toAnyRef(o),
-            mutable.Map[Int, Any](offset.asInstanceOf[Int] -> next)
-          )
-
-          0L
-        }
+        res
       }
 
       @inline
-      def getAndAddInt(o: Any, offset: Long, next: Int): Int = {
-        if (unsafeVars.has(toAnyRef(o))) {
-          val obj = unsafeVars.get(toAnyRef(o))
+      def getAndAddLong(o: Any, offset: Int, next: Long): Long = {
+        initIfNull(o)
 
-          val res = obj.get(offset.asInstanceOf[Int]).getOrElse(0)
+        val res: Long =
+          o.asInstanceOf[WithUnsafe].unsafe(offset).asInstanceOf[Long]
 
-          obj.update(
-            offset.asInstanceOf[Int],
-            res.asInstanceOf[Int] + next
-          )
+        val value: Long = res + next
+        o.asInstanceOf[WithUnsafe].unsafe(offset) = value.asInstanceOf[AnyRef]
 
-          res.asInstanceOf[Int]
-        } else {
-          unsafeVars.set(toAnyRef(o),
-            mutable.Map[Int, Any](offset.asInstanceOf[Int] -> next)
-          )
-
-          0
-        }
+        res
       }
 
       @inline
-      def putObjectVolatile(o: Any, offset: Long, next: Any): Unit = {
-        if (unsafeVars.has(toAnyRef(o))) {
-            unsafeVars.get(toAnyRef(o))
-              .update(
-                offset.asInstanceOf[Int],
-                next
-              )
-        } else {
-          unsafeVars.set(toAnyRef(o),
-            mutable.Map[Int, Any](offset.asInstanceOf[Int] -> next)
-          )
-        }
+      def getAndAddInt(o: Any, offset: Int, next: Int): Int = {
+        initIfNull(o)
+
+        val res =
+          o.asInstanceOf[WithUnsafe].unsafe(offset).asInstanceOf[Int]
+
+        val value: Int = res + next
+        o.asInstanceOf[WithUnsafe].unsafe(offset) = value.asInstanceOf[AnyRef]
+
+        res
+      }
+
+      @inline
+      def putObjectVolatile(o: Any, offset: Int, next: Any): Unit = {
+        initIfNull(o)
+
+        o.asInstanceOf[WithUnsafe].unsafe(offset) = next.asInstanceOf[AnyRef]
       }
     }
 }

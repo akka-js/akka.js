@@ -14,9 +14,17 @@ class EventLoopExecutor extends ExecutorServiceDelegate {
   // We need to access global because otherwise the overridden setTimeout
   // in `akka-js-testkit` fails to execute
   override def execute(command: Runnable) =
-    if (!_isShutdown) //global.setTimeout({ () =>
-      command.run()
-  //}, 0)
+    if (!_isShutdown) {
+      global.setTimeout(command.run _, 0)
+      //this fails it means that we are not properly getting things from env?
+      //global.setTimeout(command.run, 0)
+      /*var fn: scalajs.js.Dynamic = null
+      def clear = global.clearInterval(fn)
+      fn = global.setInterval({ () =>
+        command.run()
+        clear
+      }, 0)*/
+    }
 
   override def shutdown() = _isShutdown = true
 

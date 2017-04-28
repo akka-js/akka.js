@@ -7,20 +7,21 @@ import scalajs.js.Dynamic.global
 
 class EventLoopExecutor extends ExecutorServiceDelegate {
   def executor: ExecutorService = this
-  
+
   private[this] var _isShutdown = false
-  
+
   // XXX: DO NOT CHANGE THIS TO USE scaaljs.js.timers.setTimeout
   // We need to access global because otherwise the overridden setTimeout
   // in `akka-js-testkit` fails to execute
-  override def execute(command: Runnable) = if (!_isShutdown) global.setTimeout({ () =>
-    command.run()
-  }, 0) 
-  
+  override def execute(command: Runnable) =
+    if (!_isShutdown) //global.setTimeout({ () =>
+      command.run()
+  //}, 0)
+
   override def shutdown() = _isShutdown = true
-  
+
   override def shutdownNow() = ???
-  
+
   override def isShutdown() = _isShutdown
 
   override def isTerminated = ???
@@ -39,5 +40,5 @@ class EventLoopExecutor extends ExecutorServiceDelegate {
 
   override def invokeAny[T](callables: Collection[_ <: Callable[T]]) = ???
 
-  override def invokeAny[T](callables: Collection[_ <: Callable[T]], l: Long, timeUnit: TimeUnit) = ??? 
+  override def invokeAny[T](callables: Collection[_ <: Callable[T]], l: Long, timeUnit: TimeUnit) = ???
 }

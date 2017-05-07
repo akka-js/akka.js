@@ -6,7 +6,6 @@ import scala.concurrent.Future
 import scalajs.js.timers.setTimeout
 import scalajs.js.Dynamic.global
 import scalajs.js
-import scala.scalajs.js.|
 
 object EventLoopExecutor {
 

@@ -123,6 +123,38 @@ object Unsafe {
       }
 
       @inline
+      def getIntVolatile(o: Any, offset: Int): Int = {
+        val t = getObjectVolatile(o, offset)
+
+        if (t == null) 0
+        else t.asInstanceOf[Int]
+      }
+
+      @inline
+      def putIntVolatile(o: Any, offset: Int, next: Int): Unit = {
+        putObjectVolatile(o, offset, next).asInstanceOf[Int]
+      }
+
+      @inline
+      def compareAndSwapInt(o: Any, offset: Int, old: Int, next: Int): Boolean = {
+        try {
+          val last = getIntVolatile(o, offset)
+
+          if (last == old) {
+            o.asInstanceOf[WithUnsafe].unsafe(offset) = next.asInstanceOf[AnyRef]
+            true
+          } else false
+        } catch {
+          case _: Throwable =>
+            initIfNull(o)
+            if (old == 0) {
+              o.asInstanceOf[WithUnsafe].unsafe(offset) = next.asInstanceOf[AnyRef]
+              true
+            } else false
+        }
+      }
+
+      @inline
       def putObjectVolatile(o: Any, offset: Int, next: Any): Unit = {
         try {
           o.asInstanceOf[WithUnsafe].unsafe(offset) = next.asInstanceOf[AnyRef]

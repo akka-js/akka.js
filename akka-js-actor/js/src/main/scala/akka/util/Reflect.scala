@@ -107,4 +107,5 @@ private[akka] object Reflect {
   val getCallerClass: Option[Int ⇒ Class[_]] = None
 
   private[akka] def findClassLoader(): ClassLoader = null
+
 }

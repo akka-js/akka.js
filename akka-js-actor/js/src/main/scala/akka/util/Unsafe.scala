@@ -62,7 +62,10 @@ object Unsafe {
         } catch {
           case _: Throwable =>
             initIfNull(o)
-            fallback(offset)
+            if (old == fallback(offset)) {
+              o.asInstanceOf[WithUnsafe].unsafe(offset) = next.asInstanceOf[AnyRef]
+              true
+            } else false
         }
       }
 

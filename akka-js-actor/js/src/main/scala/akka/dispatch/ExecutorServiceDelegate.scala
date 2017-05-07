@@ -2,8 +2,22 @@ package akka.dispatch
 
 import java.util.Collection
 import java.util.concurrent.{ TimeUnit, Callable, ExecutorService }
+import scala.concurrent.Future
 import scalajs.js.timers.setTimeout
 import scalajs.js.Dynamic.global
+import scalajs.js
+import scala.scalajs.js.|
+
+object EventLoopExecutor {
+
+  final val deferringFunction: Runnable => Unit =
+    if (js.isUndefined(global.setImmediate)) {
+      { command: Runnable => global.setTimeout(command.run _, 0) }
+    } else {
+      { command: Runnable => global.setImmediate(command.run _) }
+    }
+
+}
 
 class EventLoopExecutor extends ExecutorServiceDelegate {
   def executor: ExecutorService = this
@@ -14,17 +28,7 @@ class EventLoopExecutor extends ExecutorServiceDelegate {
   // We need to access global because otherwise the overridden setTimeout
   // in `akka-js-testkit` fails to execute
   override def execute(command: Runnable) =
-    if (!_isShutdown) {
-      global.setTimeout(command.run _, 0)
-      //this fails it means that we are not properly getting things from env?
-      //global.setTimeout(command.run, 0)
-      /*var fn: scalajs.js.Dynamic = null
-      def clear = global.clearInterval(fn)
-      fn = global.setInterval({ () =>
-        command.run()
-        clear
-      }, 0)*/
-    }
+    if (!_isShutdown) EventLoopExecutor.deferringFunction(command)
 
   override def shutdown() = _isShutdown = true
 

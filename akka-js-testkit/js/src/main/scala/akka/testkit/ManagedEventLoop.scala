@@ -16,6 +16,7 @@ import scala.collection.mutable.{ Queue, ArrayBuffer }
 object ManagedEventLoop {
 
   private val jsSetTimeout = global.setTimeout
+  private val jsSetImmediate = global.setImmediate
   private val jsSetInterval = global.setInterval
   private val jsClearTimeout = global.clearTimeout
   private val jsClearInterval = global.clearInterval
@@ -103,6 +104,7 @@ object ManagedEventLoop {
 
   def reset: Unit = {
     global.setTimeout = jsSetTimeout
+    global.setImmediate = jsSetImmediate
     global.setInterval = jsSetInterval
     global.clearTimeout = jsClearTimeout
     global.clearInterval = jsClearInterval
@@ -112,6 +114,15 @@ object ManagedEventLoop {
     global.setTimeout = { (f: js.Function0[_], delay: Number) =>
       if(f.toString() != "undefined") {
         val event = TimeoutEvent(f, delay.doubleValue())
+        if (isBlocking == 0)
+          event.globalize
+        events += event
+        event.asInstanceOf[SetTimeoutHandle]
+      }
+    }
+    global.setImmediate = { (f: js.Function0[_]) =>
+      if(f.toString() != "undefined") {
+        val event = TimeoutEvent(f, 0)
         if (isBlocking == 0)
           event.globalize
         events += event

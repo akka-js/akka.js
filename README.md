@@ -69,6 +69,53 @@ Since Scala.Js 0.6.15 reflective class instatiation is perfectly supported.
 
 To handle *blocking* testing in test suites you cannot use modules that interact with external world.
 
+***Mailbox configuration***
+
+Due to limitations with reflection usage in Scala.Js it is not possible to configure actor mailboxes with the so called __requirements__ still it is possible to configure direcly mailboxes like:
+
+```scala
+class ActorWithStash extends Actor with Stash {
+  var count = 0
+
+  def receive: Receive = {
+    case "x" => stash()
+    case "Start" =>
+      unstashAll()
+      context.become(operative)
+    case "getCount" => println(count)
+  }
+
+  def operative: Receive = {
+    case "x" => count += 1
+    case "getCount" => println(count)
+  }
+}
+
+lazy val config: Config =
+  ConfigFactory
+    .parseString("""
+      stash-custom-mailbox {
+        mailbox-type = "akka.dispatch.UnboundedDequeBasedMailbox"
+      }
+      """
+    ).withFallback(akkajs.Config.default)
+
+val system: ActorSystem = ActorSystem("wsSystem", config)
+
+val actorWithStash =
+  system.actorOf(Props(new ActorWithStash()).withMailbox("stash-custom-mailbox"), "ActorWithStash")
+
+actorWithStash ! "x"
+actorWithStash ! "x"
+actorWithStash ! "x"
+
+actorWithStash ! "getCount" //will print 0
+
+actorWithStash ! "Start"
+
+actorWithStash ! "getCount" //will print 3
+```
+
 ## Add-ons
 
 Since semantics difference to Akka on JVM we include a bunch of helpers to make life easier:

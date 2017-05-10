@@ -120,6 +120,19 @@ def copyToSourceFolder(sourceDir: File, targetDir: File) = {
   (targetDir / ".gitkeep").createNewFile
 }
 
+lazy val akkaJsUnsafe = project.in(file("akka-js-unsafe"))
+  .settings(commonSettings)
+  .settings(
+    libraryDependencies ++= Seq(
+      "org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided"
+    )
+  )
+
+lazy val akkaJsUnsafeTest = project.in(file("akka-js-unsafe-test"))
+  .settings(commonSettings)
+  .dependsOn(akkaJsUnsafe)
+  .enablePlugins(ScalaJSPlugin)
+
 lazy val akkaJsActor = crossProject.in(file("akka-js-actor"))
   .settings(commonSettings : _*)
   .settings(

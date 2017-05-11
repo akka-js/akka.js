@@ -15,7 +15,11 @@ trait Props {}
 
 private[akka] class ActorCell {
   final var props: Props = null
-  var unsafe: Array[AnyRef] = null
+
+  var mailboxCallMeDirectly: akka.dispatch.Mailbox = _
+  var childrenRefsCallMeDirectly: akka.actor.dungeon.ChildrenContainer = _
+  var nextNameCallMeDirectly: Long = _
+  var functionRefsCallMeDirectly: Map[String, akka.actor.FunctionRef] = _
 }
 
 private[akka] object LocalActorRefProvider {
@@ -32,5 +36,7 @@ private[akka] object LocalActorRefProvider {
 }
 
 private[akka] class RepointableActorRef {
-  var unsafe: Array[AnyRef] = null
+
+  var cellCallMeDirectly: Cell = _
+  var lookupCallMeDirectly: Cell = _
 }

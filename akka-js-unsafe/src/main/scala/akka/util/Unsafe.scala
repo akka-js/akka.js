@@ -83,6 +83,17 @@ object Unsafe {
 
           $o.asInstanceOf[WithState].stateCallMeDirectly
         }""")
+      case q"9" =>  //_watchedByDoNotCallMeDirectly
+        c.Expr[AnyRef](q"""{
+          type WithWatchedBy = {
+            var watchedByCallMeDirectly: Seq[ActorRef]
+          }
+
+          val ref = $o.asInstanceOf[WithWatchedBy].watchedByCallMeDirectly
+
+          if (ref == null) Seq[ActorRef]()
+          else ref
+        }""")
       case x =>
         c.error(c.enclosingPosition, s"This shouldn't happen ${offset.tree}")
         throw new Exception(s"Unmatched Unsafe usage at offset: $x")
@@ -186,6 +197,20 @@ object Unsafe {
 
           if ($o.asInstanceOf[WithState].stateCallMeDirectly == $old) {
             $o.asInstanceOf[WithState].stateCallMeDirectly = $next
+            true
+          } else false
+        }""")
+      case q"9" =>  //_watchedByDoNotCallMeDirectly
+        c.Expr[Boolean](q"""{
+          type WithWatchedBy = {
+            var watchedByCallMeDirectly: Seq[ActorRef]
+          }
+
+          if ($o.asInstanceOf[WithWatchedBy].watchedByCallMeDirectly == $old ||
+              ($old == Seq[ActorRef]() &&
+              $o.asInstanceOf[WithWatchedBy].watchedByCallMeDirectly == null)
+            ) {
+            $o.asInstanceOf[WithWhatchedBy].watchedByCallMeDirectly = $next
             true
           } else false
         }""")

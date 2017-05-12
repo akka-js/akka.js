@@ -120,6 +120,14 @@ def copyToSourceFolder(sourceDir: File, targetDir: File) = {
   (targetDir / ".gitkeep").createNewFile
 }
 
+lazy val akkaJsUnsafe = project.in(file("akka-js-unsafe"))
+  .settings(commonSettings)
+  .settings(
+    libraryDependencies ++= Seq(
+      "org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided"
+    )
+  )
+
 lazy val akkaJsActor = crossProject.in(file("akka-js-actor"))
   .settings(commonSettings : _*)
   .settings(
@@ -188,7 +196,10 @@ lazy val akkaJsActor = crossProject.in(file("akka-js-actor"))
     PgpKeys.publishSigned := {PgpKeys.publishSigned.dependsOn(assembleAkkaLibrary, fixResources).value}
   ).enablePlugins(spray.boilerplate.BoilerplatePlugin)
 
-lazy val akkaJsActorJS = akkaJsActor.js.dependsOn(akkaJsActorIrPatches % "provided")
+lazy val akkaJsActorJS = akkaJsActor.js.dependsOn(
+  akkaJsUnsafe % "provided",
+  akkaJsActorIrPatches % "provided"
+)
 
 lazy val akkaJsTestkit = crossProject.in(file("akka-js-testkit"))
   .settings(commonSettings: _*)

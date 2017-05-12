@@ -1,9 +1,15 @@
 package akka.pattern
 
+trait State {}
+
 private[akka] final class PromiseActorRef {
-  var unsafe: Array[AnyRef] = null
+
+  var stateCallMeDirectly: AnyRef = _
+  var watchedByCallMeDirectly: Set[ActorRef] = _
 }
 
 class CircuitBreaker {
-  var unsafe: Array[AnyRef] = null
+
+  var currentStateCallMeDirectly: State = _
+  var currentResetTimeoutCallMeDirectly: FiniteDuration = _
 }

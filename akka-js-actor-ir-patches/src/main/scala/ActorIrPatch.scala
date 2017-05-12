@@ -13,6 +13,10 @@ class Actor {
 
 trait Props {}
 
+trait FunctionRef {}
+
+trait Cell {}
+
 private[akka] class ActorCell {
   final var props: Props = null
 

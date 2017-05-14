@@ -9,7 +9,7 @@ object Unsafe {
     import c.universe._
 
     offset.tree match {
-      case q"0" =>   //_cellDoNotCallMeDirectly
+      case q"AbstractActorRef.cellOffset" | q"0" =>   //_cellDoNotCallMeDirectly
         c.Expr[AnyRef](q"""{
           type WithCell = {
             var cellCallMeDirectly: akka.actor.Cell
@@ -17,7 +17,7 @@ object Unsafe {
 
           $o.asInstanceOf[WithCell].cellCallMeDirectly
         }""")
-      case q"1" =>   //_lookupDoNotCallMeDirectly
+      case q"AbstractActorRef.lookupOffset" | q"1" =>   //_lookupDoNotCallMeDirectly
         c.Expr[AnyRef](q"""{
           type WithLookup = {
             var lookupCallMeDirectly: akka.actor.Cell
@@ -25,7 +25,7 @@ object Unsafe {
 
           $o.asInstanceOf[WithLookup].lookupCallMeDirectly
         }""")
-      case q"AbstractActorCell.mailboxOffset" =>  //_mailboxDoNotCallMeDirectly
+      case q"AbstractActorCell.mailboxOffset" | q"2" =>  //_mailboxDoNotCallMeDirectly
         c.Expr[AnyRef](q"""{
           type WithMailbox = {
             var mailboxCallMeDirectly: akka.dispatch.Mailbox
@@ -33,7 +33,7 @@ object Unsafe {
 
           $o.asInstanceOf[WithMailbox].mailboxCallMeDirectly
         }""")
-      case q"AbstractActorCell.childrenOffset" =>  //_childrenRefsDoNotCallMeDirectly
+      case q"AbstractActorCell.childrenOffset" | q"3" =>  //_childrenRefsDoNotCallMeDirectly
         c.Expr[AnyRef](q"""{
           type WithChildrenRefs = {
             var childrenRefsCallMeDirectly: akka.actor.dungeon.ChildrenContainer
@@ -44,7 +44,7 @@ object Unsafe {
           if (res == null) EmptyChildrenContainer
           else res
         }""")
-      case q"AbstractActorCell.functionRefsOffset" =>  //_functionRefsDoNotCallMeDirectly
+      case q"AbstractActorCell.functionRefsOffset" | q"5" =>  //_functionRefsDoNotCallMeDirectly
         c.Expr[AnyRef](q"""{
           type WithFunctionRefs = {
             var functionRefsCallMeDirectly: Map[String, akka.actor.FunctionRef]
@@ -55,7 +55,7 @@ object Unsafe {
           if (res == null) Map.empty[String, akka.actor.FunctionRef]
           else res
         }""")
-      case q"6" =>  //_currentStateDoNotCallMeDirectly
+      case q"AbstractCircuitBreaker.stateOffset" | q"6" =>  //_currentStateDoNotCallMeDirectly
         c.Expr[AnyRef](q"""{
           type WithCurrentState = {
             var currentStateCallMeDirectly: AnyRef
@@ -66,7 +66,7 @@ object Unsafe {
           if (res == null) Closed
           else res
         }""")
-      case q"7" =>  //_currentResetTimeoutDoNotCallMeDirectly
+      case q"AbstractCircuitBreaker.resetTimeoutOffset" | q"7" =>  //_currentResetTimeoutDoNotCallMeDirectly
         // not sure how to initialize this ...
         c.Expr[AnyRef](q"""{
           type WithCurrentResetTimeout = {
@@ -75,7 +75,7 @@ object Unsafe {
 
           ???
         }""")
-      case q"8" =>  //_stateDoNotCallMeDirectly
+      case q"AbstractPromiseActorRef.stateOffset" | q"8" =>  //_stateDoNotCallMeDirectly
         c.Expr[AnyRef](q"""{
           type WithState = {
             var stateCallMeDirectly: AnyRef
@@ -104,7 +104,7 @@ object Unsafe {
     import c.universe._
 
     offset.tree match {
-      case q"0" =>   //_cellDoNotCallMeDirectly
+      case q"AbstractActorRef.cellOffset" | q"0" =>   //_cellDoNotCallMeDirectly
         c.Expr[Boolean](q"""{
           type WithCell = {
             var cellCallMeDirectly: akka.actor.Cell
@@ -115,7 +115,7 @@ object Unsafe {
             true
           } else false
         }""")
-      case q"1" =>   //_lookupDoNotCallMeDirectly
+      case q"AbstractActorRef.lookupOffset" | q"1" =>   //_lookupDoNotCallMeDirectly
         c.Expr[Boolean](q"""{
           type WithLookup = {
             var lookupCallMeDirectly: akka.actor.Cell
@@ -126,7 +126,7 @@ object Unsafe {
             true
           } else false
         }""")
-      case q"AbstractActorCell.mailboxOffset" =>  //_mailboxDoNotCallMeDirectly
+      case q"AbstractActorCell.mailboxOffset" | q"2" =>  //_mailboxDoNotCallMeDirectly
         c.Expr[Boolean](q"""{
           type WithMailbox = {
             var mailboxCallMeDirectly: akka.dispatch.Mailbox
@@ -137,7 +137,7 @@ object Unsafe {
             true
           } else false
         }""")
-      case q"AbstractActorCell.childrenOffset" =>  //_childrenRefsDoNotCallMeDirectly
+      case q"AbstractActorCell.childrenOffset" | q"3" =>  //_childrenRefsDoNotCallMeDirectly
         c.Expr[Boolean](q"""{
           type WithChildrenRefs = {
             var childrenRefsCallMeDirectly: akka.actor.dungeon.ChildrenContainer
@@ -151,7 +151,7 @@ object Unsafe {
             true
           } else false
         }""")
-      case q"AbstractActorCell.functionRefsOffset" =>  //_functionRefsDoNotCallMeDirectly
+      case q"AbstractActorCell.functionRefsOffset" | q"5" =>  //_functionRefsDoNotCallMeDirectly
         c.Expr[Boolean](q"""{
           type WithFunctionRefs = {
             var functionRefsCallMeDirectly: Map[String, akka.actor.FunctionRef]
@@ -166,7 +166,7 @@ object Unsafe {
             true
           } else false
         }""")
-      case q"6" =>  //_currentStateDoNotCallMeDirectly
+      case q"AbstractCircuitBreaker.stateOffset" | q"6" =>  //_currentStateDoNotCallMeDirectly
         c.Expr[Boolean](q"""{
           type WithCurrentState = {
             var currentStateCallMeDirectly: Any
@@ -180,7 +180,7 @@ object Unsafe {
             true
           } else false
         }""")
-      case q"7" =>  //_currentResetTimeoutDoNotCallMeDirectly
+      case q"AbstractCircuitBreaker.resetTimeoutOffset" | q"7" =>  //_currentResetTimeoutDoNotCallMeDirectly
         // not sure how to initialize this ...
         c.Expr[Boolean](q"""{
           type WithCurrentResetTimeout = {
@@ -189,7 +189,7 @@ object Unsafe {
 
           ???
         }""")
-      case q"8" =>  //_stateDoNotCallMeDirectly
+      case q"AbstractPromiseActorRef.stateOffset" | q"8" =>  //_stateDoNotCallMeDirectly
         c.Expr[Boolean](q"""{
           type WithState = {
             var stateCallMeDirectly: AnyRef
@@ -224,7 +224,7 @@ object Unsafe {
     import c.universe._
 
     offset.tree match {
-      case q"AbstractActorCell.childrenOffset" =>  //_childrenRefsDoNotCallMeDirectly
+      case q"AbstractActorCell.childrenOffset" | q"3" =>  //_childrenRefsDoNotCallMeDirectly
         c.Expr[Unit](q"""{
           type WithChildrenRefs = {
             var childrenRefsCallMeDirectly: akka.actor.dungeon.ChildrenContainer
@@ -232,7 +232,7 @@ object Unsafe {
 
           $o.asInstanceOf[WithChildrenRefs].childrenRefsCallMeDirectly = $next
         }""")
-      case q"8" =>  //_stateDoNotCallMeDirectly
+      case q"AbstractPromiseActorRef.stateOffset" | q"8" =>  //_stateDoNotCallMeDirectly
         c.Expr[Unit](q"""{
           type WithState = {
             var stateCallMeDirectly: AnyRef
@@ -250,7 +250,7 @@ object Unsafe {
     import c.universe._
 
     offset.tree match {
-      case q"AbstractActorCell.functionRefsOffset" =>  //_functionRefsDoNotCallMeDirectly
+      case q"AbstractActorCell.functionRefsOffset" | q"5" =>  //_functionRefsDoNotCallMeDirectly
         c.Expr[AnyRef](q"""{
           type WithFunctionRefs = {
             var functionRefsCallMeDirectly: Map[String, akka.actor.FunctionRef]
@@ -273,7 +273,7 @@ object Unsafe {
     import c.universe._
 
     offset.tree match {
-      case q"AbstractActorCell.nextNameOffset" =>   //_nextNameDoNotCallMeDirectly
+      case q"AbstractActorCell.nextNameOffset" | q"4" =>   //_nextNameDoNotCallMeDirectly
         c.Expr[Long](q"""{
           type WithNextName = {
             var nextNameCallMeDirectly: Long

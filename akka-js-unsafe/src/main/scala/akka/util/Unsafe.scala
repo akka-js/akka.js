@@ -67,13 +67,16 @@ object Unsafe {
           else res
         }""")
       case q"AbstractCircuitBreaker.resetTimeoutOffset" | q"7" =>  //_currentResetTimeoutDoNotCallMeDirectly
-        // not sure how to initialize this ...
         c.Expr[AnyRef](q"""{
           type WithCurrentResetTimeout = {
+            val resetTimeout: FiniteDuration
             var currentResetTimeoutCallMeDirectly: FiniteDuration
           }
 
-          ???
+          val res = $o.asInstanceOf[WithCurrentResetTimeout].currentResetTimeoutCallMeDirectly
+
+          if (res == null) $o.asInstanceOf[WithCurrentResetTimeout].resetTimeout
+          else res
         }""")
       case q"AbstractPromiseActorRef.stateOffset" | q"8" =>  //_stateDoNotCallMeDirectly
         c.Expr[AnyRef](q"""{
@@ -184,10 +187,17 @@ object Unsafe {
         // not sure how to initialize this ...
         c.Expr[Boolean](q"""{
           type WithCurrentResetTimeout = {
+            val resetTimeout: FiniteDuration
             var currentResetTimeoutCallMeDirectly: FiniteDuration
           }
 
-          ???
+          if ($o.asInstanceOf[WithCurrentResetTimeout].currentResetTimeoutCallMeDirectly == $old ||
+              ($old == $o.asInstanceOf[WithCurrentResetTimeout].resetTimeout &&
+              $o.asInstanceOf[WithCurrentResetTimeout].currentResetTimeoutCallMeDirectly == null)
+            ) {
+            $o.asInstanceOf[WithCurrentResetTimeout].currentResetTimeoutCallMeDirectly = $next
+            true
+          } else false
         }""")
       case q"AbstractPromiseActorRef.stateOffset" | q"8" =>  //_stateDoNotCallMeDirectly
         c.Expr[Boolean](q"""{

@@ -10,7 +10,7 @@ import com.typesafe.config.Config
 import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.duration.Duration
 import java.util.concurrent.TimeUnit
-import java.util.Locale
+import java.util.Date
 
 object Helpers {
 
@@ -25,9 +25,9 @@ object Helpers {
   //def makePattern(s: String): Pattern = Pattern.compile("^\\Q" + s.replace("?", "\\E.\\Q").replace("*", "\\E.*\\Q") + "\\E$")
   def makePattern(s: String): Pattern = {
     val chars = Seq('.', '\\', '[', ']', '^', '$', '(', ')'/*, '?', '*'*/, '+', '=', '|', '{', '}')
-    
-    
-    
+
+
+
     Pattern.compile("^" + s.map { x => if(chars.contains(x)) s"\\${x}" else if(x == '*') s".*" else x }.mkString + "$")
   }
 
@@ -71,6 +71,61 @@ object Helpers {
     val seconds = timeOfDay / 1000L % 60
     val ms = timeOfDay % 1000
     f"$hours%02d:$minutes%02d:$seconds%02d.$ms%03dUTC"
+  }
+
+  // "MM/dd/yyyy HH:mm:ss.SSS"
+	def timestamp(time: Long): String = {
+    val date = new Date(time)
+    val fields = Array(
+      (date.getYear + 1900).toString.reverse,
+      (date.getMonth + 1).toString.reverse,
+      date.getDate.toString.reverse,
+      date.getHours.toString.reverse,
+      date.getMinutes.toString.reverse,
+      date.getSeconds.toString.reverse,
+      (date.getTime - Date.UTC(date.getYear,
+         date.getMonth,
+         date.getDay,
+         date.getHours,
+         date.getMinutes,
+         date.getSeconds)).toString.reverse
+    )
+
+    def pop(pos: Int): Char = {
+      if (fields(pos).size > 0) {
+        val res = fields(pos)(0)
+        fields(pos) = fields(pos).drop(1)
+        res
+      } else '0'
+    }
+
+    val sb = new StringBuffer()
+
+    sb.append(pop(1))
+    sb.append(pop(1))
+    sb.append('/')
+    sb.append(pop(2))
+    sb.append(pop(2))
+    sb.append('/')
+    sb.append(pop(0))
+    sb.append(pop(0))
+    sb.append(pop(0))
+    sb.append(pop(0))
+    sb.append(' ')
+    sb.append(pop(3))
+    sb.append(pop(3))
+    sb.append(':')
+    sb.append(pop(4))
+    sb.append(pop(4))
+    sb.append(':')
+    sb.append(pop(5))
+    sb.append(pop(5))
+    sb.append('.')
+    sb.append(pop(6))
+    sb.append(pop(6))
+    sb.append(pop(6))
+
+	  sb.reverse.toString
   }
 
   final val base64chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+~"

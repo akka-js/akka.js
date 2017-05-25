@@ -52,7 +52,8 @@ There are small caveats to keep in mind to ensure that your code will run smooth
 
 ***Startup Time***
 
-On Js VM we cannot block, so to ensure your code will run AFTER the ```ActorSystem``` scheduler is started you need to run your code within a block like this:
+On Js VM the control flow will execute first all operations in line, so to ensure your code will run AFTER the ```ActorSystem``` is started you need to run your code within a block like this:
+
 ```scala
 import system.dispatcher
 import scala.concurrent.duration._
@@ -68,6 +69,27 @@ Since Scala.Js 0.6.15 reflective class instatiation is perfectly supported.
 ***Testing***
 
 To handle *blocking* testing in test suites you cannot use modules that interact with external world.
+
+***Mailbox configuration***
+
+Due to the lack of runtime reflection in Scala.Js is not possible to configure mailbox of actors using __requirements__ but is it possible to do so with direct configuration.
+i.e.
+
+```scala
+lazy val config: Config =
+  ConfigFactory
+    .parseString("""
+      stash-custom-mailbox {
+        mailbox-type = "akka.dispatch.UnboundedDequeBasedMailbox"
+      }
+      """
+    ).withFallback(akkajs.Config.default)
+
+val system: ActorSystem = ActorSystem("wsSystem", config)
+
+val actorWithStash =
+  system.actorOf(Props(new ActorWithStash()).withMailbox("stash-custom-mailbox"), "ActorWithStash")
+```
 
 ## Add-ons
 

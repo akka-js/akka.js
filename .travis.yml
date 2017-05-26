@@ -17,6 +17,7 @@ install:
   - npm install
 
 script:
+  - sbt ++$TRAVIS_SCALA_VERSION clean
   - sbt ++$TRAVIS_SCALA_VERSION -jvm-opts travis/jvmopts akkaJsTestkitJS/test:fastOptJS
   - sbt ++$TRAVIS_SCALA_VERSION -jvm-opts travis/jvmopts akkaJsTestkitJS/test
   - sbt ++$TRAVIS_SCALA_VERSION -jvm-opts travis/jvmopts akkaActorTestJS/test:fastOptJS

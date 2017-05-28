@@ -16,6 +16,8 @@ object EventLoopExecutor {
       { command: Runnable => global.setImmediate(command.run _) }
     }
 
+  final val instance = new EventLoopExecutor()
+
 }
 
 class EventLoopExecutor extends ExecutorServiceDelegate {
@@ -26,6 +28,7 @@ class EventLoopExecutor extends ExecutorServiceDelegate {
   // XXX: DO NOT CHANGE THIS TO USE scaaljs.js.timers.setTimeout
   // We need to access global because otherwise the overridden setTimeout
   // in `akka-js-testkit` fails to execute
+  @inline
   override def execute(command: Runnable) =
     if (!_isShutdown) EventLoopExecutor.deferringFunction(command)
 

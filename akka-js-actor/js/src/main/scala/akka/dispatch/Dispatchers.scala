@@ -68,10 +68,9 @@ class Dispatchers(val settings: ActorSystem.Settings, val prerequisites: Dispatc
 
   /** @note IMPLEMENT IN SCALA.JS
   val cachingConfig = new CachingConfig(settings.config)
-
+  */
   val defaultDispatcherConfig: Config =
     idConfig(DefaultDispatcherId).withFallback(settings.config.getConfig(DefaultDispatcherId))
-  */
 
   /**
    * The one and only default dispatcher.
@@ -87,7 +86,9 @@ class Dispatchers(val settings: ActorSystem.Settings, val prerequisites: Dispatc
    * @throws ConfigurationException if the specified dispatcher cannot be found in the configuration
    */
 
-  def lookup(id: String): MessageDispatcher = new DispatcherConfigurator(new Config, prerequisites).dispatcher() /** lookupConfigurator(id).dispatcher() */
+  def lookup(id: String): MessageDispatcher =
+    //new DispatcherConfigurator(new Config, prerequisites).dispatcher()
+    lookupConfigurator(id).dispatcher()
 
   /**
    * Checks that the configuration provides a section for the given dispatcher.
@@ -97,29 +98,25 @@ class Dispatchers(val settings: ActorSystem.Settings, val prerequisites: Dispatc
    */
   def hasDispatcher(id: String): Boolean = dispatcherConfigurators.containsKey(id) /** @note IMPLEMENT IN SCALA.JS || cachingConfig.hasPath(id) */
 
-  /**@note IMPLEMENT IN SCALA.JS
   private def lookupConfigurator(id: String): MessageDispatcherConfigurator = {
     dispatcherConfigurators.get(id) match {
-    /** @note IMPLEMENT IN SCALA.JS
       case null ⇒
         // It doesn't matter if we create a dispatcher configurator that isn't used due to concurrent lookup.
         // That shouldn't happen often and in case it does the actual ExecutorService isn't
         // created until used, i.e. cheap.
-        val newConfigurator =
-          if (cachingConfig.hasPath(id)) configuratorFrom(config(id))
-          else throw new ConfigurationException(s"Dispatcher [$id] not configured")
+        val newConfigurator = new DispatcherConfigurator(config(id), prerequisites)
+        //if (cachingConfig.hasPath(id)) configuratorFrom(config(id))
+        //else throw new ConfigurationException(s"Dispatcher [$id] not configured")
 
         dispatcherConfigurators.putIfAbsent(id, newConfigurator) match {
           case null     ⇒ newConfigurator
           case existing ⇒ existing
         }
-    */
       case existing ⇒ existing
     }
   }
 
-
-
+  /*
   /**
    * Register a [[MessageDispatcherConfigurator]] that will be
    * used by [[#lookup]] and [[#hasDispatcher]] instead of looking
@@ -138,7 +135,6 @@ class Dispatchers(val settings: ActorSystem.Settings, val prerequisites: Dispatc
   /**
    * INTERNAL API
    */
-  /** @note IMPLEMENT IN SCALA.JS
   private[akka] def config(id: String): Config = {
     config(id, settings.config.getConfig(id))
   }
@@ -151,15 +147,14 @@ class Dispatchers(val settings: ActorSystem.Settings, val prerequisites: Dispatc
     def simpleName = id.substring(id.lastIndexOf('.') + 1)
     idConfig(id)
       .withFallback(appConfig)
-      .withFallback(ConfigFactory.parseMap(Map("name" -> simpleName).asJava))
+      .withFallback(ConfigFactory.parseMap(Map[String, Any]("name" -> simpleName).asJava))
       .withFallback(defaultDispatcherConfig)
   }
 
   private def idConfig(id: String): Config = {
     import scala.collection.JavaConverters._
-    ConfigFactory.parseMap(Map("id" -> id).asJava)
+    ConfigFactory.parseString(s"id = $id")
   }
-  */
 
   /**
    * INTERNAL API

@@ -7,7 +7,8 @@ import scalajs.js.timers.setTimeout
 import scalajs.js.Dynamic.global
 import scalajs.js
 
-object EventLoopExecutor {
+class EventLoopExecutor extends ExecutorServiceDelegate {
+  def executor: ExecutorService = this
 
   final val deferringFunction: Runnable => Unit =
     if (js.isUndefined(global.setImmediate)) {
@@ -16,13 +17,6 @@ object EventLoopExecutor {
       { command: Runnable => global.setImmediate(command.run _) }
     }
 
-  final val instance = new EventLoopExecutor()
-
-}
-
-class EventLoopExecutor extends ExecutorServiceDelegate {
-  def executor: ExecutorService = this
-
   private[this] var _isShutdown = false
 
   // XXX: DO NOT CHANGE THIS TO USE scaaljs.js.timers.setTimeout
@@ -30,7 +24,7 @@ class EventLoopExecutor extends ExecutorServiceDelegate {
   // in `akka-js-testkit` fails to execute
   @inline
   override def execute(command: Runnable) =
-    if (!_isShutdown) EventLoopExecutor.deferringFunction(command)
+    if (!_isShutdown) deferringFunction(command)
 
   override def shutdown() = _isShutdown = true
 

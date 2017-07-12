@@ -1,4 +1,4 @@
-val akkaJsVersion = "1.2.5.3"
+val akkaJsVersion = "1.2.5.3-SNAPSHOT"
 val akkaOriginalVersion = "v2.5.3"
 
 val commonSettings = Seq(
@@ -182,7 +182,8 @@ lazy val akkaJsActor = crossProject.in(file("akka-js-actor"))
       org.akkajs.IrPatcherPlugin.patchThis(classDir, configFile)
 
       analysis
-    }
+    },
+    scalaJSOptimizerOptions ~= { _.withCheckScalaJSIR(true) }
   ).jsSettings(
     useAnnotationAdderPluginSettings : _*
   ).jsSettings(

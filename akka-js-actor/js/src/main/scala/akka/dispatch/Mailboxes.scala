@@ -26,7 +26,8 @@ private[akka] class Mailboxes(
   val settings:    ActorSystem.Settings,
   val eventStream: EventStream,
   dynamicAccess:   DynamicAccess,
-  deadLetters:     ActorRef) {
+  //val here to make IR checker happy
+  deadLetters: ActorRef) {
 
   import Mailboxes._
 

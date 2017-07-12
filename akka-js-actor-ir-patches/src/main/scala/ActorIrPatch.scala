@@ -6,7 +6,7 @@ trait ActorContext {
   def self: ActorRef
 }
 
-class Actor {
+trait Actor {
   implicit var context: ActorContext = null
   implicit final var self: ActorRef = null
 }
@@ -21,7 +21,7 @@ private[akka] class ActorCell {
   final var props: Props = null
 
   var mailboxCallMeDirectly: akka.dispatch.Mailbox = _
-  var childrenRefsCallMeDirectly: akka.actor.dungeon.ChildrenContainer = _
+  //var childrenRefsCallMeDirectly: akka.actor.dungeon.ChildrenContainer = _
   var nextNameCallMeDirectly: Long = _
   var functionRefsCallMeDirectly: Map[String, akka.actor.FunctionRef] = _
 }

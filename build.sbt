@@ -174,15 +174,15 @@ lazy val akkaJsActor = crossProject.in(file("akka-js-actor"))
       "org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided",
       "org.scala-lang" % "scala-compiler" % scalaVersion.value % "provided"
     ),
-    compile in Compile := {
-      val analysis = (compile in Compile).value
-      val classDir = (classDirectory in Compile).value
-      val configFile = (baseDirectory in Compile).value / ".." / ".." / "config" / "ir_patch.config"
+    //compile in Compile := {
+      //val analysis = (compile in Compile).value
+      //val classDir = (classDirectory in Compile).value
+      //val configFile = (baseDirectory in Compile).value / ".." / ".." / "config" / "ir_patch.config"
 
-      org.akkajs.IrPatcherPlugin.patchThis(classDir, configFile)
+      //org.akkajs.IrPatcherPlugin.patchThis(classDir, configFile)
 
-      analysis
-    },
+      //analysis
+    //},
     scalaJSOptimizerOptions ~= { _.withCheckScalaJSIR(true) }
   ).jsSettings(
     useAnnotationAdderPluginSettings : _*

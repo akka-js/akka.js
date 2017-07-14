@@ -177,9 +177,10 @@ lazy val akkaJsActor = crossProject.in(file("akka-js-actor"))
     compile in Compile := {
       val analysis = (compile in Compile).value
       val classDir = (classDirectory in Compile).value
-      val configFile = (baseDirectory in Compile).value / ".." / ".." / "config" / "ir_patch.config"
+      val hackDirs = (products in (akkaJsActorIrPatches, Compile)).value
 
-      org.akkajs.IrPatcherPlugin.patchThis(classDir, configFile)
+      for (hackDir <- hackDirs)
+        org.akkajs.IrPatcherPlugin.hackAllUnder(classDir, hackDir)
 
       analysis
     }
@@ -196,8 +197,7 @@ lazy val akkaJsActor = crossProject.in(file("akka-js-actor"))
   ).enablePlugins(spray.boilerplate.BoilerplatePlugin)
 
 lazy val akkaJsActorJS = akkaJsActor.js.dependsOn(
-  akkaJsUnsafe % "provided",
-  akkaJsActorIrPatches % "provided"
+  akkaJsUnsafe % "provided"
 )
 
 lazy val akkaJsTestkit = crossProject.in(file("akka-js-testkit"))
@@ -449,17 +449,6 @@ lazy val akkaJsActorIrPatches = Project(
     base = file("akka-js-actor-ir-patches")
    ).
    settings (
-    compile in Compile := {
-      val analysis = (compile in Compile).value
-      val classDir = (classDirectory in Compile).value
-      val base = (baseDirectory in Compile).value
-
-      val writer = new java.io.PrintWriter(base / ".." / "config" / "ir_patch.config", "UTF-8")
-      writer.print(classDir)
-      writer.flush
-      writer.close
-      analysis
-    },
     publishArtifact in Compile := true
   ).settings (commonSettings : _*
   ).enablePlugins (ScalaJSPlugin)

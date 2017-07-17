@@ -6,7 +6,7 @@ trait ActorContext {
   def self: ActorRef
 }
 
-class Actor {
+trait Actor {
   implicit var context: ActorContext = null
   implicit final var self: ActorRef = null
 }

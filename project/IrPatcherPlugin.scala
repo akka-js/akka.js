@@ -111,15 +111,5 @@ object IrPatcherPlugin {
         patchHackedFile(base, hack)
       }
     } else {}
-
-  }
-
-  def patchThis(classDir: File, configFile: File): Unit = {
-    import java.nio.file.Files.readAllBytes
-    import java.nio.file.Paths.get
-
-    val hackClassDir = new File(new String(readAllBytes(get(configFile.getAbsolutePath))))
-
-    hackAllUnder(classDir, hackClassDir)
   }
 }

@@ -6,11 +6,6 @@ trait ActorContext {
   def self: ActorRef
 }
 
-class Actor {
-  implicit var context: ActorContext = null
-  implicit final var self: ActorRef = null
-}
-
 trait Props {}
 
 trait FunctionRef {}

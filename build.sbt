@@ -1,5 +1,5 @@
-val akkaJsVersion = "1.2.5.2"
-val akkaOriginalVersion = "v2.5.2"
+val akkaJsVersion = "1.2.5.4-SNAPSHOT"
+val akkaOriginalVersion = "v2.5.4"
 
 val commonSettings = Seq(
     scalaVersion := "2.12.2",
@@ -166,6 +166,7 @@ lazy val akkaJsActor = crossProject.in(file("akka-js-actor"))
       }
     }
    ).jsSettings(
+    scalaJSOptimizerOptions ~= { _.withCheckScalaJSIR(true) },
     libraryDependencies ++= Seq(
       "eu.unicredit" %%% "shocon" % "0.1.6",
       "org.scala-lang.modules" %% "scala-java8-compat" % "0.8.0" % "provided"
@@ -247,6 +248,7 @@ lazy val akkaJsTestkit = crossProject.in(file("akka-js-testkit"))
   .jsSettings(sonatypeSettings : _*)
   .jsSettings(useAnnotationAdderPluginSettings : _*)
   .jsSettings(
+    scalaJSOptimizerOptions ~= { _.withCheckScalaJSIR(true) },
     libraryDependencies ++= Seq(
       "org.scalatest" %%% "scalatest" % "3.0.0" withSources ()
     ),
@@ -339,6 +341,7 @@ lazy val akkaJsActorStream = crossProject.in(file("akka-js-actor-stream"))
     publishSettings : _*
   ).jsSettings(sonatypeSettings : _*
   ).jsSettings(
+    scalaJSOptimizerOptions ~= { _.withCheckScalaJSIR(true) },
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-java8-compat" % "0.8.0" % "provided"
     ),
@@ -376,6 +379,7 @@ lazy val akkaJsStreamTestkit = crossProject.in(file("akka-js-stream-testkit"))
       rm_clash(srcTarget, jsSources)
     }
   ).jsSettings(
+    scalaJSOptimizerOptions ~= { _.withCheckScalaJSIR(true) },
     scalaJSStage in Global := FastOptStage,
     publishArtifact in (Test, packageBin) := true,
     //scalaJSOptimizerOptions ~= { _.withDisableOptimizer(true) },

@@ -56,6 +56,16 @@ object IrPatcherPlugin {
             }
           case _ => false
         }
+      } map { d =>
+        //this is to avoid copying position and to make akka-js-actor-ir-patches unreachable
+        implicit val pos = Position.NoPosition
+        d match {
+          case MethodDef(static, name, args, resultType, body) =>
+            new MethodDef(static, name, args, resultType, body)(Trees.OptimizerHints.empty, None)
+          case FieldDef(static, name, ftpe, mutable) =>
+            new FieldDef(static, name, ftpe, mutable)
+          case any => throw new Exception("Not defined")
+        }
       }
 
     val hackDefs =

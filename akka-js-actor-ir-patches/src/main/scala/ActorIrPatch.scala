@@ -2,15 +2,6 @@ package akka.actor
 
 trait ActorRef {}
 
-trait ActorContext {
-  def self: ActorRef
-}
-
-trait Actor {
-  implicit var context: ActorContext = null
-  implicit final var self: ActorRef = null
-}
-
 trait Props {}
 
 trait FunctionRef {}

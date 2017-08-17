@@ -17,19 +17,6 @@ private[akka] class ActorCell {
   var functionRefsCallMeDirectly: Map[String, akka.actor.FunctionRef] = _
 }
 
-private[akka] object LocalActorRefProvider {
-
-  private class Guardian {
-    implicit var context: ActorContext = null
-    implicit final var self: ActorRef = null
-  }
-
-  private class SystemGuardian {
-    implicit var context: ActorContext = null
-    implicit final var self: ActorRef = null
-  }
-}
-
 private[akka] class RepointableActorRef {
 
   var cellCallMeDirectly: Cell = _

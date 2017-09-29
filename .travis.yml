@@ -12,7 +12,7 @@ jdk:
 
 env:
   - TRAVIS_NODE_VERSION="7.10.1"
-  - TRAVIS_NODE_VERSION="8.4.0"
+  - TRAVIS_NODE_VERSION="8.6.0"
 
 install:
   - rm -rf ~/.nvm && git clone https://github.com/creationix/nvm.git ~/.nvm && (cd ~/.nvm && git checkout `git describe --abbrev=0 --tags`) && source ~/.nvm/nvm.sh && nvm install $TRAVIS_NODE_VERSION

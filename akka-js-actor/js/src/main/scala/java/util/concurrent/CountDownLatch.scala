@@ -4,7 +4,8 @@ class CountDownLatch(var count: Int) {
 
   def await() = ()
 
-  //def boolean await(long timeout, TimeUnit unit)
+  //this could be risky
+  def await(timeout: Long, unit: TimeUnit) = true
 
   def countDown(): Unit = count -= 1
 

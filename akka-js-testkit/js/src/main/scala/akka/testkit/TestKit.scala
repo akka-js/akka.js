@@ -661,6 +661,11 @@ trait TestKitBase {
     lastWasNoMsg = true
   }
 
+  /* TODO: port new TestKit structure */
+  def expectNoMessage(max: FiniteDuration) = {
+    expectNoMsg(max)
+  }
+
   /**
    * Receive a series of messages until one does not match the given partial
    * function or the idle timeout is met (disabled by default) or the overall

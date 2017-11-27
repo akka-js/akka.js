@@ -1,9 +1,9 @@
-val akkaJsVersion = "1.2.5.6"
-val akkaOriginalVersion = "v2.5.6"
+val akkaJsVersion = "1.2.5.7-SNAPSHOT"
+val akkaOriginalVersion = "v2.5.7"
 
 val commonSettings = Seq(
-    scalaVersion := "2.12.3",
-    crossScalaVersions  := Seq("2.12.3", "2.11.11"),
+    scalaVersion := "2.12.4",
+    crossScalaVersions  := Seq("2.12.4", "2.11.11"),
     organization := "org.akka-js",
     scalacOptions ++= Seq(
         "-deprecation",

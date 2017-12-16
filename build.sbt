@@ -1,4 +1,4 @@
-val akkaJsVersion = "1.2.5.8"
+val akkaJsVersion = "1.2.5.8-SNAPSHOT"
 val akkaOriginalVersion = "v2.5.8"
 
 val commonSettings = Seq(
@@ -169,6 +169,7 @@ lazy val akkaJsActor = crossProject.in(file("akka-js-actor"))
     scalaJSOptimizerOptions ~= { _.withCheckScalaJSIR(true) },
     libraryDependencies ++= Seq(
       "eu.unicredit" %%% "shocon" % "0.1.10",
+      // "eu.unicredit" %%% "shocon" % "0.2.0-SNAPSHOT",
       "org.scala-lang.modules" %% "scala-java8-compat" % "0.8.0" % "provided"
     ),
     libraryDependencies ++= Seq(
@@ -250,7 +251,7 @@ lazy val akkaJsTestkit = crossProject.in(file("akka-js-testkit"))
   .jsSettings(
     scalaJSOptimizerOptions ~= { _.withCheckScalaJSIR(true) },
     libraryDependencies ++= Seq(
-      "org.scalatest" %%% "scalatest" % "3.0.0" withSources ()
+      "org.scalatest" %%% "scalatest" % "3.0.4" withSources ()
     ),
     scalaJSStage in Global := FastOptStage,
     publishArtifact in (Test, packageBin) := true,
@@ -427,6 +428,138 @@ lazy val akkaJsStreamTestkit = crossProject.in(file("akka-js-stream-testkit"))
   ).dependsOn(akkaJsStreamTestkit % "test->test", akkaJsActorStream)
 
   lazy val akkaStreamTestJS = akkaStreamTest.js
+
+  lazy val akkaJsActorTyped = crossProject.in(file("akka-js-actor-typed"))
+    .settings(commonSettings : _*)
+    .settings(
+      version := akkaJsVersion,
+      akkaVersion := akkaOriginalVersion,
+      akkaTargetDir := file("akka-js-actor/js/target/") / "akkaSources" / akkaVersion.value,
+      assembleAkkaLibrary := {
+        getAkkaSources(akkaTargetDir.value, akkaVersion.value)
+        val srcTarget = file("akka-js-actor-typed/shared/src/main/scala")
+        copyToSourceFolder(
+          akkaTargetDir.value / "akka-typed" / "src" / "main" / "scala",
+          srcTarget
+        )
+
+        val jsSources = file("akka-js-actor-typed/js/src/main/scala")
+
+        rm_clash(srcTarget, jsSources)
+      },
+      fixResources := {
+        val compileConf = (resourceDirectory in Compile).value / "application.conf"
+        if (compileConf.exists)
+          IO.copyFile(
+            compileConf,
+            (classDirectory in Compile).value / "application.conf"
+          )
+        val testConf = (resourceDirectory in Test).value / "application.conf"
+        if (testConf.exists) {
+          IO.copyFile(
+            testConf,
+            (classDirectory in Test).value / "application.conf"
+          )
+        }
+      }
+    ).jsSettings(
+      useAnnotationAdderPluginSettings : _*
+    ).jsSettings(
+      publishSettings : _*
+    ).jsSettings(sonatypeSettings : _*
+    ).jsSettings(
+      scalaJSOptimizerOptions ~= { _.withCheckScalaJSIR(true) },
+      libraryDependencies ++= Seq(
+        "org.scala-lang.modules" %% "scala-java8-compat" % "0.8.0" % "provided"
+      ),
+      excludeDependencies += ("org.akka-js" %% "akkaactorjsirpatches"),
+      compile in Compile := {(compile in Compile).dependsOn(assembleAkkaLibrary, fixResources).value},
+      publishLocal := {publishLocal.dependsOn(assembleAkkaLibrary, fixResources).value},
+      PgpKeys.publishSigned := {PgpKeys.publishSigned.dependsOn(assembleAkkaLibrary, fixResources).value}
+    ).enablePlugins(spray.boilerplate.BoilerplatePlugin).dependsOn(akkaJsActor)
+
+  lazy val akkaJsActorTypedJS = akkaJsActorTyped.js.dependsOn(
+    akkaJsUnsafe % "provided"
+  )
+
+  lazy val akkaJsTypedTestkit = crossProject.in(file("akka-js-typed-testkit"))
+    .settings(commonSettings: _*)
+    .jsSettings(publishSettings : _*)
+    .jsSettings(sonatypeSettings : _*)
+    .settings(
+      // parallelExecution in Test := false,
+      version := akkaJsVersion,
+      akkaVersion := akkaOriginalVersion,
+      akkaTargetDir := file("akka-js-actor/js/target/") / "akkaSources" / akkaVersion.value,
+      assembleAkkaLibrary := {
+        getAkkaSources(akkaTargetDir.value, akkaVersion.value)
+        val srcTarget = file("akka-js-typed-testkit/shared/src/test/scala")
+        copyToSourceFolder(
+          akkaTargetDir.value / "akka-typed-testkit" / "src" / "test" / "scala",
+          srcTarget
+        )
+        copyToSourceFolder(
+          akkaTargetDir.value / "akka-typed-testkit" / "src" / "main" / "scala",
+          file("akka-js-typed-testkit/shared/src/main/scala")
+        )
+
+        // not needed
+        // val jsSources = file("akka-js-typed-testkit/js/src/test/scala")
+        // rm_clash(srcTarget, jsSources)
+      }
+    ).jsSettings(
+      scalaJSOptimizerOptions ~= { _.withCheckScalaJSIR(true) },
+      scalaJSStage in Global := FastOptStage,
+      publishArtifact in (Test, packageBin) := true,
+      //scalaJSOptimizerOptions ~= { _.withDisableOptimizer(true) },
+      //preLinkJSEnv := jsEnv.value,
+      //postLinkJSEnv := jsEnv.value.withSourceMap(true),
+      excludeDependencies += ("org.akka-js" %% "akkaactorjsirpatches"),
+      compile in Compile := {(compile in Compile).dependsOn(assembleAkkaLibrary).value},
+      publishLocal := {publishLocal.dependsOn(assembleAkkaLibrary).value},
+      PgpKeys.publishSigned := {PgpKeys.publishSigned.dependsOn(assembleAkkaLibrary).value}
+   ).dependsOn(akkaJsActorTyped, akkaJsTestkit % "*->*")
+
+   lazy val akkaJsTypedTestkitJS = akkaJsTypedTestkit.js
+
+   lazy val akkaTypedTest = crossProject.in(file("akka-js-typed-tests"))
+     .settings(commonSettings: _*)
+     .settings(
+       version := akkaJsVersion,
+       akkaVersion := akkaOriginalVersion,
+       akkaTargetDir := file("akka-js-actor/js/target/") / "akkaSources" / akkaVersion.value,
+       assembleAkkaLibrary := {
+         getAkkaSources(akkaTargetDir.value, akkaVersion.value)
+         val srcTarget = file("akka-js-typed-tests/shared/src/test/scala")
+         copyToSourceFolder(
+           akkaTargetDir.value / "akka-typed-tests" / "src" / "test" / "scala",
+           srcTarget
+         )
+
+         // not needed?
+         val jsSources = file("akka-js-typed-tests/js/src/test/scala")
+
+         rm_clash(srcTarget, jsSources)
+       }
+     ).jsSettings(
+       libraryDependencies ++= Seq(
+         "org.scalacheck" %%% "scalacheck" % "1.13.4" % "test"
+       ),
+       scalaJSStage in Global := FastOptStage,
+       publishArtifact in (Test, packageBin) := true
+       //scalaJSOptimizerOptions ~= { _.withDisableOptimizer(true) },
+       //preLinkJSEnv := jsEnv.value,
+       //postLinkJSEnv := jsEnv.value.withSourceMap(true)
+    ).jsSettings(
+         excludeDependencies += ("org.akka-js" %% "akkaactorjsirpatches"),
+         compile in Compile := {(compile in Compile).dependsOn(assembleAkkaLibrary).value},
+         publishLocal := {publishLocal.dependsOn(assembleAkkaLibrary).value}
+    ).dependsOn(akkaJsTypedTestkit % "test->test", akkaJsActorStream
+    ).jsConfigure(
+      _.enablePlugins(ScalaJSJUnitPlugin)
+    )
+
+    lazy val akkaTypedTestJS = akkaTypedTest.js
 
 //COMPILER PLUGINS SECTION
 

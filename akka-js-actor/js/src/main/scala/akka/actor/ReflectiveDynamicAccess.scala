@@ -25,7 +25,7 @@ class JSDynamicAccess(val classLoader: ClassLoader) extends DynamicAccess {
        dyn.declaredConstructors.find(_.parameterTypes == constructorClasses).map{ ctor =>
          ctor.newInstance(args.map(_._2): _*).asInstanceOf[A]
        }.getOrElse{
-         throw new InstantiationError(dyn.toString)
+         throw new InstantiationError("error trying to get instance for " + dyn.runtimeClass.getName + "\n" + dyn.toString)
        }
      } catch {
        case err: Exception => err.printStackTrace()

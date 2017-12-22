@@ -28,6 +28,11 @@ script:
   - sbt ++$TRAVIS_SCALA_VERSION -jvm-opts travis/jvmopts akkaJsStreamTestkitJS/test
   - sbt ++$TRAVIS_SCALA_VERSION -jvm-opts travis/jvmopts akkaStreamTestJS/test:fastOptJS
   - sbt ++$TRAVIS_SCALA_VERSION -jvm-opts travis/jvmopts akkaStreamTestJS/test
+  - sbt ++$TRAVIS_SCALA_VERSION -jvm-opts travis/jvmopts akkaJsTypedTestkitJS/test:fastOptJS
+  - sbt ++$TRAVIS_SCALA_VERSION -jvm-opts travis/jvmopts akkaJsTypedTestkitJS/test
+  - sbt ++$TRAVIS_SCALA_VERSION -jvm-opts travis/jvmopts akkaTypedTestJS/compile
+  - sbt ++$TRAVIS_SCALA_VERSION -jvm-opts travis/jvmopts akkaTypedTestJS/test:fastOptJS
+  - sbt ++$TRAVIS_SCALA_VERSION -jvm-opts travis/jvmopts akkaTypedTestJS/test
   # Tricks to avoid unnecessary cache updates, from
   # http://www.scala-sbt.org/0.13/docs/Travis-CI-with-sbt.html
   - find $HOME/.sbt -name "*.lock" | xargs rm

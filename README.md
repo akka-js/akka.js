@@ -31,6 +31,11 @@ libraryDependencies += "org.akka-js" %%% "akkajstestkit" % "1.2.5.8" % "test"
 libraryDependencies += "org.akka-js" %%% "akkajsstreamtestkit" % "1.2.5.8" % "test"
 ```
 
+You can test first port of Akka Typed using version `1.2.5.8-SNAPSHOT`:
+```scala
+libraryDependencies += "org.akka-js" %%% "akkajsactortyped" % "1.2.5.8-SNAPSHOT"
+libraryDependencies += "org.akka-js" %%% "akkajstypedtestkit" % "1.2.5.8-SNAPSHOT" % "test"
+```
 
 Please note that Akka.js 1.2.5.8 is shipped from the stable Akka 2.5.8.
 At this point you can use most of the Akka core Api as described in the official [docs](http://doc.akka.io/docs/akka/2.5.8/scala.html).

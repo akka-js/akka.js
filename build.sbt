@@ -1,5 +1,5 @@
-val akkaJsVersion = "1.2.5.8-SNAPSHOT"
-val akkaOriginalVersion = "v2.5.8"
+val akkaJsVersion = "1.2.5.9-SNAPSHOT"
+val akkaOriginalVersion = "v2.5.9"
 
 val commonSettings = Seq(
     scalaVersion := "2.12.4",
@@ -439,7 +439,7 @@ lazy val akkaJsStreamTestkit = crossProject.in(file("akka-js-stream-testkit"))
         getAkkaSources(akkaTargetDir.value, akkaVersion.value)
         val srcTarget = file("akka-js-actor-typed/shared/src/main/scala")
         copyToSourceFolder(
-          akkaTargetDir.value / "akka-typed" / "src" / "main" / "scala",
+          akkaTargetDir.value / "akka-actor-typed" / "src" / "main" / "scala",
           srcTarget
         )
 
@@ -495,17 +495,18 @@ lazy val akkaJsStreamTestkit = crossProject.in(file("akka-js-stream-testkit"))
         getAkkaSources(akkaTargetDir.value, akkaVersion.value)
         val srcTarget = file("akka-js-typed-testkit/shared/src/test/scala")
         copyToSourceFolder(
-          akkaTargetDir.value / "akka-typed-testkit" / "src" / "test" / "scala",
+          akkaTargetDir.value / "akka-testkit-typed" / "src" / "test" / "scala",
           srcTarget
         )
         copyToSourceFolder(
-          akkaTargetDir.value / "akka-typed-testkit" / "src" / "main" / "scala",
+          akkaTargetDir.value / "akka-testkit-typed" / "src" / "main" / "scala",
           file("akka-js-typed-testkit/shared/src/main/scala")
         )
 
-        // not needed
-        // val jsSources = file("akka-js-typed-testkit/js/src/test/scala")
-        // rm_clash(srcTarget, jsSources)
+        rm_clash(
+          file("akka-js-typed-testkit/shared/src/main/scala"),
+          file("akka-js-typed-testkit/js/src/main/scala")
+        )
       }
     ).jsSettings(
       scalaJSOptimizerOptions ~= { _.withCheckScalaJSIR(true) },
@@ -532,11 +533,10 @@ lazy val akkaJsStreamTestkit = crossProject.in(file("akka-js-stream-testkit"))
          getAkkaSources(akkaTargetDir.value, akkaVersion.value)
          val srcTarget = file("akka-js-typed-tests/shared/src/test/scala")
          copyToSourceFolder(
-           akkaTargetDir.value / "akka-typed-tests" / "src" / "test" / "scala",
+           akkaTargetDir.value / "akka-actor-typed-tests" / "src" / "test" / "scala",
            srcTarget
          )
 
-         // not needed?
          val jsSources = file("akka-js-typed-tests/js/src/test/scala")
 
          rm_clash(srcTarget, jsSources)
@@ -600,5 +600,8 @@ lazy val root = project.in(file(".")).settings(commonSettings: _*)
     akkaActorTestJS,
     akkaJsActorStreamJS,
     akkaJsStreamTestkitJS,
-    akkaStreamTestJS
+    akkaStreamTestJS,
+    akkaJsActorTypedJS,
+    akkaJsTypedTestkitJS,
+    akkaTypedTestJS
   )

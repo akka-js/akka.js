@@ -1,4 +1,4 @@
-package akka.typed
+package akka.actor.typed.internal
 
 object LineNumbers {
 

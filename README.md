@@ -17,28 +17,28 @@ Otherwise, if you want to start from scratch:
 First of all you need to setup a new [Scala.js project](https://www.scala-js.org/doc/project/).
 Then add to your JS project configuration:
 ```scala
-libraryDependencies += "org.akka-js" %%% "akkajsactor" % "1.2.5.8"
+libraryDependencies += "org.akka-js" %%% "akkajsactor" % "1.2.5.9"
 ```
 
 If you want to use Akka Stream:
 ```scala
-libraryDependencies += "org.akka-js" %%% "akkajsactorstream" % "1.2.5.8"
+libraryDependencies += "org.akka-js" %%% "akkajsactorstream" % "1.2.5.9"
 ```
 
 To test your code you can use:
 ```scala
-libraryDependencies += "org.akka-js" %%% "akkajstestkit" % "1.2.5.8" % "test"
-libraryDependencies += "org.akka-js" %%% "akkajsstreamtestkit" % "1.2.5.8" % "test"
+libraryDependencies += "org.akka-js" %%% "akkajstestkit" % "1.2.5.9" % "test"
+libraryDependencies += "org.akka-js" %%% "akkajsstreamtestkit" % "1.2.5.9" % "test"
 ```
 
-You can test first port of Akka Typed using version `1.2.5.8-SNAPSHOT`:
+You can test first port of Akka Typed using version `1.2.5.9`:
 ```scala
-libraryDependencies += "org.akka-js" %%% "akkajsactortyped" % "1.2.5.8-SNAPSHOT"
-libraryDependencies += "org.akka-js" %%% "akkajstypedtestkit" % "1.2.5.8-SNAPSHOT" % "test"
+libraryDependencies += "org.akka-js" %%% "akkajsactortyped" % "1.2.5.9"
+libraryDependencies += "org.akka-js" %%% "akkajstypedtestkit" % "1.2.5.9" % "test"
 ```
 
-Please note that Akka.js 1.2.5.8 is shipped from the stable Akka 2.5.8.
-At this point you can use most of the Akka core Api as described in the official [docs](http://doc.akka.io/docs/akka/2.5.8/scala.html).
+Please note that Akka.js 1.2.5.9 is shipped from the stable Akka 2.5.9.
+At this point you can use most of the Akka core Api as described in the official [docs](http://doc.akka.io/docs/akka/2.5.9/scala.html).
 
 Check out the @andreaTP session at Scala Days 2016:
 [slides](https://github.com/andreaTP/sd2016.git)
@@ -110,8 +110,10 @@ Since semantics difference to Akka on JVM we include a bunch of helpers to make 
 ```scala
 akkajs.Config.default // default configuration shipped with Akka.JS
 
-akka.testkit.TestKitBase.await() // to help on waiting during tests
-akka.testkit.TestKitBase.await(duration: Long) // with configurable duration
+akka.testkit.TestKitBase {
+  await() // to help on waiting during tests
+  await(duration: Long) // with configurable duration
+}
 ```
 
 To change default configuration logging level you can simply:
@@ -143,9 +145,13 @@ git clone https://github.com/unicredit/akka.js
 cd akka.js
 sbt akkaJsActorJS/publishLocal
 ```
-To have also the bleeding edge integration of akka-stream:
+To have also akka-stream:
 ```
 sbt akkaJsActorStreamJS/publishLocal
+```
+For the bleeding edge akka-typed
+```
+sbt akkaJsActorTypedJS/publishLocal
 ```
 
 ## Akka version

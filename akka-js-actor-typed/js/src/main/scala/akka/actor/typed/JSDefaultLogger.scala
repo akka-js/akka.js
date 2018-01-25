@@ -1,7 +1,8 @@
-package akka.typed
+package akka.actor.typed
 
 import akka.{ event ⇒ e }
 import akka.event.Logging.{ LogEvent, LogLevel, StdOutLogger }
+import akka.event.typed.Logger
 
 object JSDefaultLogger { // extends Logger with StdOutLogger {
   import Logger._

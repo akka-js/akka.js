@@ -1,29 +1,28 @@
 /**
  * Copyright (C) 2016-2018 Lightbend Inc. <http://www.lightbend.com/>
  */
-package akka.actor.typed
-package internal
+package akka.testkit.typed.internal
 
-import java.util.concurrent.ThreadFactory
+import java.util.concurrent.{ CompletionStage, ThreadFactory }
 
+import akka.actor.typed.internal.ActorRefImpl
+import akka.actor.typed.{ ActorRef, ActorSystem, Behavior, DispatcherSelector, Dispatchers, Extension, ExtensionId, Logger, Props, Settings, Terminated }
 import akka.annotation.InternalApi
-import akka.event.Logging
-import akka.event.typed.{ BusLogging, DefaultLoggingFilter, EventStream }
 import akka.util.Timeout
 import akka.{ actor ⇒ a, event ⇒ e }
 import com.typesafe.config.ConfigFactory
 
+// import scala.compat.java8.FutureConverters
 import scala.concurrent._
 
 /**
  * INTERNAL API
  */
-@InternalApi private[akka] class ActorSystemStub(val name: String)
+@InternalApi private[akka] final class ActorSystemStub(val name: String)
   extends ActorSystem[Nothing] with ActorRef[Nothing] with ActorRefImpl[Nothing] {
 
   override val path: a.ActorPath = a.RootActorPath(a.Address("akka", name)) / "user"
 
-  // override val settings: Settings = new Settings(getClass.getClassLoader, ConfigFactory.empty, name)
   override val settings: Settings = new Settings(null, ConfigFactory.empty, name)
 
   override def tell(msg: Nothing): Unit = throw new RuntimeException("must not send message to ActorSystemStub")
@@ -42,18 +41,8 @@ import scala.concurrent._
     def shutdown(): Unit = ()
   }
 
-  // override def dynamicAccess: a.DynamicAccess = new a.ReflectiveDynamicAccess(getClass.getClassLoader)
   override def dynamicAccess: a.DynamicAccess = new a.ReflectiveDynamicAccess(null)
-  override def eventStream: EventStream = new EventStream {
-    override def subscribe[T](subscriber: ActorRef[T], to: Class[T]) = false
-    override def setLogLevel(loglevel: Logging.LogLevel): Unit = {}
-    override def logLevel = Logging.InfoLevel
-    override def unsubscribe[T](subscriber: ActorRef[T], from: Class[T]) = false
-    override def unsubscribe[T](subscriber: ActorRef[T]): Unit = {}
-    override def publish[T](event: T): Unit = {}
-  }
-  override def logFilter: e.LoggingFilter = new DefaultLoggingFilter(settings, eventStream)
-  override def log: e.LoggingAdapter = new BusLogging(eventStream, path.parent.toString, getClass, logFilter)
+
   override def logConfiguration(): Unit = log.info(settings.toString)
 
   override def scheduler: a.Scheduler = throw new UnsupportedOperationException("no scheduler")
@@ -64,6 +53,7 @@ import scala.concurrent._
     terminationPromise.future
   }
   override def whenTerminated: Future[akka.actor.typed.Terminated] = terminationPromise.future
+  override def getWhenTerminated: CompletionStage[Terminated] = ??? // FutureConverters.toJava(whenTerminated)
   override val startTime: Long = System.currentTimeMillis()
   override def uptime: Long = System.currentTimeMillis() - startTime
   override def threadFactory: java.util.concurrent.ThreadFactory = new ThreadFactory {
@@ -84,4 +74,6 @@ import scala.concurrent._
 
   def hasExtension(ext: ExtensionId[_ <: Extension]): Boolean =
     throw new UnsupportedOperationException("ActorSystemStub cannot register extensions")
+
+  def log: Logger = new StubbedLogger
 }

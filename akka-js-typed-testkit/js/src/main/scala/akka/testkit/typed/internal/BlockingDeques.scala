@@ -1,4 +1,4 @@
-package akka.testkit.typed.scaladsl
+package akka.testkit.typed.internal
 
 import java.util.concurrent.BlockingDeque
 import java.util.ArrayDeque

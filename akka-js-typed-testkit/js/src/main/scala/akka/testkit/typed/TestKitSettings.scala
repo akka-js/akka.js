@@ -21,6 +21,19 @@ object TestKitSettings {
    */
   def apply(config: Config): TestKitSettings =
     new TestKitSettings(config)
+
+  /**
+   * Java API: Reads configuration settings from `akka.actor.typed.test` section.
+   */
+  def create(system: ActorSystem[_]): TestKitSettings =
+    apply(system)
+
+  /**
+   * Reads configuration settings from given `Config` that
+   * must have the same layout as the `akka.actor.typed.test` section.
+   */
+  def create(config: Config): TestKitSettings =
+    new TestKitSettings(config)
 }
 
 class TestKitSettings(val config: Config) {
@@ -35,4 +48,9 @@ class TestKitSettings(val config: Config) {
   val TestTimeFactor = 3.0
   val SingleExpectDefaultTimeout: FiniteDuration = 5 seconds
   val DefaultTimeout: Timeout = Timeout(8 seconds)
+  val ExpectNoMessageDefaultTimeout = 500 millis
+  val DefaultActorSystemShutdownTimeout: FiniteDuration = 3 seconds
+  val ThrowOnShutdownTimeout: Boolean = false
+
+  def dilated(duration: FiniteDuration): FiniteDuration = (duration * TestTimeFactor).asInstanceOf[FiniteDuration]
 }

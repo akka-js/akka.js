@@ -59,7 +59,7 @@ trait ActorTestKit {
    * Actor system name based on the test it is mixed into, override to customize, or pass to constructor
    * if using [[ActorTestKit]] rather than [[ActorTestKit]]
    */
-  protected def name: String = TestKitUtils.testNameFromCallStack(classOf[ActorTestKit])
+  protected def name: String = TestKitUtils.testNameFromCallStack(classOf[ActorTestKit]) + "Spec"
 
   /**
    * Configuration the actor system is created with, override to customize, or pass to constructor
@@ -72,9 +72,29 @@ trait ActorTestKit {
    */
   protected implicit def testkitSettings = TestKitSettings(system)
 
-  private val internalSystem: ActorSystem[ActorTestKitGuardian.TestKitCommand] =
-    if (config eq ActorTestKit.noConfigSet) ActorSystem(ActorTestKitGuardian.testKitGuardian, name)
-    else ActorSystem(ActorTestKitGuardian.testKitGuardian, name, config)
+  private val internalSystem: ActorSystem[ActorTestKitGuardian.TestKitCommand] = {
+    akka.testkit.ManagedEventLoop.manage
+
+    val sys =
+      // original implementation
+      if (config eq ActorTestKit.noConfigSet) ActorSystem(ActorTestKitGuardian.testKitGuardian, name)
+      else ActorSystem(ActorTestKitGuardian.testKitGuardian, name, config)
+
+    val p = scala.concurrent.Promise[ActorSystem[ActorTestKitGuardian.TestKitCommand]]
+
+    // import sys.scheduler.dispatcher
+    import scala.concurrent.ExecutionContext.Implicits.global
+    sys.scheduler.scheduleOnce(0 millis){
+      p.success(sys)
+    }
+
+    akka.testkit.Await.result(p.future, 10 seconds)
+
+    // akka.testkit.ManagedEventLoop.reset
+    // cannot doit they are still having blocking stuffs here and there
+    sys
+  }
+
 
   implicit final def system: ActorSystem[Nothing] = internalSystem
 
@@ -82,6 +102,25 @@ trait ActorTestKit {
   private val childName: Iterator[String] = Iterator.from(0).map(_.toString)
 
   implicit val timeout = testkitSettings.DefaultTimeout
+
+  /* hacking scalatest to re-use my Await */
+  // import scala.util.{Success, Failure}
+  // implicit class FutureConcept[T](scalaFuture: scala.concurrent.Future[T]) {
+  //   def eitherValue: Option[Either[Throwable, T]] =
+  //       scalaFuture.value.map {
+  //         case Success(o) => Right(o)
+  //         case Failure(e) => Left(e)
+  //       }
+  //   def isExpired: Boolean = false // Scala Futures themselves don't support the notion of a timeout
+  //   def isCanceled: Boolean = false // Scala Futures don't seem to be cancelable either
+  //   def futureValue(): T = {
+  //     // try
+  //     akka.testkit.Await.ready(scalaFuture, 3 seconds).asInstanceOf[T] // to make it configurable ...
+  //     // catch {
+  //     //   case e: TimeoutException =>
+  //     // }
+  //   }
+  // }
 
   final def shutdownTestKit(): Unit = {
     ActorTestKit.shutdown(

@@ -506,6 +506,11 @@ lazy val akkaJsStreamTestkit = crossProject.in(file("akka-js-stream-testkit"))
           file("akka-js-typed-testkit/shared/src/main/scala"),
           file("akka-js-typed-testkit/js/src/main/scala")
         )
+
+        rm_clash(
+          file("akka-js-typed-testkit/shared/src/test/scala"),
+          file("akka-js-typed-testkit/js/src/test/scala")
+        )
       }
     ).jsSettings(
       scalaJSOptimizerOptions ~= { _.withCheckScalaJSIR(true) },

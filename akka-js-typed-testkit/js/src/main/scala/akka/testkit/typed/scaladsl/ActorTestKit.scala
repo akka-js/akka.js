@@ -59,7 +59,7 @@ trait ActorTestKit {
    * Actor system name based on the test it is mixed into, override to customize, or pass to constructor
    * if using [[ActorTestKit]] rather than [[ActorTestKit]]
    */
-  protected def name: String = TestKitUtils.testNameFromCallStack(classOf[ActorTestKit]) + "Spec"
+  protected def name: String = TestKitUtils.testNameFromCallStack(this.getClass)
 
   /**
    * Configuration the actor system is created with, override to customize, or pass to constructor

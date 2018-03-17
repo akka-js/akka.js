@@ -1,4 +1,4 @@
-val akkaJsVersion = "1.2.5.11-SNAPSHOT"
+val akkaJsVersion = "1.2.5.11"
 val akkaOriginalVersion = "v2.5.11"
 
 val commonSettings = Seq(

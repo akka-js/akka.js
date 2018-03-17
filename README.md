@@ -31,7 +31,7 @@ libraryDependencies += "org.akka-js" %%% "akkajstestkit" % "1.2.5.11" % "test"
 libraryDependencies += "org.akka-js" %%% "akkajsstreamtestkit" % "1.2.5.11" % "test"
 ```
 
-You can test first port of Akka Typed using version `1.2.5.11`:
+You can also use cutting edge Akka Typed:
 ```scala
 libraryDependencies += "org.akka-js" %%% "akkajsactortyped" % "1.2.5.11"
 libraryDependencies += "org.akka-js" %%% "akkajstypedtestkit" % "1.2.5.11" % "test"

@@ -153,7 +153,14 @@ class Dispatchers(val settings: ActorSystem.Settings, val prerequisites: Dispatc
 
   private def idConfig(id: String): Config = {
     import scala.collection.JavaConverters._
-    ConfigFactory.parseString(s"id = $id")
+    // ConfigFactory.parseString(s"id = $id")
+    com.typesafe.config.Config(
+      eu.unicredit.shocon.Config.Object(
+        Map(
+          "id" -> eu.unicredit.shocon.Config.StringLiteral(id)
+        )
+      )
+    )
   }
 
   /**

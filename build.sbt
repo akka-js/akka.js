@@ -168,7 +168,7 @@ lazy val akkaJsActor = crossProject.in(file("akka-js-actor"))
    ).jsSettings(
     scalaJSOptimizerOptions ~= { _.withCheckScalaJSIR(true) },
     libraryDependencies ++= Seq(
-      "org.akka-js" %%% "shocon" % "0.2.1",
+      "org.akka-js" %%% "shocon" % "0.3.0-SNAPSHOT",
       "org.scala-lang.modules" %% "scala-java8-compat" % "0.8.0" % "provided"
     ),
     libraryDependencies ++= Seq(

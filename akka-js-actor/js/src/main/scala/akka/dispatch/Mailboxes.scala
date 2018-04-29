@@ -65,8 +65,6 @@ private[akka] class Mailboxes(
     //             s"[${v}] in config can't be loaded due to [${e.getMessage}]", e)
     //       }.get
     //   }
-
-    // verify is stashing still works
     Map()
   }
 

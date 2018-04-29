@@ -1,6 +1,7 @@
 /**
- * Copyright (C) 2009-2018 Lightbend Inc. <http://www.lightbend.com>
+ * Copyright (C) 2009-2018 Lightbend Inc. <https://www.lightbend.com>
  */
+
 package akka.testkit.typed.internal
 
 import akka.actor.typed.scaladsl.Behaviors
@@ -19,7 +20,7 @@ private[akka] object ActorTestKitGuardian {
   final case class SpawnActor[T](name: String, behavior: Behavior[T], replyTo: ActorRef[ActorRef[T]], props: Props) extends TestKitCommand
   final case class SpawnActorAnonymous[T](behavior: Behavior[T], replyTo: ActorRef[ActorRef[T]], props: Props) extends TestKitCommand
 
-  val testKitGuardian: Behavior[TestKitCommand] = Behaviors.immutable[TestKitCommand] {
+  val testKitGuardian: Behavior[TestKitCommand] = Behaviors.receive[TestKitCommand] {
     case (ctx, SpawnActor(name, behavior, reply, props)) ⇒
       reply ! ctx.spawn(behavior, name, props)
       Behaviors.same
@@ -40,21 +41,25 @@ private[akka] object TestKitUtils {
 
   def testNameFromCallStack(classToStartFrom: Class[_]): String = {
     val startFrom = classToStartFrom.getName
-    // val filteredStack = Thread.currentThread.getStackTrace.toIterator
-    //   .map(_.getClassName)
-    //   // drop until we find the first occurence of classToStartFrom
-    //   .dropWhile(!_.startsWith(startFrom))
-    //   // then continue to the next entry after classToStartFrom that makes sense
-    //   .dropWhile {
-    //     case `startFrom`                            ⇒ true
-    //     case str if str.startsWith(startFrom + "$") ⇒ true // lambdas inside startFrom etc
-    //     case TestKitRegex()                         ⇒ true // testkit internals
-    //     case _                                      ⇒ false
-    //   }
-    //
-    // // sanitize for actor system name
-    // filteredStack.next().replaceFirst(""".*\.""", "").replaceAll("[^a-zA-Z_0-9]", "_")
-    startFrom.replaceFirst(""".*\.""", "").replaceAll("[^a-zA-Z_0-9]", "_")
+    /*
+    val filteredStack = Thread.currentThread.getStackTrace.toIterator
+      .map(_.getClassName)
+      // drop until we find the first occurence of classToStartFrom
+      .dropWhile(!_.startsWith(startFrom))
+      // then continue to the next entry after classToStartFrom that makes sense
+      .dropWhile {
+        case `startFrom`                            ⇒ true
+        case str if str.startsWith(startFrom + "$") ⇒ true // lambdas inside startFrom etc
+        case TestKitRegex()                         ⇒ true // testkit internals
+        case _                                      ⇒ false
+      }
+    */
+    // sanitize for actor system name
+    // filteredStack.next()
+    startFrom
+      .replaceFirst("""^.*\.""", "") // drop package name
+      .replaceAll("""\$\$?\w+""", "") // drop scala anonymous functions/classes
+      .replaceAll("[^a-zA-Z_0-9]", "_")
   }
 
   def shutdown(

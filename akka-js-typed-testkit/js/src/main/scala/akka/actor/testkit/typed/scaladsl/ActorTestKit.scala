@@ -1,10 +1,10 @@
-package akka.testkit.typed.scaladsl
+package akka.actor.testkit.typed.scaladsl
 
 import akka.actor.typed.scaladsl.AskPattern._
 import akka.actor.typed.{ ActorRef, ActorSystem, Behavior, Props }
 import akka.annotation.{ ApiMayChange, InternalApi }
-import akka.testkit.typed.TestKitSettings
-import akka.testkit.typed.internal.{ ActorTestKitGuardian, TestKitUtils }
+import akka.actor.testkit.typed.TestKitSettings
+import akka.actor.testkit.typed.internal.{ ActorTestKitGuardian, TestKitUtils }
 import com.typesafe.config.{ Config, ConfigFactory }
 
 import scala.concurrent.Await

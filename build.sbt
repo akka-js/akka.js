@@ -494,11 +494,11 @@ lazy val akkaJsStreamTestkit = crossProject.in(file("akka-js-stream-testkit"))
         getAkkaSources(akkaTargetDir.value, akkaVersion.value)
         val srcTarget = file("akka-js-typed-testkit/shared/src/test/scala")
         copyToSourceFolder(
-          akkaTargetDir.value / "akka-testkit-typed" / "src" / "test" / "scala",
+          akkaTargetDir.value / "akka-actor-testkit-typed" / "src" / "test" / "scala",
           srcTarget
         )
         copyToSourceFolder(
-          akkaTargetDir.value / "akka-testkit-typed" / "src" / "main" / "scala",
+          akkaTargetDir.value / "akka-actor-testkit-typed" / "src" / "main" / "scala",
           file("akka-js-typed-testkit/shared/src/main/scala")
         )
 

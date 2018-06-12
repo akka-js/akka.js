@@ -257,9 +257,9 @@ private[akka] class Mailboxes(
   private def config(id: String): Config = {
     import scala.collection.JavaConverters._
     com.typesafe.config.Config(
-      eu.unicredit.shocon.Config.Object(
+      org.akkajs.shocon.Config.Object(
         Map(
-          "id" -> eu.unicredit.shocon.Config.StringLiteral(id)
+          "id" -> org.akkajs.shocon.Config.StringLiteral(id)
         )
       )
     )

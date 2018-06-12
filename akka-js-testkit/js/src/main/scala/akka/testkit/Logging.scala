@@ -17,4 +17,8 @@ object Logging {
   object Error {
     val NoCause = akka.event.Logging.Error.NoCause
   }
+
+  type MDC = Map[String, Any]
+
+  val emptyMDC: MDC = Map()
 }

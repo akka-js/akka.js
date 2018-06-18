@@ -1,5 +1,5 @@
-val akkaJsVersion = "1.2.5.12"
-val akkaOriginalVersion = "v2.5.12"
+val akkaJsVersion = "1.2.5.13"
+val akkaOriginalVersion = "v2.5.13"
 
 val commonSettings = Seq(
     scalaVersion := "2.12.4",
@@ -168,7 +168,7 @@ lazy val akkaJsActor = crossProject.in(file("akka-js-actor"))
    ).jsSettings(
     scalaJSOptimizerOptions ~= { _.withCheckScalaJSIR(true) },
     libraryDependencies ++= Seq(
-      "org.akka-js" %%% "shocon" % "0.2.1",
+      "org.akka-js" %%% "shocon" % "0.3.1",
       "org.scala-lang.modules" %% "scala-java8-compat" % "0.8.0" % "provided"
     ),
     libraryDependencies ++= Seq(
@@ -494,11 +494,11 @@ lazy val akkaJsStreamTestkit = crossProject.in(file("akka-js-stream-testkit"))
         getAkkaSources(akkaTargetDir.value, akkaVersion.value)
         val srcTarget = file("akka-js-typed-testkit/shared/src/test/scala")
         copyToSourceFolder(
-          akkaTargetDir.value / "akka-testkit-typed" / "src" / "test" / "scala",
+          akkaTargetDir.value / "akka-actor-testkit-typed" / "src" / "test" / "scala",
           srcTarget
         )
         copyToSourceFolder(
-          akkaTargetDir.value / "akka-testkit-typed" / "src" / "main" / "scala",
+          akkaTargetDir.value / "akka-actor-testkit-typed" / "src" / "main" / "scala",
           file("akka-js-typed-testkit/shared/src/main/scala")
         )
 

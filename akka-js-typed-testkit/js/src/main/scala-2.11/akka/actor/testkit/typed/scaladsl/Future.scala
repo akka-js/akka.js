@@ -1,4 +1,4 @@
-package akka.testkit.typed.scaladsl
+package akka.actor.testkit.typed.scaladsl
 
 import scala.concurrent.duration._
 // fixing the hard way

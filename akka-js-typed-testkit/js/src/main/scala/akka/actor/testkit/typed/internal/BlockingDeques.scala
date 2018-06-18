@@ -1,4 +1,4 @@
-package akka.testkit.typed.internal
+package akka.actor.testkit.typed.internal
 
 import java.util.concurrent.BlockingDeque
 import java.util.ArrayDeque

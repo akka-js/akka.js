@@ -1,4 +1,4 @@
-package akka.testkit.typed.scaladsl
+package akka.actor.testkit.typed.internal
 
 import scala.concurrent.Future
 import scala.concurrent.duration.Duration

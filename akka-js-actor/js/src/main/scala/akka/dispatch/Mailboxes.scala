@@ -50,21 +50,22 @@ private[akka] class Mailboxes(
   private val mailboxTypeConfigurators = new ConcurrentHashMap[String, MailboxType]
 
   private val mailboxBindings: Map[Class[_ <: Any], String] = {
-    import scala.collection.JavaConverters._
-    settings.config.getConfig("akka.actor.mailbox.requirements").root.unwrapped.asScala
-      .toMap.foldLeft(Map.empty[Class[_ <: Any], String]) {
-        case (m, (k, v)) ⇒
-          val mt = settings.config.getString(v+".mailbox-type")
-          dynamicAccess.getClassFor[Any](mt).map {
-            case x ⇒ m.updated(x, v.toString)
-          //dynamicAccess.getClassFor[Any](k).map {
-          //  case x ⇒ m.updated(x, v.toString)
-          }.recover {
-            case e ⇒
-              throw new ConfigurationException(s"Type [${k}] specified as akka.actor.mailbox.requirement " +
-                s"[${v}] in config can't be loaded due to [${e.getMessage}]", e)
-          }.get
-      }
+    // import scala.collection.JavaConverters._
+    // settings.config.getConfig("akka.actor.mailbox.requirements").root.unwrapped.asScala
+    //   .toMap.foldLeft(Map.empty[Class[_ <: Any], String]) {
+    //     case (m, (k, v)) ⇒
+    //       val mt = settings.config.getString(v+".mailbox-type")
+    //       dynamicAccess.getClassFor[Any](mt).map {
+    //         case x ⇒ m.updated(x, v.toString)
+    //       //dynamicAccess.getClassFor[Any](k).map {
+    //       //  case x ⇒ m.updated(x, v.toString)
+    //       }.recover {
+    //         case e ⇒
+    //           throw new ConfigurationException(s"Type [${k}] specified as akka.actor.mailbox.requirement " +
+    //             s"[${v}] in config can't be loaded due to [${e.getMessage}]", e)
+    //       }.get
+    //   }
+    Map()
   }
 
   /**
@@ -254,10 +255,15 @@ private[akka] class Mailboxes(
 
   //INTERNAL API
   private def config(id: String): Config = {
-    import scala.collection.JavaConverters._
-    ConfigFactory.parseString(s"""{ id = $id }""")//(new java.util.HashMap("id" → id))//.asJava)
-      .withFallback(settings.config.getConfig(id))
-      .withFallback(defaultMailboxConfig)
+    com.typesafe.config.Config(
+      org.akkajs.shocon.Config.Object(
+        Map(
+          "id" -> org.akkajs.shocon.Config.StringLiteral(id)
+        )
+      )
+    )
+    .withFallback(settings.config.getConfig(id))
+    .withFallback(defaultMailboxConfig)
   }
 
   private val stashCapacityCache = new AtomicReference[Map[String, Int]](Map.empty[String, Int])

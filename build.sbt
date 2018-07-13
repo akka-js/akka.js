@@ -1,5 +1,5 @@
-val akkaJsVersion = "1.2.5.13"
-val akkaOriginalVersion = "v2.5.13"
+val akkaJsVersion = "1.2.5.14-SNAPSHOT"
+val akkaOriginalVersion = "v2.5.14"
 
 val commonSettings = Seq(
     scalaVersion := "2.12.4",
@@ -516,6 +516,9 @@ lazy val akkaJsStreamTestkit = crossProject.in(file("akka-js-stream-testkit"))
       scalaJSOptimizerOptions ~= { _.withCheckScalaJSIR(true) },
       scalaJSStage in Global := FastOptStage,
       publishArtifact in (Test, packageBin) := true,
+      libraryDependencies ++= Seq(
+        "org.scala-lang.modules" %% "scala-java8-compat" % "0.8.0" % "provided"
+      ),
       //scalaJSOptimizerOptions ~= { _.withDisableOptimizer(true) },
       //preLinkJSEnv := jsEnv.value,
       //postLinkJSEnv := jsEnv.value.withSourceMap(true),

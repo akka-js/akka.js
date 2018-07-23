@@ -26,6 +26,13 @@ val commonSettings = Seq(
 val publishSettings = Seq(
   publishMavenStyle := true,
   pomIncludeRepository := { x => false },
+  publishTo := {
+    val nexus = "https://oss.sonatype.org/"
+    if (isSnapshot.value)
+      Some("snapshots" at nexus + "content/repositories/snapshots")
+    else
+      Some("releases"  at nexus + "service/local/staging/deploy/maven2")
+  },
   credentials += Credentials(Path.userHome / ".ivy2" / "sonatype.credentials"),
   pomExtra := {
     <url>https://github.com/unicredit/akka.js</url>
@@ -189,7 +196,6 @@ lazy val akkaJsActor = crossProject.in(file("akka-js-actor"))
     useAnnotationAdderPluginSettings : _*
   ).jsSettings(
     publishSettings : _*
-  ).jsSettings(sonatypeSettings : _*
   ).jsSettings(
     excludeDependencies += ("org.akka-js" %% "akkaactorjsirpatches"),
     compile in Compile := {(compile in Compile).dependsOn(assembleAkkaLibrary, fixResources).value},
@@ -245,7 +251,6 @@ lazy val akkaJsTestkit = crossProject.in(file("akka-js-testkit"))
       }
     }
   ).jsSettings(publishSettings : _*)
-  .jsSettings(sonatypeSettings : _*)
   .jsSettings(useAnnotationAdderPluginSettings : _*)
   .jsSettings(
     scalaJSOptimizerOptions ~= { _.withCheckScalaJSIR(true) },
@@ -339,7 +344,6 @@ lazy val akkaJsActorStream = crossProject.in(file("akka-js-actor-stream"))
     useAnnotationAdderPluginSettings : _*
   ).jsSettings(
     publishSettings : _*
-  ).jsSettings(sonatypeSettings : _*
   ).jsSettings(
     scalaJSOptimizerOptions ~= { _.withCheckScalaJSIR(true) },
     libraryDependencies ++= Seq(
@@ -356,7 +360,6 @@ lazy val akkaJsActorStreamJS = akkaJsActorStream.js
 lazy val akkaJsStreamTestkit = crossProject.in(file("akka-js-stream-testkit"))
   .settings(commonSettings: _*)
   .jsSettings(publishSettings : _*)
-  .jsSettings(sonatypeSettings : _*)
   .settings(
     // parallelExecution in Test := false,
     version := akkaJsVersion,
@@ -465,7 +468,6 @@ lazy val akkaJsStreamTestkit = crossProject.in(file("akka-js-stream-testkit"))
       useAnnotationAdderPluginSettings : _*
     ).jsSettings(
       publishSettings : _*
-    ).jsSettings(sonatypeSettings : _*
     ).jsSettings(
       scalaJSOptimizerOptions ~= { _.withCheckScalaJSIR(true) },
       libraryDependencies ++= Seq(
@@ -484,7 +486,6 @@ lazy val akkaJsStreamTestkit = crossProject.in(file("akka-js-stream-testkit"))
   lazy val akkaJsTypedTestkit = crossProject.in(file("akka-js-typed-testkit"))
     .settings(commonSettings: _*)
     .jsSettings(publishSettings : _*)
-    .jsSettings(sonatypeSettings : _*)
     .settings(
       // parallelExecution in Test := false,
       version := akkaJsVersion,
@@ -614,7 +615,6 @@ lazy val akkaJsStreamTestkit = crossProject.in(file("akka-js-stream-testkit"))
       useAnnotationAdderPluginSettings : _*
     ).jsSettings(
       publishSettings : _*
-    ).jsSettings(sonatypeSettings : _*
     ).jsSettings(
       scalaJSStage in Global := FastOptStage,
       publishArtifact in (Test, packageBin) := true,

@@ -568,6 +568,71 @@ lazy val akkaJsStreamTestkit = crossProject.in(file("akka-js-stream-testkit"))
 
     lazy val akkaTypedTestJS = akkaTypedTest.js
 
+  lazy val akkaJsActorStreamTyped = crossProject.in(file("akka-js-stream-typed"))
+    .settings(commonSettings : _*)
+    .settings(
+      version := akkaJsVersion,
+      akkaVersion := akkaOriginalVersion,
+      akkaTargetDir := file("akka-js-actor/js/target/") / "akkaSources" / akkaVersion.value,
+      assembleAkkaLibrary := {
+        getAkkaSources(akkaTargetDir.value, akkaVersion.value)
+        val srcTarget = file("akka-js-stream-typed/shared/src/main/scala")
+        copyToSourceFolder(
+          akkaTargetDir.value / "akka-stream-typed" / "src" / "main" / "scala",
+          srcTarget
+        )
+        val testTarget = file("akka-js-stream-typed/shared/src/test/scala")
+        copyToSourceFolder(
+          akkaTargetDir.value / "akka-stream-typed" / "src" / "test" / "scala",
+          testTarget
+        )
+
+        val jsSources = file("akka-js-stream-typed/js/src/main/scala")
+
+        rm_clash(srcTarget, jsSources)
+
+        val jsTests = file("akka-js-stream-typed/js/src/test/scala")
+
+        rm_clash(testTarget, jsTests)
+      },
+      fixResources := {
+        val compileConf = (resourceDirectory in Compile).value / "application.conf"
+        if (compileConf.exists)
+          IO.copyFile(
+            compileConf,
+            (classDirectory in Compile).value / "application.conf"
+          )
+        val testConf = (resourceDirectory in Test).value / "application.conf"
+        if (testConf.exists) {
+          IO.copyFile(
+            testConf,
+            (classDirectory in Test).value / "application.conf"
+          )
+        }
+      }
+    ).jsSettings(
+      useAnnotationAdderPluginSettings : _*
+    ).jsSettings(
+      publishSettings : _*
+    ).jsSettings(sonatypeSettings : _*
+    ).jsSettings(
+      scalaJSStage in Global := FastOptStage,
+      publishArtifact in (Test, packageBin) := true,
+      scalaJSOptimizerOptions ~= { _.withCheckScalaJSIR(true) },
+      excludeDependencies += ("org.akka-js" %% "akkaactorjsirpatches"),
+      compile in Compile := {(compile in Compile).dependsOn(assembleAkkaLibrary, fixResources).value},
+      publishLocal := {publishLocal.dependsOn(assembleAkkaLibrary, fixResources).value}
+    ).dependsOn(
+      akkaJsActorStream,
+      akkaJsActorTyped,
+      akkaJsTypedTestkit % "test->test",
+      akkaTypedTest % "test->test", // to report upstream
+      akkaJsStreamTestkit % "test->test"
+    )
+
+    lazy val akkaJsActorStreamTypedJS = akkaJsActorStreamTyped.js
+
+
 //COMPILER PLUGINS SECTION
 
 //add scala.js annotations to proper classes

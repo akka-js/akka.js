@@ -1,14 +1,12 @@
-val scalaJsVersion = "0.6.20"
+val scalaJsVersion = "0.6.24"
 
 addSbtPlugin("org.scala-js" % "sbt-scalajs" % scalaJsVersion)
 
-addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "0.2.2")
+addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "2.3")
 
-addSbtPlugin("com.typesafe.sbt" % "sbt-pgp" % "0.8.3")
+addSbtPlugin("com.jsuereth" % "sbt-pgp" % "1.1.0")
 
-addSbtPlugin("io.spray" % "sbt-boilerplate" % "0.6.0")
-
-addSbtPlugin("com.eed3si9n" % "sbt-dirty-money" % "0.1.0")
+addSbtPlugin("io.spray" % "sbt-boilerplate" % "0.6.1")
 
 libraryDependencies ++= Seq(
   "org.eclipse.jgit" % "org.eclipse.jgit.pgm" % "3.2.0.201312181205-r",

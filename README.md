@@ -159,6 +159,9 @@ For the bleeding edge akka-typed
 ```
 sbt akkaJsActorTypedJS/publishLocal
 ```
+## Built with Akka.js
+
+  - [akka-ui](https://github.com/pishen/akka-ui) FRP with Akka.js
 
 ## Akka version
 

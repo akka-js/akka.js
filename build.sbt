@@ -1,4 +1,4 @@
-val akkaJsVersion = "1.2.5.16-SNAPSHOT"
+val akkaJsVersion = "1.2.5.16"
 val akkaOriginalVersion = "v2.5.16"
 
 val commonSettings = Seq(
@@ -675,5 +675,6 @@ lazy val root = project.in(file(".")).settings(commonSettings: _*)
     akkaStreamTestJS,
     akkaJsActorTypedJS,
     akkaJsTypedTestkitJS,
-    akkaTypedTestJS
+    akkaTypedTestJS,
+    akkaJsActorStreamTypedJS
   )

@@ -62,6 +62,18 @@ private[akka] object TestKitUtils {
       .replaceAll("[^a-zA-Z_0-9]", "_")
   }
 
+  /**
+   * Sanitize the `name` to be used as valid actor system name by
+   * replacing invalid characters. `name` may for example be a fully qualified
+   * class name and then the short class name will be used.
+   */
+  def scrubActorSystemName(name: String): String = {
+    name
+      .replaceFirst("""^.*\.""", "") // drop package name
+      .replaceAll("""\$\$?\w+""", "") // drop scala anonymous functions/classes
+      .replaceAll("[^a-zA-Z_0-9]", "_")
+  }
+
   def shutdown(
     system:                  ActorSystem[_],
     timeout:                 Duration,

@@ -126,10 +126,26 @@ final class ActorTestKit private[akka] (val name: String, val config: Config, se
   implicit def testKitSettings: TestKitSettings =
     settings.getOrElse(TestKitSettings(system))
 
-  private val internalSystem: ActorSystem[ActorTestKitGuardian.TestKitCommand] =
-    if (config eq ActorTestKit.noConfigSet) ActorSystem(ActorTestKitGuardian.testKitGuardian, name)
-    else ActorSystem(ActorTestKitGuardian.testKitGuardian, name, config)
+  private val internalSystem: ActorSystem[ActorTestKitGuardian.TestKitCommand] = {
+    akka.testkit.ManagedEventLoop.manage
 
+     val sys =
+      // original implementation
+      if (config eq ActorTestKit.noConfigSet) ActorSystem(ActorTestKitGuardian.testKitGuardian, name)
+      else ActorSystem(ActorTestKitGuardian.testKitGuardian, name, config)
+
+     val p = scala.concurrent.Promise[ActorSystem[ActorTestKitGuardian.TestKitCommand]]
+     // import sys.scheduler.dispatcher
+    import scala.concurrent.ExecutionContext.Implicits.global
+    sys.scheduler.scheduleOnce(0 millis){
+      p.success(sys)
+    }
+     akka.testkit.Await.result(p.future, 10 seconds)
+     // akka.testkit.ManagedEventLoop.reset
+    // cannot doit they are still having blocking stuffs here and there
+    sys
+  }
+   
   implicit def system: ActorSystem[Nothing] = internalSystem
 
   implicit def scheduler: Scheduler = system.scheduler

@@ -42,7 +42,6 @@ class ActorFlowSpec extends ScalaTestWithActorTestKit with WordSpecLike {
     })
 
     "produce asked elements" in {
-      println("start")
       val in: Future[immutable.Seq[Reply]] =
         Source.repeat("hello")
           .via(ActorFlow.ask(replier)((el, replyTo: ActorRef[Reply]) ⇒ Asking(el, replyTo)))
@@ -51,7 +50,7 @@ class ActorFlowSpec extends ScalaTestWithActorTestKit with WordSpecLike {
 
       Await.result(in) shouldEqual List.fill(3)(Reply("hello!!!"))
       // // Find a better way to cross compile this
-      // // in.futureValue shouldEqual List.fill(3)(Reply("hello!!!"))
+      // in.futureValue shouldEqual List.fill(3)(Reply("hello!!!"))
     }
 
     "produce asked elements in order" in {
@@ -99,7 +98,8 @@ class ActorFlowSpec extends ScalaTestWithActorTestKit with WordSpecLike {
       intercept[RuntimeException] {
         replier ! Asking("TERMINATE", system.deadLetters)
         Await.result(done, 3.seconds)
-      }.getMessage should startWith("Actor watched by [ask()] has terminated! Was: Actor[akka://ActorFlowSpec")
+      }.getMessage should startWith("Actor watched by [ask()] has terminated! Was: Actor[")
+      // }.getMessage should startWith("Actor watched by [ask()] has terminated! Was: Actor[akka://ActorFlowSpec")
     }
 
   }

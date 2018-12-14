@@ -13,9 +13,9 @@ import org.scalatest.Matchers
 import org.scalatest.WordSpec
 import org.scalatest.WordSpecLike
 
-// class ActorTestKitSpec extends ScalaTestWithActorTestKit with WordSpecLike {
+class ActorTestKitSpec extends ScalaTestWithActorTestKit with WordSpecLike {
 
-//   "the Scala testkit" should {
+  "the Scala testkit" should {
 
     // "generate a default name from the test class via ScalaTestWithActorTestKit" in {
     //   system.name should ===("ActorTestKitSpec")
@@ -29,44 +29,44 @@ import org.scalatest.WordSpecLike
     //     testkit2.shutdownTestKit()
     // }
 
-    // "use name from given class name" in {
-    //   val testkit2 = ActorTestKit(classOf[Vector[_]].getName)
-    //   try {
-    //     // removing package name and such
-    //     testkit2.system.name should ===("Vector")
-    //   } finally
-    //     testkit2.shutdownTestKit()
-    // }
+    "use name from given class name" in {
+      val testkit2 = ActorTestKit(classOf[Vector[_]].getName)
+      try {
+        // removing package name and such
+        testkit2.system.name should ===("Vector")
+      } finally
+        testkit2.shutdownTestKit()
+    }
 
-    // "spawn an actor" in {
-    //   val sawMessage = Promise[Boolean]()
-    //   val ref = spawn(Behaviors.setup[AnyRef] { context ⇒
-    //     sawMessage.trySuccess(true)
-    //     Behaviors.empty
-    //   })
+    "spawn an actor" in {
+      val sawMessage = Promise[Boolean]()
+      val ref = spawn(Behaviors.setup[AnyRef] { context ⇒
+        sawMessage.trySuccess(true)
+        Behaviors.empty
+      })
 
-    //   sawMessage.future.futureValue should ===(true)
-    // }
+      sawMessage.future.futureValue should ===(true)
+    }
 
-    // "spawn a named actor" in {
-    //   val spawnedWithName = Promise[String]()
-    //   val ref = spawn(Behaviors.setup[AnyRef] { context ⇒
-    //     spawnedWithName.trySuccess(context.self.path.name)
-    //     Behaviors.empty
-    //   }, "name")
+    "spawn a named actor" in {
+      val spawnedWithName = Promise[String]()
+      val ref = spawn(Behaviors.setup[AnyRef] { context ⇒
+        spawnedWithName.trySuccess(context.self.path.name)
+        Behaviors.empty
+      }, "name")
 
-    //   spawnedWithName.future.futureValue should ===("name")
-    // }
+      spawnedWithName.future.futureValue should ===("name")
+    }
 
-    // "stop the actor system" in {
-    //   // usually done in test framework hook method but we want to assert
-    //   val testkit2 = ActorTestKit()
-    //   testkit2.shutdownTestKit()
-    //   testkit2.system.whenTerminated.futureValue shouldBe a[Terminated]
-    // }
-//   }
+    "stop the actor system" in {
+      // usually done in test framework hook method but we want to assert
+      val testkit2 = ActorTestKit()
+      testkit2.shutdownTestKit()
+      testkit2.system.whenTerminated.futureValue shouldBe a[Terminated]
+    }
+  }
 
-// }
+}
 
 // derivative classes should also work fine (esp the naming part
 abstract class MyBaseSpec extends ScalaTestWithActorTestKit with Matchers with WordSpecLike

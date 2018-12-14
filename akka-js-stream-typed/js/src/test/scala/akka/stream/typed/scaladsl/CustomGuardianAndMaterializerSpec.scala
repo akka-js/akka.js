@@ -42,20 +42,20 @@ class CustomGuardianAndMaterializerSpec extends ScalaTestWithActorTestKit with W
       // it.futureValue should ===("hello")
     }
 
-    "should kill streams with bound actor context" in {
-      var doneF: Future[Done] = null
-      val behavior =
-        Behaviors.setup[String] { ctx ⇒
-          implicit val mat: ActorMaterializer = ActorMaterializer.boundToActor(ctx)
-          doneF = Source.repeat("hello").runWith(Sink.ignore)
+    // "should kill streams with bound actor context" in {
+    //   var doneF: Future[Done] = null
+    //   val behavior =
+    //     Behaviors.setup[String] { ctx ⇒
+    //       implicit val mat: ActorMaterializer = ActorMaterializer.boundToActor(ctx)
+    //       doneF = Source.repeat("hello").runWith(Sink.ignore)
 
-          Behaviors.receiveMessage[String](_ ⇒ Behaviors.stopped)
-        }
+    //       Behaviors.receiveMessage[String](_ ⇒ Behaviors.stopped)
+    //     }
 
-      val actorRef = spawn(behavior)
+    //   val actorRef = spawn(behavior)
 
-      actorRef ! "kill"
-      eventually(doneF.failed.futureValue shouldBe an[AbruptStageTerminationException])
-    }
+    //   actorRef ! "kill"
+    //   eventually(doneF.failed.futureValue shouldBe an[AbruptStageTerminationException])
+    // }
   }
 }

@@ -86,12 +86,10 @@ class ActorSourceSinkSpec extends ScalaTestWithActorTestKit with WordSpecLike {
 
   "ActorSource" should {
     "send messages and complete" in {
-      println("start")
       val (in, out) = ActorSource.actorRef[String]({ case "complete" ⇒ }, PartialFunction.empty, 10, OverflowStrategy.dropBuffer)
         .toMat(Sink.seq)(Keep.both)
         .run()
 
-      println("duew")
       in ! "one"
       in ! "two"
       in ! "complete"

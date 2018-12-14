@@ -1,5 +1,5 @@
 package akka.actor.testkit.typed
 
-// where is it implementes??
+// where this come from?
 
 final case class TE(message: String) extends TestException(message)

@@ -20,3 +20,7 @@ akka-js-typed-tests/shared/src/test/scala/docs
 akka-js-stream-typed/shared/src/main/scala/akka
 akka-js-stream-typed/shared/src/test/scala/akka
 akka-js-stream-typed/shared/src/test/scala/docs
+
+
+.metals
+.bloop

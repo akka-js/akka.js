@@ -1,4 +1,4 @@
-val akkaJsVersion = "1.2.5.19-SNAPSHOT"
+val akkaJsVersion = "1.2.5.19"
 val akkaOriginalVersion = "v2.5.19"
 
 val commonSettings = Seq(
@@ -175,7 +175,7 @@ lazy val akkaJsActor = crossProject.in(file("akka-js-actor"))
    ).jsSettings(
     scalaJSOptimizerOptions ~= { _.withCheckScalaJSIR(true) },
     libraryDependencies ++= Seq(
-      "org.akka-js" %%% "shocon" % "0.3.1",
+      "org.akka-js" %%% "shocon" % "0.4.1",
       "org.scala-lang.modules" %% "scala-java8-compat" % "0.8.0" % "provided"
     ),
     libraryDependencies ++= Seq(

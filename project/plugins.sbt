@@ -1,4 +1,4 @@
-val scalaJsVersion = "0.6.24"
+val scalaJsVersion = "0.6.26"
 
 addSbtPlugin("org.scala-js" % "sbt-scalajs" % scalaJsVersion)
 

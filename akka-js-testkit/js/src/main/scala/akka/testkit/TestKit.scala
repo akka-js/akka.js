@@ -666,6 +666,11 @@ trait TestKitBase {
     expectNoMsg(max)
   }
 
+  /* FIXME */
+  def expectNoMessage() = {
+    expectNoMsg(FiniteDuration(365, TimeUnit.DAYS))
+  }
+
   /**
    * Receive a series of messages until one does not match the given partial
    * function or the idle timeout is met (disabled by default) or the overall

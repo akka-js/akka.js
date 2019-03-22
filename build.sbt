@@ -1,5 +1,5 @@
-val akkaJsVersion = "1.2.5.19"
-val akkaOriginalVersion = "v2.5.19"
+val akkaJsVersion = "1.2.5.21-SNAPSHOT"
+val akkaOriginalVersion = "v2.5.21"
 
 val commonSettings = Seq(
     scalaVersion := "2.12.6",
@@ -367,19 +367,22 @@ lazy val akkaJsStreamTestkit = crossProject.in(file("akka-js-stream-testkit"))
     akkaTargetDir := file("akka-js-actor/js/target/") / "akkaSources" / akkaVersion.value,
     assembleAkkaLibrary := {
       getAkkaSources(akkaTargetDir.value, akkaVersion.value)
-      val srcTarget = file("akka-js-stream-testkit/shared/src/test/scala")
+      val srcTestTarget = file("akka-js-stream-testkit/shared/src/test/scala")
+      val srcMainTarget = file("akka-js-stream-testkit/shared/src/main/scala")
       copyToSourceFolder(
         akkaTargetDir.value / "akka-stream-testkit" / "src" / "test" / "scala",
-        srcTarget
+        srcTestTarget
       )
       copyToSourceFolder(
         akkaTargetDir.value / "akka-stream-testkit" / "src" / "main" / "scala",
-        file("akka-js-stream-testkit/shared/src/main/scala")
+        srcMainTarget
       )
 
-      val jsSources = file("akka-js-stream-testkit/js/src/test/scala")
+      val jsTestSources = file("akka-js-stream-testkit/js/src/test/scala")
+      val jsMainSources = file("akka-js-stream-testkit/js/src/main/scala")
 
-      rm_clash(srcTarget, jsSources)
+      rm_clash(srcTestTarget, jsTestSources)
+      rm_clash(srcMainTarget, jsMainSources)
     }
   ).jsSettings(
     scalaJSOptimizerOptions ~= { _.withCheckScalaJSIR(true) },

@@ -15,6 +15,7 @@ akka-js-testkit/shared/src/main/scala/akka
 akka-js-actor-typed/shared/src/main/scala/akka
 akka-js-typed-testkit/shared/src/test/scala/akka
 akka-js-typed-testkit/shared/src/main/scala/akka
+akka-js-typed-testkit/shared/src/test/scala/docs
 akka-js-typed-tests/shared/src/test/scala/akka
 akka-js-typed-tests/shared/src/test/scala/docs
 akka-js-stream-typed/shared/src/main/scala/akka

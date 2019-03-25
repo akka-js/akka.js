@@ -381,8 +381,6 @@ lazy val akkaJsStreamTestkit = crossProject.in(file("akka-js-stream-testkit"))
       val jsTestSources = file("akka-js-stream-testkit/js/src/test/scala")
       val jsMainSources = file("akka-js-stream-testkit/js/src/main/scala")
 
-      akka-js-stream-testkit/shared/src/main/scala
-      akka-js-stream-testkit/js/src/main/akka/stream/testkit/scaladsl
       rm_clash(srcTestTarget, jsTestSources)
       rm_clash(srcMainTarget, jsMainSources)
     }

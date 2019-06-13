@@ -13,7 +13,7 @@ import akka.actor.testkit.typed.TestKitSettings
 import akka.actor.testkit.typed.internal.{ ActorTestKitGuardian, TestKitUtils }
 import com.typesafe.config.{ Config, ConfigFactory }
 
-import scala.concurrent.Await
+// import scala.concurrent.Await
 import scala.concurrent.duration._
 import akka.actor.Scheduler
 import akka.util.Timeout
@@ -142,7 +142,8 @@ final class ActorTestKit private[akka] (val name: String, val config: Config, se
     sys.scheduler.scheduleOnce(0 millis){
       p.success(sys)
     }
-     akka.testkit.Await.result(p.future, 10 seconds)
+    //  akka.testkit.
+     Await.result(p.future, 10 seconds)
      // akka.testkit.ManagedEventLoop.reset
     // cannot doit they are still having blocking stuffs here and there
     sys

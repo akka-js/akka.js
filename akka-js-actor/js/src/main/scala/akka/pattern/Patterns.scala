@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit.MILLISECONDS
 
 object Patterns {
   import akka.actor.{ ActorRef, ActorSystem }
-  import akka.pattern.{ ask ⇒ scalaAsk, pipe ⇒ scalaPipe, gracefulStop ⇒ scalaGracefulStop, after ⇒ scalaAfter }
+  import akka.pattern.{ ask ⇒ scalaAsk, pipe ⇒ scalaPipe, gracefulStop ⇒ scalaGracefulStop, after ⇒ scalaAfter, retry => scalaRetry }
   import akka.util.Timeout
   import scala.concurrent.Future
   import scala.concurrent.duration.Duration
@@ -92,4 +92,21 @@ object Patterns {
    */
   def after[T](duration: FiniteDuration, scheduler: Scheduler, context: ExecutionContext, value: Future[T]): Future[T] =
     scalaAfter(duration, scheduler)(value)(context)
+
+  /**
+   * Returns an internally retrying [[scala.concurrent.Future]]
+   * The first attempt will be made immediately, and each subsequent attempt will be made after 'delay'.
+   * A scheduler (eg context.system.scheduler) must be provided to delay each retry
+   * If attempts are exhausted the returned future is simply the result of invoking attempt.
+   * Note that the attempt function will be invoked on the given execution context for subsequent tries and
+   * therefore must be thread safe (not touch unsafe mutable state).
+   */
+  def retry[T](
+      attempt: Callable[Future[T]],
+      attempts: Int,
+      delay: FiniteDuration,
+      scheduler: Scheduler,
+      context: ExecutionContext): Future[T] =
+    scalaRetry(() => attempt.call, attempts, delay)(context, scheduler)
+
 }

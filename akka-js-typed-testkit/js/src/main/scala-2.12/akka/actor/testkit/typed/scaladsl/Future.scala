@@ -31,7 +31,7 @@ trait WrappedFuture[T] extends scala.concurrent.Future[T] {
   lazy val inner = prom.future
 
   def futureValue(): T =
-    Await.result(inner, 5 seconds) // make it configurable? .asInstanceOf[T]
+    akka.testkit.Await.result(inner, 5 seconds) // make it configurable? .asInstanceOf[T]
 
   def ready(atMost: scala.concurrent.duration.Duration)(implicit permit: scala.concurrent.CanAwait): this.type = {
     self.inner.ready(atMost)(permit)

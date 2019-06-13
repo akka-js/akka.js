@@ -1,5 +1,10 @@
 val akkaJsVersion = "1.2.5.23"
-val akkaOriginalVersion = "v2.5.23"
+val akkaOriginalVersionDefault = "v2.5.23"
+val akkaOriginalVersion = {
+  val res = Option(System.getenv("AKKA_VERSION")).getOrElse(akkaOriginalVersionDefault)
+  println(s"Akka version: $res")
+  res
+}
 
 val commonSettings = Seq(
     scalaVersion := "2.12.8",

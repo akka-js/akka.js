@@ -25,3 +25,5 @@ akka-js-stream-typed/shared/src/test/scala/docs
 
 .metals
 .bloop
+
+travis.token

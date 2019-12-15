@@ -7,12 +7,12 @@ scala:
 sudo: false
 
 jdk:
-  - oraclejdk8
+  - openjdk8
 
 env:
-  - TRAVIS_NODE_VERSION="8.9.1"
-  - TRAVIS_NODE_VERSION="9.2.0"
-  - TRAVIS_NODE_VERSION="10.0.0"
+  - TRAVIS_NODE_VERSION="8.16.2"
+  - TRAVIS_NODE_VERSION="10.17.0"
+  - TRAVIS_NODE_VERSION="12.13.1"
 
 install:
   - rm -rf ~/.nvm && git clone https://github.com/creationix/nvm.git ~/.nvm && (cd ~/.nvm && git checkout `git describe --abbrev=0 --tags`) && source ~/.nvm/nvm.sh && nvm install $TRAVIS_NODE_VERSION

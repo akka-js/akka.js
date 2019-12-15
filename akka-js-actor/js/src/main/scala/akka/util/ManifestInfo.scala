@@ -163,23 +163,24 @@ final class ManifestInfo(val system: ExtendedActorSystem) extends Extension {
    * Verify that the version is the same for all given artifacts.
    */
   def checkSameVersion(productName: String, dependencies: immutable.Seq[String], logWarning: Boolean): Boolean = {
-    val filteredVersions = versions.filterKeys(dependencies.toSet)
-    val values = filteredVersions.values.toSet
-    if (values.size > 1) {
-      if (logWarning) {
-        val conflictingVersions = values.mkString(", ")
-        val fullInfo = filteredVersions.map { case (k, v) ⇒ s"$k:$v" }.mkString(", ")
-        val highestVersion = values.max
-        Logging(system, getClass).warning(
-          "Detected possible incompatible versions on the classpath. " +
-            s"Please note that a given $productName version MUST be the same across all modules of $productName " +
-            "that you are using, e.g. if you use [{}] all other modules that are released together MUST be of the " +
-            "same version. Make sure you're using a compatible set of libraries. " +
-            "Possibly conflicting versions [{}] in libraries [{}]",
-          highestVersion, conflictingVersions, fullInfo)
-      }
-      false
-    } else
+    // doesn't make sense in Scala.Js
+    // val filteredVersions = versions.filterKeys(dependencies.toSet)
+    // val values = filteredVersions.values.toSet
+    // if (values.size > 1) {
+    //   if (logWarning) {
+    //     val conflictingVersions = values.mkString(", ")
+    //     val fullInfo = filteredVersions.map { case (k, v) ⇒ s"$k:$v" }.mkString(", ")
+    //     val highestVersion = values.max
+    //     Logging(system, getClass).warning(
+    //       "Detected possible incompatible versions on the classpath. " +
+    //         s"Please note that a given $productName version MUST be the same across all modules of $productName " +
+    //         "that you are using, e.g. if you use [{}] all other modules that are released together MUST be of the " +
+    //         "same version. Make sure you're using a compatible set of libraries. " +
+    //         "Possibly conflicting versions [{}] in libraries [{}]",
+    //       highestVersion, conflictingVersions, fullInfo)
+    //   }
+    //   false
+    // } else
       true
   }
 

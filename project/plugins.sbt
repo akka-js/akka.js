@@ -1,5 +1,6 @@
-val scalaJsVersion = "0.6.28"
+val scalaJsVersion = "0.6.31"
 
+addSbtPlugin("org.portable-scala" % "sbt-scalajs-crossproject" % "0.6.1")
 addSbtPlugin("org.scala-js" % "sbt-scalajs" % scalaJsVersion)
 
 addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "2.3")
@@ -15,6 +16,3 @@ libraryDependencies ++= Seq(
 )
 
 logLevel := Level.Warn
-
-resolvers += "Typesafe repository" at "http://repo.typesafe.com/typesafe/releases/"
-resolvers += "Sonatype-Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"

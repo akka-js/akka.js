@@ -13,6 +13,8 @@ class JSDynamicAccess(val classLoader: ClassLoader) extends DynamicAccess {
 	import scala.scalajs.js
   import scala.scalajs.reflect._
 
+  def classIsOnClasspath(fqcn: String): Boolean = true
+
 	def getRuntimeClass[A](name: String): InstantiatableClass = {
     Reflect.lookupInstantiatableClass(name).getOrElse {
       throw new InstantiationError(s"JSDynamicAccess $name is not js instantiable class")

@@ -1,9 +1,9 @@
-val akkaJsVersion = "1.2.5.26"
-val akkaOriginalVersion = "v2.5.26"
+val akkaJsVersion = "1.2.6.1-SNAPSHOT"
+val akkaOriginalVersion = "v2.6.1"
 
 val commonSettings = Seq(
-    scalaVersion := "2.12.8",
-    crossScalaVersions  := Seq("2.12.8", "2.11.12"),
+    scalaVersion := "2.12.10",
+    crossScalaVersions  := Seq("2.12.10", "2.13.1"),
     organization := "org.akka-js",
     scalacOptions ++= Seq(
         "-deprecation",
@@ -135,7 +135,11 @@ lazy val akkaJsUnsafe = project.in(file("akka-js-unsafe"))
     )
   )
 
-lazy val akkaJsActor = crossProject.in(file("akka-js-actor"))
+import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
+
+lazy val akkaJsActor = crossProject(JSPlatform)
+  .crossType(CrossType.Full)
+  .in(file("akka-js-actor"))
   .settings(commonSettings : _*)
   .settings(
     version := akkaJsVersion,
@@ -148,6 +152,24 @@ lazy val akkaJsActor = crossProject.in(file("akka-js-actor"))
         akkaTargetDir.value / "akka-actor" / "src" / "main" / "scala",
         srcTarget
       )
+
+      copyToSourceFolder(
+        akkaTargetDir.value / "akka-actor" / "src" / "main" / "scala-2.12",
+        file("akka-js-actor/shared/src/main/scala-2.12")
+      )
+      copyToSourceFolder(
+        akkaTargetDir.value / "akka-actor" / "src" / "main" / "scala-2.13",
+        file("akka-js-actor/shared/src/main/scala-2.13")
+      )
+      copyToSourceFolder(
+        akkaTargetDir.value / "akka-actor" / "src" / "main" / "scala-2.13+",
+        file("akka-js-actor/shared/src/main/scala-2.13+")
+      )
+      copyToSourceFolder(
+        akkaTargetDir.value / "akka-actor" / "src" / "main" / "scala-2.13-",
+        file("akka-js-actor/shared/src/main/scala-2.13-")
+      )
+
       copyToSourceFolder(
         akkaTargetDir.value / "akka-actor" / "src" / "main" / "boilerplate",
         file("akka-js-actor/js/src/main/boilerplate")
@@ -207,7 +229,9 @@ lazy val akkaJsActorJS = akkaJsActor.js.dependsOn(
   akkaJsUnsafe % "provided"
 )
 
-lazy val akkaJsTestkit = crossProject.in(file("akka-js-testkit"))
+lazy val akkaJsTestkit = crossProject(JSPlatform)
+  .crossType(CrossType.Full)
+  .in(file("akka-js-testkit"))
   .settings(commonSettings: _*)
   .settings(
     version := akkaJsVersion,
@@ -269,7 +293,9 @@ lazy val akkaJsTestkit = crossProject.in(file("akka-js-testkit"))
 
 lazy val akkaJsTestkitJS = akkaJsTestkit.js.dependsOn(akkaJsActorJS)
 
-lazy val akkaActorTest = crossProject.in(file("akka-js-actor-tests"))
+lazy val akkaActorTest = crossProject(JSPlatform)
+  .crossType(CrossType.Full)
+  .in(file("akka-js-actor-tests"))
   .settings(commonSettings: _*)
   .settings(
     version := akkaJsVersion,
@@ -303,7 +329,9 @@ lazy val akkaActorTest = crossProject.in(file("akka-js-actor-tests"))
 
 lazy val akkaActorTestJS = akkaActorTest.js
 
-lazy val akkaJsActorStream = crossProject.in(file("akka-js-actor-stream"))
+lazy val akkaJsActorStream = crossProject(JSPlatform)
+  .crossType(CrossType.Full)
+  .in(file("akka-js-actor-stream"))
   .settings(commonSettings : _*)
   .settings(
     version := akkaJsVersion,
@@ -357,7 +385,9 @@ lazy val akkaJsActorStream = crossProject.in(file("akka-js-actor-stream"))
 
 lazy val akkaJsActorStreamJS = akkaJsActorStream.js
 
-lazy val akkaJsStreamTestkit = crossProject.in(file("akka-js-stream-testkit"))
+lazy val akkaJsStreamTestkit = crossProject(JSPlatform)
+  .crossType(CrossType.Full)
+  .in(file("akka-js-stream-testkit"))
   .settings(commonSettings: _*)
   .jsSettings(publishSettings : _*)
   .settings(
@@ -399,7 +429,9 @@ lazy val akkaJsStreamTestkit = crossProject.in(file("akka-js-stream-testkit"))
 
  lazy val akkaJsStreamTestkitJS = akkaJsStreamTestkit.js
 
- lazy val akkaStreamTest = crossProject.in(file("akka-js-stream-tests"))
+ lazy val akkaStreamTest = crossProject(JSPlatform)
+  .crossType(CrossType.Full)
+  .in(file("akka-js-stream-tests"))
    .settings(commonSettings: _*)
    .settings(
      version := akkaJsVersion,
@@ -434,7 +466,9 @@ lazy val akkaJsStreamTestkit = crossProject.in(file("akka-js-stream-testkit"))
 
   lazy val akkaStreamTestJS = akkaStreamTest.js
 
-  lazy val akkaJsActorTyped = crossProject.in(file("akka-js-actor-typed"))
+  lazy val akkaJsActorTyped = crossProject(JSPlatform)
+  .crossType(CrossType.Full)
+  .in(file("akka-js-actor-typed"))
     .settings(commonSettings : _*)
     .settings(
       version := akkaJsVersion,
@@ -486,7 +520,9 @@ lazy val akkaJsStreamTestkit = crossProject.in(file("akka-js-stream-testkit"))
     akkaJsUnsafe % "provided"
   )
 
-  lazy val akkaJsTypedTestkit = crossProject.in(file("akka-js-typed-testkit"))
+  lazy val akkaJsTypedTestkit = crossProject(JSPlatform)
+  .crossType(CrossType.Full)
+  .in(file("akka-js-typed-testkit"))
     .settings(commonSettings: _*)
     .jsSettings(publishSettings : _*)
     .settings(
@@ -534,7 +570,9 @@ lazy val akkaJsStreamTestkit = crossProject.in(file("akka-js-stream-testkit"))
 
    lazy val akkaJsTypedTestkitJS = akkaJsTypedTestkit.js
 
-   lazy val akkaTypedTest = crossProject.in(file("akka-js-typed-tests"))
+   lazy val akkaTypedTest = crossProject(JSPlatform)
+  .crossType(CrossType.Full)
+  .in(file("akka-js-typed-tests"))
      .settings(commonSettings: _*)
      .settings(
        version := akkaJsVersion,
@@ -572,7 +610,9 @@ lazy val akkaJsStreamTestkit = crossProject.in(file("akka-js-stream-testkit"))
 
     lazy val akkaTypedTestJS = akkaTypedTest.js
 
-  lazy val akkaJsActorStreamTyped = crossProject.in(file("akka-js-stream-typed"))
+  lazy val akkaJsActorStreamTyped = crossProject(JSPlatform)
+  .crossType(CrossType.Full)
+  .in(file("akka-js-stream-typed"))
     .settings(commonSettings : _*)
     .settings(
       version := akkaJsVersion,

@@ -121,6 +121,31 @@ import com.github.ghik.silencer.silent
       haveShutDown,
       FlowNames(context.system).name.copy(namePrefix))
   }
+
+  // For Akka.Js
+  protected[akka] def apply(
+      system: ActorSystem,
+      namePrefix: String,
+      settings: ActorMaterializerSettings,
+      attributes: Attributes): PhasedFusingActorMaterializer = {
+    val haveShutDown = new AtomicBoolean(false)
+
+    val dispatcher = attributes.mandatoryAttribute[ActorAttributes.Dispatcher].dispatcher
+    val supervisorProps =
+      StreamSupervisor.props(attributes, haveShutDown).withDispatcher(dispatcher).withDeploy(Deploy.local)
+
+    // FIXME why do we need a global unique name for the child?
+    val streamSupervisor = system.actorOf(supervisorProps, StreamSupervisor.nextName())
+
+    new PhasedFusingActorMaterializer(
+      system,
+      settings,
+      attributes,
+      system.dispatchers,
+      streamSupervisor,
+      haveShutDown,
+      FlowNames(system).name.copy(namePrefix))
+  }
 }
 
 private final case class SegmentInfo(

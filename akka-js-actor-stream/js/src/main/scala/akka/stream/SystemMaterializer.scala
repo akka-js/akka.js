@@ -48,7 +48,8 @@ final class SystemMaterializer(system: ExtendedActorSystem) extends Extension {
   @InternalApi @silent("deprecated")
   private[akka] val materializerSettings = ActorMaterializerSettings(system)
 
-  private implicit val materializerTimeout: Timeout = system.settings.config.getDuration("akka.stream.materializer.creation-timeout").asScala
+  private implicit val materializerTimeout: Timeout =
+    system.settings.config.getDuration("akka.stream.materializer.creation-timeout").asScala
 
   @InternalApi @silent("deprecated")
   private val materializerGuardian = system.systemActorOf(
@@ -59,13 +60,6 @@ final class SystemMaterializer(system: ExtendedActorSystem) extends Extension {
       .withDeploy(Deploy.local),
     "Materializers")
 
-  // Hack for Scala.js
-  private def newHackSystemMaterializer = {
-    //  this create a loop on a single threaded environemnt
-    implicit val sys = system
-    ActorMaterializer(materializerSettings)
-  }
-
   /**
    * INTERNAL API
    */
@@ -75,7 +69,7 @@ final class SystemMaterializer(system: ExtendedActorSystem) extends Extension {
     //   (materializerGuardian ? MaterializerGuardian.StartMaterializer).mapTo[MaterializerGuardian.MaterializerStarted]
     // Await.result(started, materializerTimeout.duration).materializer
 
-    newHackSystemMaterializer
+    akka.stream.impl.PhasedFusingActorMaterializer(system, "flow", materializerSettings, materializerSettings.toAttributes)
   }
 
   /**
@@ -91,11 +85,17 @@ final class SystemMaterializer(system: ExtendedActorSystem) extends Extension {
     //     .mapTo[MaterializerGuardian.MaterializerStarted]
     // Await.result(started, materializerTimeout.duration).materializer
 
-    newHackSystemMaterializer
+    akka.stream.impl.PhasedFusingActorMaterializer(system, namePrefix, settings, settings.toAttributes)
   }
 
   // block on async creation to make it effectively final
-  val materializer = newHackSystemMaterializer
+  val materializer = {
+    if (systemMaterializerPromise.future.isCompleted) {
+      systemMaterializerPromise.future.value.get.get
+    } else {
+      akka.stream.impl.PhasedFusingActorMaterializer(system, "flow", materializerSettings, materializerSettings.toAttributes)
+    }
+  }
   // Await.result(systemMaterializerPromise.future, materializerTimeout.duration)
 
 }

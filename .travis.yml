@@ -40,7 +40,10 @@ script:
   # http://www.scala-sbt.org/0.13/docs/Travis-CI-with-sbt.html
   - find $HOME/.sbt -name "*.lock" | xargs rm
   - find $HOME/.ivy2 -name "ivydata-*.properties" | xargs rm
+  - find $HOME/.cache -name "*.lock" | xargs rm | true
+  - find $HOME/.cache -name "ivydata-*.properties" | xargs rm | true
 cache:
   directories:
     - $HOME/.ivy2/cache
     - $HOME/.sbt/boot/
+    - $HOME/.cache/

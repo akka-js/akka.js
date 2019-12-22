@@ -20,17 +20,19 @@ class MaterializerForTypedSpec extends ScalaTestWithActorTestKit with WordSpecLi
 
   "Materialization in typed" should {
 
-    // "use system materializer by default" in {
-    //   val it: Future[String] = Source.single("hello").runWith(Sink.head)
-    //   it.futureValue should ===("hello")
-    // }
+    "use system materializer by default" in {
+      val it: Future[String] = Source.single("hello").runWith(Sink.head)
+      Await.result(it) shouldEqual ("hello")
+      // it.futureValue should ===("hello")
+    }
 
-    // "allow for custom instances for special cases" in {
-    //   val customMaterializer = Materializer(system)
-    //   val it: Future[String] = Source.single("hello").runWith(Sink.head)(customMaterializer)
+    "allow for custom instances for special cases" in {
+      val customMaterializer = Materializer(system)
+      val it: Future[String] = Source.single("hello").runWith(Sink.head)(customMaterializer)
 
-    //   it.futureValue should ===("hello")
-    // }
+      Await.result(it) shouldEqual ("hello")
+      // it.futureValue should ===("hello")
+    }
 
     "allow for actor context bound instances" in {
       val probe = testKit.createTestProbe[Any]()

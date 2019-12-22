@@ -21,6 +21,11 @@ class Logger(name: String = "default") {
   def trace(message: Any, fmt: String, more: Any*): Unit = inner.trace(message + more.mkString(" "))
 
   def isDebugEnabled() = false
+
+}
+
+object Logger {
+  val ROOT_LOGGER_NAME = "root"
 }
 
 object LoggerFactory {

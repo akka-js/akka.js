@@ -425,7 +425,7 @@ lazy val akkaJsStreamTestkit = crossProject(JSPlatform)
     scalaJSOptimizerOptions ~= { _.withCheckScalaJSIR(true) },
     scalaJSStage in Global := FastOptStage,
     libraryDependencies ++= Seq(
-      "org.scalatest" %%% "scalatest" % "3.0.4" withSources ()
+      "org.scalatest" %%% "scalatest" % "3.0.8" withSources ()
     ),
     publishArtifact in (Test, packageBin) := true,
     //scalaJSOptimizerOptions ~= { _.withDisableOptimizer(true) },

@@ -20,6 +20,7 @@ import scala.annotation.tailrec
 object Mailboxes {
   final val DefaultMailboxId = "akka.actor.default-mailbox"
   final val NoMailboxRequirement = ""
+  final val BoundedCapacityPrefix = "bounded-capacity:"
 }
 
 private[akka] class Mailboxes(

@@ -512,6 +512,7 @@ lazy val akkaJsStreamTestkit = crossProject(JSPlatform)
     ).jsSettings(
       scalaJSOptimizerOptions ~= { _.withCheckScalaJSIR(true) },
       libraryDependencies ++= Seq(
+        "org.wvlet.airframe" %%% "airframe-log" % "19.12.3",
         "org.scala-lang.modules" %% "scala-java8-compat" % "0.8.0" % "provided"
       ),
       excludeDependencies += ("org.akka-js" %% "akkaactorjsirpatches"),

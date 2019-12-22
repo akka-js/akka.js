@@ -83,7 +83,8 @@ import org.slf4j.LoggerFactory
     def shutdown(): Unit = ()
   }
 
-  override def dynamicAccess: classic.DynamicAccess = new classic.ReflectiveDynamicAccess(getClass.getClassLoader)
+  override def dynamicAccess: classic.DynamicAccess = new classic.ReflectiveDynamicAccess(null)
+  // new classic.ReflectiveDynamicAccess(getClass.getClassLoader)
 
   override def logConfiguration(): Unit = log.info(settings.toString)
 

@@ -135,7 +135,12 @@ import com.github.ghik.silencer.silent
       StreamSupervisor.props(attributes, haveShutDown).withDispatcher(dispatcher).withDeploy(Deploy.local)
 
     // FIXME why do we need a global unique name for the child?
-    val streamSupervisor = system.actorOf(supervisorProps, StreamSupervisor.nextName())
+    // Adaptation for Scala.Js
+    val streamSupervisor = system match {
+      case eas: akka.actor.ExtendedActorSystem => eas.systemActorOf(supervisorProps, StreamSupervisor.nextName())
+      case _ => system.actorOf(supervisorProps, StreamSupervisor.nextName())
+    }
+    // system.actorOf(supervisorProps, StreamSupervisor.nextName())
 
     new PhasedFusingActorMaterializer(
       system,

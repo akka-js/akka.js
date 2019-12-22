@@ -28,8 +28,6 @@ object ActorFlowSpec {
 class ActorFlowSpec extends ScalaTestWithActorTestKit with WordSpecLike {
   import ActorFlowSpec._
 
-  implicit val mat = ActorMaterializer()
-
   "ActorFlow" should {
 
     val replier = spawn(Behaviors.receiveMessage[Asking] {
@@ -78,13 +76,14 @@ class ActorFlowSpec extends ScalaTestWithActorTestKit with WordSpecLike {
       import akka.actor.typed.scaladsl.adapter._
       val dontReply = spawn(Behaviors.ignore[Asking])
 
-      val c = TestSubscriber.manualProbe[Reply]()(system.toUntyped)
-      implicit val ec = system.dispatchers.lookup(DispatcherSelector.default())
+      val c = TestSubscriber.manualProbe[Reply]()(system.toClassic)
       implicit val timeout = akka.util.Timeout(10.millis)
 
-      Source(1 to 5).map(_ + " nope")
+      Source(1 to 5)
+        .map(_.toString + " nope")
         .via(ActorFlow.ask[String, Asking, Reply](4)(dontReply)(Asking(_, _)))
-        .to(Sink.fromSubscriber(c)).run()
+        .to(Sink.fromSubscriber(c))
+        .run()
 
       c.expectSubscription().request(10)
       c.expectError().getMessage should startWith("Ask timed out on [Actor")

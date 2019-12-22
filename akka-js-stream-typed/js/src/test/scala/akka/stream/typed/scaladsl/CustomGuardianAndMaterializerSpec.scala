@@ -30,8 +30,6 @@ class CustomGuardianAndMaterializerSpec extends ScalaTestWithActorTestKit with W
     (_, msg) ⇒ Behaviors.same
   }
 
-  implicit val mat = ActorMaterializer()
-
   "ActorMaterializer" should {
 
     "work with typed ActorSystem with custom guardian" in {

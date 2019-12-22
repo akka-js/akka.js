@@ -197,10 +197,13 @@ lazy val akkaJsActor = crossProject(JSPlatform)
    ).jsSettings(
     scalaJSOptimizerOptions ~= { _.withCheckScalaJSIR(true) },
     resolvers +=Resolver.sonatypeRepo("snapshots"),
-    libraryDependencies ++= Seq(
-      "org.akka-js" %%% "shocon" % "0.5.1-SNAPSHOT",
-      "org.scala-lang.modules" %% "scala-java8-compat" % "0.8.0" % "provided"
-    ),
+    libraryDependencies ++= {
+      Seq("org.akka-js" %%% "shocon" % "0.5.1-SNAPSHOT") ++
+      (CrossVersion.partialVersion(scalaVersion.value) match {
+        case Some((2, minor)) if minor < 13 => Seq("org.scala-lang.modules" %% "scala-java8-compat" % "0.8.0" % "provided")
+        case _                              => Seq()
+      })
+    },
     libraryDependencies ++= Seq(
       "org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided",
       "org.scala-lang" % "scala-compiler" % scalaVersion.value % "provided"
@@ -321,7 +324,7 @@ lazy val akkaActorTest = crossProject(JSPlatform)
     //preLinkJSEnv := jsEnv.value,
     //postLinkJSEnv := jsEnv.value.withSourceMap(true),
     libraryDependencies ++= Seq(
-      "org.scalacheck" %%% "scalacheck" % "1.13.4" % "test"
+      "org.scalacheck" %%% "scalacheck" % "1.14.2" % "test"
     ),
     excludeDependencies += ("org.akka-js" %% "akkaactorjsirpatches"),
     compile in Compile := {(compile in Compile).dependsOn(assembleAkkaLibrary).value},
@@ -375,9 +378,12 @@ lazy val akkaJsActorStream = crossProject(JSPlatform)
     publishSettings : _*
   ).jsSettings(
     scalaJSOptimizerOptions ~= { _.withCheckScalaJSIR(true) },
-    libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %% "scala-java8-compat" % "0.8.0" % "provided"
-    ),
+    libraryDependencies ++= {
+      CrossVersion.partialVersion(scalaVersion.value) match {
+        case Some((2, minor)) if minor < 13 => Seq("org.scala-lang.modules" %% "scala-java8-compat" % "0.8.0" % "provided")
+        case _                              => Seq()
+      }
+    },
     excludeDependencies += ("org.akka-js" %% "akkaactorjsirpatches"),
     compile in Compile := {(compile in Compile).dependsOn(assembleAkkaLibrary, fixResources).value},
     publishLocal := {publishLocal.dependsOn(assembleAkkaLibrary, fixResources).value},
@@ -455,7 +461,7 @@ lazy val akkaJsStreamTestkit = crossProject(JSPlatform)
      }
    ).jsSettings(
      libraryDependencies ++= Seq(
-       "org.scalacheck" %%% "scalacheck" % "1.13.4" % "test"
+       "org.scalacheck" %%% "scalacheck" % "1.14.2" % "test"
      ),
      scalaJSStage in Global := FastOptStage,
      publishArtifact in (Test, packageBin) := true
@@ -511,10 +517,13 @@ lazy val akkaJsStreamTestkit = crossProject(JSPlatform)
       publishSettings : _*
     ).jsSettings(
       scalaJSOptimizerOptions ~= { _.withCheckScalaJSIR(true) },
-      libraryDependencies ++= Seq(
-        "org.wvlet.airframe" %%% "airframe-log" % "19.12.3",
-        "org.scala-lang.modules" %% "scala-java8-compat" % "0.8.0" % "provided"
-      ),
+      libraryDependencies ++= {
+        Seq("org.wvlet.airframe" %%% "airframe-log" % "19.12.3") ++
+        (CrossVersion.partialVersion(scalaVersion.value) match {
+          case Some((2, minor)) if minor < 13 => Seq("org.scala-lang.modules" %% "scala-java8-compat" % "0.8.0" % "provided")
+          case _                              => Seq()
+        })
+      },
       excludeDependencies += ("org.akka-js" %% "akkaactorjsirpatches"),
       compile in Compile := {(compile in Compile).dependsOn(assembleAkkaLibrary, fixResources).value},
       publishLocal := {publishLocal.dependsOn(assembleAkkaLibrary, fixResources).value},
@@ -598,7 +607,7 @@ lazy val akkaJsStreamTestkit = crossProject(JSPlatform)
        }
      ).jsSettings(
        libraryDependencies ++= Seq(
-         "org.scalacheck" %%% "scalacheck" % "1.13.4" % "test"
+         "org.scalacheck" %%% "scalacheck" % "1.14.2" % "test"
        ),
        scalaJSStage in Global := FastOptStage,
        publishArtifact in (Test, packageBin) := true

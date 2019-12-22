@@ -93,37 +93,37 @@ class ActorTestKitSpec extends ScalaTestWithActorTestKit with WordSpecLike with 
 // derivative classes should also work fine (esp the naming part
 abstract class MyBaseSpec extends ScalaTestWithActorTestKit with Matchers with WordSpecLike with LogCapturing
 
-class MyConcreteDerivateSpec extends MyBaseSpec {
-  "A derivative test" should {
-    "generate a default name from the test class via ScalaTestWithActorTestKit" in {
-      system.name should ===("MyConcreteDerivateSpec")
-    }
+// class MyConcreteDerivateSpec extends MyBaseSpec {
+//   "A derivative test" should {
+//     "generate a default name from the test class via ScalaTestWithActorTestKit" in {
+//       system.name should ===("MyConcreteDerivateSpec")
+//     }
 
-    "generate a default name from the test class" in {
-      val testkit2 = ActorTestKit()
-      try {
-        testkit2.system.name should ===("MyConcreteDerivateSpec")
-      } finally testkit2.shutdownTestKit()
-    }
+//     "generate a default name from the test class" in {
+//       val testkit2 = ActorTestKit()
+//       try {
+//         testkit2.system.name should ===("MyConcreteDerivateSpec")
+//       } finally testkit2.shutdownTestKit()
+//     }
 
-    "use name from given class name" in {
-      val testkit2 = ActorTestKit(classOf[Vector[_]].getName)
-      try {
-        testkit2.system.name should ===("Vector")
-      } finally testkit2.shutdownTestKit()
-    }
-  }
+//     "use name from given class name" in {
+//       val testkit2 = ActorTestKit(classOf[Vector[_]].getName)
+//       try {
+//         testkit2.system.name should ===("Vector")
+//       } finally testkit2.shutdownTestKit()
+//     }
+//   }
 
-}
+// }
 
-class CompositionSpec extends WordSpec with Matchers with BeforeAndAfterAll with LogCapturing {
-  val testKit = ActorTestKit()
+// class CompositionSpec extends WordSpec with Matchers with BeforeAndAfterAll with LogCapturing {
+//   val testKit = ActorTestKit()
 
-  override def afterAll(): Unit = {
-    testKit.shutdownTestKit()
-  }
+//   override def afterAll(): Unit = {
+//     testKit.shutdownTestKit()
+//   }
 
-  "generate a default name from the test class" in {
-    testKit.system.name should ===("CompositionSpec")
-  }
-}
+//   "generate a default name from the test class" in {
+//     testKit.system.name should ===("CompositionSpec")
+//   }
+// }

@@ -10,7 +10,6 @@ jdk:
   - openjdk8
 
 env:
-  - TRAVIS_NODE_VERSION="8.16.2"
   - TRAVIS_NODE_VERSION="10.17.0"
   - TRAVIS_NODE_VERSION="12.13.1"
 
@@ -20,6 +19,7 @@ install:
 
 script:
   - sbt ++$TRAVIS_SCALA_VERSION clean
+  - sbt ++$TRAVIS_SCALA_VERSION -jvm-opts travis/jvmopts assembleAkkaLibrary
   - sbt ++$TRAVIS_SCALA_VERSION -jvm-opts travis/jvmopts akkaJsTestkitJS/test:fastOptJS
   - sbt ++$TRAVIS_SCALA_VERSION -jvm-opts travis/jvmopts akkaJsTestkitJS/test
   - sbt ++$TRAVIS_SCALA_VERSION -jvm-opts travis/jvmopts akkaActorTestJS/test:fastOptJS

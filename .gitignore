@@ -3,6 +3,10 @@ project/target
 project/project
 config/ir_patch.config
 akka-js-actor/shared/src/main/scala/akka
+akka-js-actor/shared/src/main/scala-2.12/akka
+akka-js-actor/shared/src/main/scala-2.13/akka
+akka-js-actor/shared/src/main/scala-2.13-/akka
+akka-js-actor/shared/src/main/scala-2.13+/akka
 akka-js-actor/js/src/main/boilerplate/akka
 akka-js-actor-stream/shared/src/main/scala/akka
 akka-js-actor-stream/js/src/main/boilerplate/akka

@@ -47,6 +47,80 @@ object CoordinatedShutdown extends ExtensionId[CoordinatedShutdown] with Extensi
   val PhaseBeforeActorSystemTerminate = "before-actor-system-terminate"
   val PhaseActorSystemTerminate = "actor-system-terminate"
 
+   /**
+   * Reason for the shutdown, which can be used by tasks in case they need to do
+   * different things depending on what caused the shutdown. There are some
+   * predefined reasons, but external libraries applications may also define
+   * other reasons.
+   */
+  trait Reason
+
+  /**
+   * Scala API: The reason for the shutdown was unknown. Needed for backwards compatibility.
+   */
+  case object UnknownReason extends Reason
+
+  /**
+   * Java API: The reason for the shutdown was unknown. Needed for backwards compatibility.
+   */
+  def unknownReason: Reason = UnknownReason
+
+  /**
+   * Scala API: The shutdown was initiated by ActorSystem.terminate.
+   */
+  case object ActorSystemTerminateReason extends Reason
+
+  /**
+   * Java API: The shutdown was initiated by ActorSystem.terminate.
+   */
+  def actorSystemTerminateReason: Reason = ActorSystemTerminateReason
+
+  /**
+   * Scala API: The shutdown was initiated by a JVM shutdown hook, e.g. triggered by SIGTERM.
+   */
+  case object JvmExitReason extends Reason
+
+  /**
+   * Java API: The shutdown was initiated by a JVM shutdown hook, e.g. triggered by SIGTERM.
+   */
+  def jvmExitReason: Reason = JvmExitReason
+
+  /**
+   * Scala API: The shutdown was initiated by Cluster downing.
+   */
+  case object ClusterDowningReason extends Reason
+
+  /**
+   * Java API: The shutdown was initiated by Cluster downing.
+   */
+  def clusterDowningReason: Reason = ClusterDowningReason
+
+  /**
+   * Scala API: The shutdown was initiated by a failure to join a seed node.
+   */
+  case object ClusterJoinUnsuccessfulReason extends Reason
+
+  /**
+   * Java API: The shutdown was initiated by a failure to join a seed node.
+   */
+  def clusterJoinUnsuccessfulReason: Reason = ClusterJoinUnsuccessfulReason
+
+  /**
+   * Scala API: The shutdown was initiated by a configuration clash within the existing cluster and the joining node
+   */
+  case object IncompatibleConfigurationDetectedReason extends Reason
+
+  /**
+   * Java API: The shutdown was initiated by a configuration clash within the existing cluster and the joining node
+   */
+  def incompatibleConfigurationDetectedReason: Reason = IncompatibleConfigurationDetectedReason
+
+  /**
+   * Scala API: The shutdown was initiated by Cluster leaving.
+   */
+  case object ClusterLeavingReason extends Reason
+
+
   @volatile private var runningJvmHook = false
 
   override def get(system: ActorSystem): CoordinatedShutdown = super.get(system)
@@ -198,7 +272,7 @@ object CoordinatedShutdown extends ExtensionId[CoordinatedShutdown] with Extensi
 final class CoordinatedShutdown private[akka] (
   system: ExtendedActorSystem,
   phases: Map[String, CoordinatedShutdown.Phase]) extends Extension {
-  import CoordinatedShutdown.Phase
+  import CoordinatedShutdown._
 
   /** INTERNAL API */
   private[akka] val log = Logging(system, getClass)
@@ -265,7 +339,7 @@ final class CoordinatedShutdown private[akka] (
    *
    * It's safe to call this method multiple times. It will only run the once.
    */
-  def run(): Future[Done] = run(None)
+  def run(): Future[Done] = run(UnknownReason)
 
   /**
    * Java API: Run tasks of all phases. The returned
@@ -283,7 +357,7 @@ final class CoordinatedShutdown private[akka] (
    *
    * It's safe to call this method multiple times. It will only run the once.
    */
-  def run(fromPhase: Option[String]): Future[Done] = {
+  def run(reason: Reason, fromPhase: Option[String]): Future[Done] = {
     if (runStarted.compareAndSet(false, true)) {
       import system.dispatcher
       val debugEnabled = log.isDebugEnabled
@@ -368,8 +442,17 @@ final class CoordinatedShutdown private[akka] (
    *
    * It's safe to call this method multiple times. It will only run once.
    */
-  def run(fromPhase: Optional[String]): CompletionStage[Done] =
-    run(fromPhase.asScala).toJava
+  // def run(fromPhase: Optional[String]): CompletionStage[Done] =
+  //   run(fromPhase.asScala).toJava
+
+  /**
+   * Scala API: Run tasks of all phases. The returned
+   * `Future` is completed when all tasks have been completed,
+   * or there is a failure when recovery is disabled.
+   *
+   * It's safe to call this method multiple times. It will only run the shutdown sequence once.
+   */
+  def run(reason: Reason): Future[Done] = run(reason, None)
 
   /**
    * The configured timeout for a given `phase`.

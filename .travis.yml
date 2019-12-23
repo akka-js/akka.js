@@ -1,8 +1,9 @@
 language: scala
 
 scala:
-  - 2.11.12
-  - 2.12.8
+  - 2.12.10
+  # temporary disable 2.13
+  # - 2.13.1
 
 sudo: false
 
@@ -10,7 +11,6 @@ jdk:
   - openjdk8
 
 env:
-  - TRAVIS_NODE_VERSION="8.16.2"
   - TRAVIS_NODE_VERSION="10.17.0"
   - TRAVIS_NODE_VERSION="12.13.1"
 
@@ -20,6 +20,7 @@ install:
 
 script:
   - sbt ++$TRAVIS_SCALA_VERSION clean
+  - sbt ++$TRAVIS_SCALA_VERSION -jvm-opts travis/jvmopts assembleAkkaLibrary
   - sbt ++$TRAVIS_SCALA_VERSION -jvm-opts travis/jvmopts akkaJsTestkitJS/test:fastOptJS
   - sbt ++$TRAVIS_SCALA_VERSION -jvm-opts travis/jvmopts akkaJsTestkitJS/test
   - sbt ++$TRAVIS_SCALA_VERSION -jvm-opts travis/jvmopts akkaActorTestJS/test:fastOptJS
@@ -38,9 +39,12 @@ script:
   - sbt ++$TRAVIS_SCALA_VERSION -jvm-opts travis/jvmopts akkaJsActorStreamTypedJS/test
   # Tricks to avoid unnecessary cache updates, from
   # http://www.scala-sbt.org/0.13/docs/Travis-CI-with-sbt.html
-  - find $HOME/.sbt -name "*.lock" | xargs rm
-  - find $HOME/.ivy2 -name "ivydata-*.properties" | xargs rm
+  - find $HOME/.sbt -name "*.lock" | xargs rm | true
+  - find $HOME/.ivy2 -name "ivydata-*.properties" | xargs rm | true
+  - find $HOME/.cache -name "*.lock" | xargs rm | true
+  - find $HOME/.cache -name "ivydata-*.properties" | xargs rm | true
 cache:
   directories:
     - $HOME/.ivy2/cache
     - $HOME/.sbt/boot/
+    - $HOME/.cache/

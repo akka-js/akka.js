@@ -12,7 +12,7 @@ import akka.actor.{ Scheduler, DynamicAccess, ActorSystem }
 import com.typesafe.config.Config
 import akka.actor.{ Scheduler, ActorSystem }
 import akka.event.Logging.Warning
-import akka.event.EventStream
+import akka.event.{ EventStream, LoggingAdapter }
 import scala.concurrent.duration.Duration
 import akka.ConfigurationException
 import akka.actor.Deploy
@@ -52,6 +52,12 @@ object Dispatchers {
    * configuration of the default dispatcher.
    */
   final val DefaultDispatcherId = "akka.actor.default-dispatcher"
+
+  /**
+   * INTERNAL API
+   */
+  private[akka] final val InternalDispatcherId = "akka.actor.internal-dispatcher"
+
 }
 
 /**
@@ -62,7 +68,9 @@ object Dispatchers {
  * Look in `akka.actor.default-dispatcher` section of the reference.conf
  * for documentation of dispatcher options.
  */
-class Dispatchers(val settings: ActorSystem.Settings, val prerequisites: DispatcherPrerequisites) {
+class Dispatchers(val settings: ActorSystem.Settings,
+    val prerequisites: DispatcherPrerequisites,
+    logger: LoggingAdapter) {
 
   import Dispatchers._
 
@@ -78,6 +86,11 @@ class Dispatchers(val settings: ActorSystem.Settings, val prerequisites: Dispatc
   def defaultGlobalDispatcher: MessageDispatcher = lookup(DefaultDispatcherId)
 
   private val dispatcherConfigurators = new ConcurrentHashMap[String, MessageDispatcherConfigurator]
+
+  /**
+   * INTERNAL API
+   */
+  private[akka] val internalDispatcher = lookup(Dispatchers.InternalDispatcherId)
 
   /**
    * Returns a dispatcher as specified in configuration. Please note that this

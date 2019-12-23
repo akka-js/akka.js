@@ -484,6 +484,26 @@ trait TestKitBase {
   }
 
   /**
+   * Waits for specific message that partial function matches while ignoring all other messages coming in the meantime.
+   * Use it to ignore any number of messages while waiting for a specific one.
+   *
+   * @return result of applying partial function to the last received message,
+   *         i.e. the first one for which the partial function is defined
+   */
+  def fishForSpecificMessage[T](max: Duration = Duration.Undefined, hint: String = "")(
+      f: PartialFunction[Any, T]): T = {
+    val _max = remainingOrDilated(max)
+    val end = now + _max
+    @tailrec
+    def recv: T = {
+      val o = receiveOne(end - now)
+      assert(o ne null, s"timeout (${_max}) during fishForSpecificMessage, hint: $hint")
+      if (f.isDefinedAt(o)) f(o) else recv
+    }
+    recv
+  }
+
+  /**
    * Same as `expectMsgType[T](remainingOrDefault)`, but correctly treating the timeFactor.
    */
   def expectMsgType[T](implicit t: ClassTag[T]): T = expectMsgClass_internal(remainingOrDefault, t.runtimeClass.asInstanceOf[Class[T]])

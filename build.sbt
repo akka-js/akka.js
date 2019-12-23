@@ -14,8 +14,7 @@ val commonSettings = Seq(
         "-encoding", "utf8"
     ),
     resolvers ++= Seq(
-      Resolver.typesafeRepo("releases"),
-      Resolver.sonatypeRepo("snapshots")
+      Resolver.typesafeRepo("releases")
     ),
     parallelExecution in Global := false,
     sources in doc in Compile := Nil,
@@ -196,9 +195,8 @@ lazy val akkaJsActor = crossProject(JSPlatform)
     }
    ).jsSettings(
     scalaJSOptimizerOptions ~= { _.withCheckScalaJSIR(true) },
-    resolvers +=Resolver.sonatypeRepo("snapshots"),
     libraryDependencies ++= {
-      Seq("org.akka-js" %%% "shocon" % "0.5.1-SNAPSHOT") ++
+      Seq("org.akka-js" %%% "shocon" % "0.5.0") ++
       (CrossVersion.partialVersion(scalaVersion.value) match {
         case Some((2, minor)) if minor < 13 => Seq("org.scala-lang.modules" %% "scala-java8-compat" % "0.8.0" % "provided")
         case _                              => Seq()

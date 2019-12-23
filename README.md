@@ -17,34 +17,34 @@ Otherwise, if you want to start from scratch:
 First of all you need to setup a new [Scala.js project](https://www.scala-js.org/doc/project/).
 Then add to your JS project configuration:
 ```scala
-libraryDependencies += "org.akka-js" %%% "akkajsactor" % "1.2.5.26"
+libraryDependencies += "org.akka-js" %%% "akkajsactor" % "1.2.6.1"
 ```
 
 If you want to use Akka Stream:
 ```scala
-libraryDependencies += "org.akka-js" %%% "akkajsactorstream" % "1.2.5.26"
+libraryDependencies += "org.akka-js" %%% "akkajsactorstream" % "1.2.6.1"
 ```
 
 To test your code you can use:
 ```scala
-libraryDependencies += "org.akka-js" %%% "akkajstestkit" % "1.2.5.26" % "test"
-libraryDependencies += "org.akka-js" %%% "akkajsstreamtestkit" % "1.2.5.26" % "test"
+libraryDependencies += "org.akka-js" %%% "akkajstestkit" % "1.2.6.1" % "test"
+libraryDependencies += "org.akka-js" %%% "akkajsstreamtestkit" % "1.2.6.1" % "test"
 ```
 
 You can also use Akka Typed:
 ```scala
-libraryDependencies += "org.akka-js" %%% "akkajsactortyped" % "1.2.5.26"
-libraryDependencies += "org.akka-js" %%% "akkajstypedtestkit" % "1.2.5.26" % "test"
+libraryDependencies += "org.akka-js" %%% "akkajsactortyped" % "1.2.6.1"
+libraryDependencies += "org.akka-js" %%% "akkajstypedtestkit" % "1.2.6.1" % "test"
 ```
 
 And Akka Stream Typed interface:
 ```scala
-libraryDependencies += "org.akka-js" %%% "akkajsactorstreamtyped" % "1.2.5.26"
+libraryDependencies += "org.akka-js" %%% "akkajsactorstreamtyped" % "1.2.6.1"
 ```
 
 
-Please note that Akka.js 1.2.5.26 is shipped from the stable Akka 2.5.26.
-At this point you can use most of the Akka core Api as described in the official [docs](http://doc.akka.io/docs/akka/2.5.26/scala.html).
+Please note that Akka.js 1.2.6.1 is shipped from the stable Akka 2.6.1.
+At this point you can use most of the Akka core Api as described in the official [docs](http://doc.akka.io/docs/akka/2.6.1/scala.html).
 
 Check out the @andreaTP session at Scala Days 2016:
 [slides](https://github.com/andreaTP/sd2016.git)

@@ -21,8 +21,10 @@ class AnnotationAdderPlugin(val global: Global) extends Plugin {
   val description = "Want to add annotation to objects, classes, fields, and methods"
   val components = List[PluginComponent](AnnotationAdderComponent)
 
-  lazy val config: mutable.Set[(String, String, List[String])] =
-    (try new String(readAllBytes(get("./config/annotation_adder.config"))).split("\n").toSeq.map(e => {
+  lazy val config: mutable.Set[(String, String, List[String])] = {
+    val ret = mutable.Set[(String, String, List[String])]()
+
+    ret ++= (try new String(readAllBytes(get("./config/annotation_adder.config"))).split("\n").toSeq.map(e => {
       val splitted = e.split(" ")
       (splitted(0), splitted(1), splitted.drop(2).toList)
     })
@@ -30,7 +32,10 @@ class AnnotationAdderPlugin(val global: Global) extends Plugin {
       case err: Throwable =>
         println("Annotation adder configuration file is missing")
         Seq()
-    }).to[mutable.Set]
+    })
+
+    ret
+  }
 
   private object AnnotationAdderComponent extends PluginComponent with Transform {
     val global = AnnotationAdderPlugin.this.global

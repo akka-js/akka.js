@@ -569,9 +569,11 @@ lazy val akkaJsStreamTestkit = crossProject(JSPlatform)
       scalaJSStage in Global := FastOptStage,
       publishArtifact in (Test, packageBin) := true,
       libraryDependencies ++= Seq(
-        "org.scalatest" %%% "scalatest" % "3.0.8" withSources (),
-        "org.scala-lang.modules" %% "scala-java8-compat" % "0.8.0" % "provided"
-      ),
+        "org.scalatest" %%% "scalatest" % "3.0.8" withSources ()) ++
+        (CrossVersion.partialVersion(scalaVersion.value) match {
+          case Some((2, minor)) if minor < 13 => Seq("org.scala-lang.modules" %% "scala-java8-compat" % "0.8.0" % "provided")
+          case _                              => Seq()
+        }),
       //scalaJSOptimizerOptions ~= { _.withDisableOptimizer(true) },
       //preLinkJSEnv := jsEnv.value,
       //postLinkJSEnv := jsEnv.value.withSourceMap(true),

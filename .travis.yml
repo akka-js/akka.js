@@ -2,8 +2,7 @@ language: scala
 
 scala:
   - 2.12.10
-  # temporary disable 2.13
-  # - 2.13.1
+  - 2.13.1
 
 sudo: false
 

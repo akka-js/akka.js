@@ -516,7 +516,7 @@ lazy val akkaJsStreamTestkit = crossProject(JSPlatform)
     ).jsSettings(
       scalaJSOptimizerOptions ~= { _.withCheckScalaJSIR(true) },
       libraryDependencies ++= {
-        Seq("org.wvlet.airframe" %%% "airframe-log" % "19.12.3") ++
+        Seq("org.wvlet.airframe" %%% "airframe-log" % "19.12.4") ++
         (CrossVersion.partialVersion(scalaVersion.value) match {
           case Some((2, minor)) if minor < 13 => Seq("org.scala-lang.modules" %% "scala-java8-compat" % "0.8.0" % "provided")
           case _                              => Seq()

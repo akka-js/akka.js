@@ -61,12 +61,9 @@ object Unsafe {
             var currentStateCallMeDirectly: State
           }
 
-          println( $o.getClass )
-          println( $o )
-
           val res = $o.asInstanceOf[WithCurrentState].currentStateCallMeDirectly
 
-          if (res eq null) {
+          if (res == null) {
             Closed
           } else {
             res

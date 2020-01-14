@@ -43,7 +43,7 @@ libraryDependencies += "org.akka-js" %%% "akkajsactorstreamtyped" % "2.2.6.1"
 ```
 
 
-Please note that Akka.js 1.2.6.1 is shipped from the stable Akka 2.6.1.
+Please note that Akka.js 2.2.6.1 is shipped from the stable Akka 2.6.1.
 At this point you can use most of the Akka core Api as described in the official [docs](http://doc.akka.io/docs/akka/2.6.1/scala.html).
 
 Check out the @andreaTP session at Scala Days 2016:

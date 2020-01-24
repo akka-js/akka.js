@@ -58,13 +58,16 @@ object Unsafe {
       case q"AbstractCircuitBreaker.stateOffset" | q"6" =>  //_currentStateDoNotCallMeDirectly
         c.Expr[AnyRef](q"""{
           type WithCurrentState = {
-            var currentStateCallMeDirectly: AnyRef
+            var currentStateCallMeDirectly: State
           }
 
           val res = $o.asInstanceOf[WithCurrentState].currentStateCallMeDirectly
 
-          if (res == null) Closed
-          else res
+          if (res == null) {
+            Closed
+          } else {
+            res
+          }
         }""")
       case q"AbstractCircuitBreaker.resetTimeoutOffset" | q"7" =>  //_currentResetTimeoutDoNotCallMeDirectly
         c.Expr[AnyRef](q"""{
@@ -172,7 +175,7 @@ object Unsafe {
       case q"AbstractCircuitBreaker.stateOffset" | q"6" =>  //_currentStateDoNotCallMeDirectly
         c.Expr[Boolean](q"""{
           type WithCurrentState = {
-            var currentStateCallMeDirectly: Any
+            var currentStateCallMeDirectly: State
           }
 
           if ($o.asInstanceOf[WithCurrentState].currentStateCallMeDirectly == $old ||

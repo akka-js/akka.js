@@ -1,5 +1,10 @@
+<<<<<<< HEAD
 val akkaJsVersion = "2.2.6.3-SNAPSHOT"
 val akkaOriginalVersion = "v2.6.3"
+=======
+val akkaJsVersion = "2.2.6.1"
+val akkaOriginalVersion = "v2.6.1"
+>>>>>>> feature: Support for Scala 2.13
 
 val commonSettings = Seq(
     scalaVersion := "2.12.10",
@@ -116,8 +121,10 @@ def getAkkaSources(targetDir: File, version: String) = {
   }
 }
 
-def copyToSourceFolder(sourceDir: File, targetDir: File) = {
-  IO.delete(targetDir)
+def copyToSourceFolder(sourceDir: File, targetDir: File, deleteOld: Boolean = true) = {
+  if (deleteOld)
+    IO.delete(targetDir)
+
   IO.copyDirectory(
     sourceDir,
     targetDir,
@@ -157,16 +164,18 @@ lazy val akkaJsActor = crossProject(JSPlatform)
         file("akka-js-actor/shared/src/main/scala-2.12")
       )
       copyToSourceFolder(
+        akkaTargetDir.value / "akka-actor" / "src" / "main" / "scala-2.13-",
+        file("akka-js-actor/shared/src/main/scala-2.12"),
+        false
+      )
+      copyToSourceFolder(
         akkaTargetDir.value / "akka-actor" / "src" / "main" / "scala-2.13",
         file("akka-js-actor/shared/src/main/scala-2.13")
       )
       copyToSourceFolder(
         akkaTargetDir.value / "akka-actor" / "src" / "main" / "scala-2.13+",
-        file("akka-js-actor/shared/src/main/scala-2.13+")
-      )
-      copyToSourceFolder(
-        akkaTargetDir.value / "akka-actor" / "src" / "main" / "scala-2.13-",
-        file("akka-js-actor/shared/src/main/scala-2.13-")
+        file("akka-js-actor/shared/src/main/scala-2.13"),
+        false
       )
 
       copyToSourceFolder(
@@ -196,11 +205,10 @@ lazy val akkaJsActor = crossProject(JSPlatform)
    ).jsSettings(
     scalaJSOptimizerOptions ~= { _.withCheckScalaJSIR(true) },
     libraryDependencies ++= {
-      Seq("org.akka-js" %%% "shocon" % "0.5.0") ++
-      (CrossVersion.partialVersion(scalaVersion.value) match {
-        case Some((2, minor)) if minor < 13 => Seq("org.scala-lang.modules" %% "scala-java8-compat" % "0.8.0" % "provided")
-        case _                              => Seq()
-      })
+      Seq(
+        "org.akka-js" %%% "shocon" % "0.5.0",
+        "org.scala-lang.modules" %% "scala-java8-compat" % "0.9.0"
+      )
     },
     libraryDependencies ++= Seq(
       "org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided",
@@ -376,12 +384,6 @@ lazy val akkaJsActorStream = crossProject(JSPlatform)
     publishSettings : _*
   ).jsSettings(
     scalaJSOptimizerOptions ~= { _.withCheckScalaJSIR(true) },
-    libraryDependencies ++= {
-      CrossVersion.partialVersion(scalaVersion.value) match {
-        case Some((2, minor)) if minor < 13 => Seq("org.scala-lang.modules" %% "scala-java8-compat" % "0.8.0" % "provided")
-        case _                              => Seq()
-      }
-    },
     excludeDependencies += ("org.akka-js" %% "akkaactorjsirpatches"),
     compile in Compile := {(compile in Compile).dependsOn(assembleAkkaLibrary, fixResources).value},
     publishLocal := {publishLocal.dependsOn(assembleAkkaLibrary, fixResources).value},
@@ -515,13 +517,10 @@ lazy val akkaJsStreamTestkit = crossProject(JSPlatform)
       publishSettings : _*
     ).jsSettings(
       scalaJSOptimizerOptions ~= { _.withCheckScalaJSIR(true) },
-      libraryDependencies ++= {
-        Seq("org.wvlet.airframe" %%% "airframe-log" % "19.12.4") ++
-        (CrossVersion.partialVersion(scalaVersion.value) match {
-          case Some((2, minor)) if minor < 13 => Seq("org.scala-lang.modules" %% "scala-java8-compat" % "0.8.0" % "provided")
-          case _                              => Seq()
-        })
-      },
+      libraryDependencies ++= Seq(
+        "org.wvlet.airframe" %%% "airframe-log" % "19.12.4",
+        "org.scala-lang.modules" %% "scala-java8-compat" % "0.9.0"
+      ),
       excludeDependencies += ("org.akka-js" %% "akkaactorjsirpatches"),
       compile in Compile := {(compile in Compile).dependsOn(assembleAkkaLibrary, fixResources).value},
       publishLocal := {publishLocal.dependsOn(assembleAkkaLibrary, fixResources).value},

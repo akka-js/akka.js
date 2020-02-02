@@ -1,5 +1,5 @@
-val akkaJsVersion = "2.2.6.1-fixCircuitBreaker2-SNAPSHOT"
-val akkaOriginalVersion = "v2.6.1"
+val akkaJsVersion = "2.2.6.3-SNAPSHOT"
+val akkaOriginalVersion = "v2.6.3"
 
 val commonSettings = Seq(
     scalaVersion := "2.12.10",
@@ -281,7 +281,7 @@ lazy val akkaJsTestkit = crossProject(JSPlatform)
   .jsSettings(
     scalaJSOptimizerOptions ~= { _.withCheckScalaJSIR(true) },
     libraryDependencies ++= Seq(
-      "org.scalatest" %%% "scalatest" % "3.0.8" withSources ()
+      "org.scalatest" %%% "scalatest" % "3.1.0" withSources ()
     ),
     scalaJSStage in Global := FastOptStage,
     publishArtifact in (Test, packageBin) := true,
@@ -423,7 +423,7 @@ lazy val akkaJsStreamTestkit = crossProject(JSPlatform)
     scalaJSOptimizerOptions ~= { _.withCheckScalaJSIR(true) },
     scalaJSStage in Global := FastOptStage,
     libraryDependencies ++= Seq(
-      "org.scalatest" %%% "scalatest" % "3.0.8" withSources ()
+      "org.scalatest" %%% "scalatest" % "3.1.0" withSources ()
     ),
     publishArtifact in (Test, packageBin) := true,
     //scalaJSOptimizerOptions ~= { _.withDisableOptimizer(true) },
@@ -569,7 +569,7 @@ lazy val akkaJsStreamTestkit = crossProject(JSPlatform)
       scalaJSStage in Global := FastOptStage,
       publishArtifact in (Test, packageBin) := true,
       libraryDependencies ++= Seq(
-        "org.scalatest" %%% "scalatest" % "3.0.8" withSources ()) ++
+        "org.scalatest" %%% "scalatest" % "3.1.0" withSources ()) ++
         (CrossVersion.partialVersion(scalaVersion.value) match {
           case Some((2, minor)) if minor < 13 => Seq("org.scala-lang.modules" %% "scala-java8-compat" % "0.8.0" % "provided")
           case _                              => Seq()

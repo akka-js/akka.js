@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Lightbend Inc. <https://www.lightbend.com>
+ * Copyright (C) 2018-2020 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package akka.actor.testkit.typed.scaladsl
@@ -7,10 +7,11 @@ package akka.actor.testkit.typed.scaladsl
 import akka.actor.testkit.typed.TestKitSettings
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
-import org.scalatest._
-// import org.scalatest.concurrent.Eventually
+import org.scalatest.{ BeforeAndAfterAll, TestSuite }
+//import org.scalatest.concurrent.Eventually
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.Span
+import org.scalatest.matchers.should.Matchers
 
 /**
  * A ScalaTest base class for the [[ActorTestKit]], making it possible to have ScalaTest manage the lifecycle of the testkit.
@@ -19,11 +20,25 @@ import org.scalatest.time.Span
  *
  * Note that ScalaTest is not provided as a transitive dependency of the testkit module but must be added explicitly
  * to your project to use this.
+ *
+ * By default config is loaded from `application-test.conf` if that exists, otherwise
+ * using default configuration from the reference.conf resources that ship with the Akka libraries.
+ * The application.conf of your project is not used in this case.
+ * A specific configuration can be passed as constructor parameter.
  */
-abstract class ScalaTestWithActorTestKit(testKit: ActorTestKit) extends ActorTestKitBase(testKit)
-  with TestSuite with Matchers with BeforeAndAfterAll with ScalaFutures {
-  // with Eventually {
+abstract class ScalaTestWithActorTestKit(testKit: ActorTestKit)
+  extends ActorTestKitBase(testKit)
+    with TestSuite
+    with Matchers
+    with BeforeAndAfterAll
+    with ScalaFutures {
+    //with Eventually {
 
+  /**
+   * Config loaded from `application-test.conf` if that exists, otherwise
+   * using default configuration from the reference.conf resources that ship with the Akka libraries.
+   * The application.conf of your project is not used in this case.
+   */
   def this() = this(ActorTestKit(ActorTestKitBase.testNameFromCallStack()))
 
   /**
@@ -58,4 +73,3 @@ abstract class ScalaTestWithActorTestKit(testKit: ActorTestKit) extends ActorTes
     testKit.shutdownTestKit()
   }
 }
-

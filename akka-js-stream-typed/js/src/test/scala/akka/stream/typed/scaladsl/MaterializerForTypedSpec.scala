@@ -22,7 +22,7 @@ class MaterializerForTypedSpec extends ScalaTestWithActorTestKit with WordSpecLi
 
     "use system materializer by default" in {
       val it: Future[String] = Source.single("hello").runWith(Sink.head)
-      Await.result(it) shouldEqual ("hello")
+      akka.testkit.Await.result(it) shouldEqual ("hello")
       // it.futureValue should ===("hello")
     }
 
@@ -30,7 +30,7 @@ class MaterializerForTypedSpec extends ScalaTestWithActorTestKit with WordSpecLi
       val customMaterializer = Materializer(system)
       val it: Future[String] = Source.single("hello").runWith(Sink.head)(customMaterializer)
 
-      Await.result(it) shouldEqual ("hello")
+      akka.testkit.Await.result(it) shouldEqual ("hello")
       // it.futureValue should ===("hello")
     }
 

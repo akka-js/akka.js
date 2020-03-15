@@ -7,7 +7,7 @@ val akkaOriginalVersion = "v2.6.1"
 >>>>>>> feature: Support for Scala 2.13
 
 val commonSettings = Seq(
-    scalaVersion := "2.12.10",
+    scalaVersion := "2.13.1",
     crossScalaVersions  := Seq("2.12.10", "2.13.1"),
     organization := "org.akka-js",
     scalacOptions ++= Seq(
@@ -77,6 +77,9 @@ lazy val assembleAkkaLibrary = taskKey[Unit](
 lazy val fixResources = taskKey[Unit](
   "Fix application.conf presence on first clean build.")
 
+lazy val fixAwait = taskKey[Unit](
+  "Fix The imports of Await in the tests.")
+
 //basically eviction rules
 def rm_clash(base: File, target: File): Unit = {
   if (base.exists &&
@@ -140,6 +143,39 @@ lazy val akkaJsUnsafe = project.in(file("akka-js-unsafe"))
       "org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided"
     )
   )
+
+fixAwait in Test := {
+  import scala.sys.process._
+  val coursierBin = (target.value) / "coursier"
+  val scalafixBin = (target.value) / "scalafix"
+
+  val scalafixRule = (baseDirectory.value) / "plugins" / "ChangeAwaitImport.scala"
+
+  if (!scalafixBin.exists) {
+    // Install scalafix command line
+    coursierBin.delete()
+
+    assert { s"curl -Lo ${coursierBin.getAbsolutePath} https://git.io/coursier-cli".! == 0 }
+    assert { s"chmod +x ${coursierBin.getAbsolutePath}".! == 0 }
+    assert { s"${coursierBin.getAbsolutePath} bootstrap ch.epfl.scala:scalafix-cli_2.12.10:0.9.11 -f --main scalafix.cli.Cli -o ${scalafixBin.getAbsolutePath}".! == 0 }
+  }
+
+  def fixCommand(targetFolder: String) =
+    s"${scalafixBin.getAbsolutePath} -r file:${scalafixRule} --stdout --files ${targetFolder}"
+
+  // val folders = Seq(
+  //   testFolder
+  //   akka-js-actor-tests/shared/src/test/scala/akka
+  // )
+  
+  val foldersToFix = Seq(
+    (akkaActorTestJS / Test / baseDirectory).value.getAbsolutePath
+  )
+  
+  foldersToFix.foreach { folder =>
+    fixCommand(folder).!
+  }
+}
 
 import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 

@@ -1,10 +1,5 @@
-<<<<<<< HEAD
 val akkaJsVersion = "2.2.6.3-SNAPSHOT"
 val akkaOriginalVersion = "v2.6.3"
-=======
-val akkaJsVersion = "2.2.6.1"
-val akkaOriginalVersion = "v2.6.1"
->>>>>>> feature: Support for Scala 2.13
 
 val commonSettings = Seq(
     scalaVersion := "2.13.1",

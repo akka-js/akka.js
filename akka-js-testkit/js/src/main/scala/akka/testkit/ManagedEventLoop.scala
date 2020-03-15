@@ -35,7 +35,7 @@ object ManagedEventLoop {
     def run(): Unit = handler()
   }
   private final class TimeoutEvent(handler: => JSFun, time: Double) extends Event(handler) {
-    def clear(): Unit = externalQueueH.map(x => if (x != null) jsClearTimeout(x))
+    def clear(): Unit = externalQueueH.map(x => jsClearTimeout(x))
     def globalize(): Unit =
       externalQueueH = Some(
         jsSetTimeout(() => {
@@ -179,7 +179,7 @@ object Await {
     @scala.annotation.tailrec
     def loop(f: Future[T]): Try[T] = {
       val execution: Duration = ManagedEventLoop.tick
-      if(execution > endTime) throw new java.util.concurrent.TimeoutException(s"Futures timed out after [${atMost.toMillis}] milliseconds")
+      if(execution > endTime) Failure(new java.util.concurrent.TimeoutException(s"Futures timed out after [${atMost.toMillis}] milliseconds"))
       else f.value match {
         case None => loop(f)
         case Some(res) => res
@@ -192,10 +192,12 @@ object Await {
       case Success(m) => m
       // if it's a wrapped execution (something coming from inside a promise)
       // we need to unwrap it, otherwise just return the regular throwable
-      case Failure(e) => throw (e match {
-        case _: scala.concurrent.ExecutionException => e.getCause()
-        case _ => e
-      })
+      case Failure(e) => throw {
+        e match {
+          case _: scala.concurrent.ExecutionException => e.getCause()
+          case _ => e
+        }
+      }
     }
   }
 

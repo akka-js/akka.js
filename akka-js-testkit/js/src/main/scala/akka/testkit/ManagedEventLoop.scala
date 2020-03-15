@@ -35,7 +35,7 @@ object ManagedEventLoop {
     def run(): Unit = handler()
   }
   private final class TimeoutEvent(handler: => JSFun, time: Double) extends Event(handler) {
-    def clear(): Unit = externalQueueH.map(x => jsClearTimeout(x))
+    def clear(): Unit = externalQueueH.map(x => if (x != null) jsClearTimeout(x))
     def globalize(): Unit =
       externalQueueH = Some(
         jsSetTimeout(() => {

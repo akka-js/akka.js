@@ -10,7 +10,8 @@ import org.scalatest.Matchers
 import org.scalatest.BeforeAndAfterAll
 import akka.actor._
 import com.typesafe.config.ConfigFactory
-import scala.concurrent.{Await, Promise}
+import scala.concurrent.Promise
+import akka.testkit.Await
 import scala.concurrent.duration._
 import akka.actor.DeadLetter
 import akka.pattern.ask

@@ -77,9 +77,6 @@ lazy val assembleAkkaLibrary = taskKey[Unit](
 lazy val fixResources = taskKey[Unit](
   "Fix application.conf presence on first clean build.")
 
-lazy val fixAwait = taskKey[Unit](
-  "Fix The imports of Await in the tests.")
-
 //basically eviction rules
 def rm_clash(base: File, target: File): Unit = {
   if (base.exists &&
@@ -144,12 +141,12 @@ lazy val akkaJsUnsafe = project.in(file("akka-js-unsafe"))
     )
   )
 
-fixAwait in Test := {
+def fixAwaitImport(folders: Seq[File]) = {
   import scala.sys.process._
-  val coursierBin = (target.value) / "coursier"
-  val scalafixBin = (target.value) / "scalafix"
+  val coursierBin = file("target") / "coursier"
+  val scalafixBin = file("target") / "scalafix"
 
-  val scalafixRule = (baseDirectory.value) / "plugins" / "ChangeAwaitImport.scala"
+  val scalafixRule = file(".") / "plugins" / "ChangeAwaitImport.scala"
 
   if (!scalafixBin.exists) {
     // Install scalafix command line
@@ -161,19 +158,12 @@ fixAwait in Test := {
   }
 
   def fixCommand(targetFolder: String) =
-    s"${scalafixBin.getAbsolutePath} -r file:${scalafixRule} --stdout --files ${targetFolder}"
-
-  // val folders = Seq(
-  //   testFolder
-  //   akka-js-actor-tests/shared/src/test/scala/akka
-  // )
+    s"${scalafixBin.getAbsolutePath} -r file:${scalafixRule} --files ${targetFolder}"
   
-  val foldersToFix = Seq(
-    (akkaActorTestJS / Test / baseDirectory).value.getAbsolutePath
-  )
-  
-  foldersToFix.foreach { folder =>
-    fixCommand(folder).!
+  folders.foreach { folder =>
+    if (folder.exists) {
+      fixCommand(folder.getAbsolutePath).!
+    }
   }
 }
 
@@ -304,6 +294,8 @@ lazy val akkaJsTestkit = crossProject(JSPlatform)
       val jsTestSources = file("akka-js-testkit/js/src/test/scala")
 
       rm_clash(testTarget, jsTestSources)
+
+      fixAwaitImport(Seq(baseDirectory.value / ".."))
     },
     fixResources := {
       val compileConf = (resourceDirectory in Compile).value / "application.conf"

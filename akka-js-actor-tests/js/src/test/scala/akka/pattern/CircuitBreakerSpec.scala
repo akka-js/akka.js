@@ -7,7 +7,7 @@ package akka.pattern
 import akka.actor.ActorSystem
 import akka.testkit._
 
-import scala.concurrent.Await
+import akka.testkit.Await
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.concurrent.TimeoutException

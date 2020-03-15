@@ -350,6 +350,8 @@ lazy val akkaActorTest = crossProject(JSPlatform)
       val jsSources = file("akka-js-actor-tests/js/src/test/scala")
 
       rm_clash(srcTarget, jsSources)
+
+      fixAwaitImport(Seq(baseDirectory.value / ".."))
     }
   ).jsSettings(
     scalaJSStage in Global := FastOptStage,
@@ -448,6 +450,8 @@ lazy val akkaJsStreamTestkit = crossProject(JSPlatform)
 
       rm_clash(srcTestTarget, jsTestSources)
       rm_clash(srcMainTarget, jsMainSources)
+
+      fixAwaitImport(Seq(baseDirectory.value / ".."))
     }
   ).jsSettings(
     scalaJSOptimizerOptions ~= { _.withCheckScalaJSIR(true) },
@@ -486,6 +490,8 @@ lazy val akkaJsStreamTestkit = crossProject(JSPlatform)
        val jsSources = file("akka-js-stream-tests/js/src/test/scala")
 
        rm_clash(srcTarget, jsSources)
+
+       fixAwaitImport(Seq(baseDirectory.value / ".."))
      }
    ).jsSettings(
      libraryDependencies ++= Seq(
@@ -590,6 +596,8 @@ lazy val akkaJsStreamTestkit = crossProject(JSPlatform)
           file("akka-js-typed-testkit/shared/src/test/scala"),
           file("akka-js-typed-testkit/js/src/test/scala")
         )
+
+        fixAwaitImport(Seq(baseDirectory.value / ".."))
       }
     ).jsSettings(
       scalaJSOptimizerOptions ~= { _.withCheckScalaJSIR(true) },
@@ -631,6 +639,8 @@ lazy val akkaJsStreamTestkit = crossProject(JSPlatform)
          val jsSources = file("akka-js-typed-tests/js/src/test/scala")
 
          rm_clash(srcTarget, jsSources)
+
+         fixAwaitImport(Seq(baseDirectory.value / ".."))
        }
      ).jsSettings(
        libraryDependencies ++= Seq(
@@ -677,6 +687,8 @@ lazy val akkaJsStreamTestkit = crossProject(JSPlatform)
         val jsTests = file("akka-js-stream-typed/js/src/test/scala")
 
         rm_clash(testTarget, jsTests)
+
+        fixAwaitImport(Seq(baseDirectory.value / ".."))
       },
       fixResources := {
         val compileConf = (resourceDirectory in Compile).value / "application.conf"

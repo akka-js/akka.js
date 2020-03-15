@@ -6,7 +6,7 @@ package akka.actor.testkit.typed.scaladsl
 
 import java.util.concurrent.TimeoutException
 
-import scala.concurrent.Await
+import akka.testkit.Await
 import scala.concurrent.duration._
 import akka.actor.testkit.typed.TestKitSettings
 import akka.actor.testkit.typed.internal.ActorTestKitGuardian

@@ -18,6 +18,11 @@ object Logging {
     val NoCause = akka.event.Logging.Error.NoCause
   }
 
+  final val ErrorLevel = akka.event.Logging.LogLevel(1)
+  final val WarningLevel = akka.event.Logging.LogLevel(2)
+  final val InfoLevel = akka.event.Logging.LogLevel(3)
+  final val DebugLevel = akka.event.Logging.LogLevel(4)
+
   type MDC = Map[String, Any]
 
   val emptyMDC: MDC = Map()

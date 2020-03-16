@@ -15,9 +15,9 @@ class ChangeAwaitImport extends SyntacticRule("ChangeAwaitImport") {
       case t @ importer"scala.concurrent.{..$importees}" =>
         findAwaitImportee(importees) match {
           case Some(i) =>
-            Seq(Patch.removeImportee(i), Patch.addRight(t, "\nimport akka.testkit.Await"))
-          case _ => Seq()
+            Patch.removeImportee(i) + Patch.addRight(t, "\nimport akka.testkit.Await")
+          case _ => Patch.empty
         }
-    }.flatten.asPatch
+    }.asPatch
   }
 }

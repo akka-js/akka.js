@@ -35,7 +35,7 @@ class CustomGuardianAndMaterializerSpec extends ScalaTestWithActorTestKit with W
     "work with typed ActorSystem with custom guardian" in {
       val it: Future[String] = Source.single("hello").runWith(Sink.head)
 
-      Await.result(it) should ===("hello")
+      akka.testkit.Await.result(it) should ===("hello")
       // Find a better way to cross compile this
       // it.futureValue should ===("hello")
     }

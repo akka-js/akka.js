@@ -6,7 +6,7 @@ package akka.testkit
 import language.postfixOps
 import scala.annotation.{ tailrec }
 import scala.collection.immutable
-import scala.concurrent.Await
+import akka.testkit.Await
 import scala.concurrent.duration._
 import scala.reflect.ClassTag
 import java.util.concurrent._

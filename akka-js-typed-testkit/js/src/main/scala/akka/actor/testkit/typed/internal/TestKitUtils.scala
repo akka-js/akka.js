@@ -9,7 +9,8 @@ import java.lang.reflect.Modifier
 import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ ActorRef, ActorSystem, Behavior, Props }
 import akka.annotation.InternalApi
-import scala.concurrent.{ Await, TimeoutException }
+import scala.concurrent.TimeoutException
+import akka.testkit.Await
 import scala.concurrent.duration.Duration
 
 /**

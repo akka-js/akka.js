@@ -26,7 +26,7 @@ import akka.event.Logging
 import akka.dispatch.ExecutionContexts
 import java.util.concurrent.Executors
 import scala.util.Try
-import scala.concurrent.Await
+// SCALA.JS import scala.concurrent.Await
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Supplier

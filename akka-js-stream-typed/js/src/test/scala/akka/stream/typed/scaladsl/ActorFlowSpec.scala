@@ -18,7 +18,9 @@ import akka.actor.typed.DispatcherSelector
 import akka.stream.testkit.TestSubscriber
 
 import scala.collection.immutable
-import scala.concurrent.{ Await, Future }
+// import scala.concurrent.{ Await, Future }
+import scala.concurrent.Future
+import akka.testkit.Await
 
 object ActorFlowSpec {
   final case class Asking(s: String, replyTo: ActorRef[Reply])

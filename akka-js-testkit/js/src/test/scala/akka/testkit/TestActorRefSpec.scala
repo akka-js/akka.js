@@ -7,7 +7,8 @@ import language.{ postfixOps }
 import org.scalatest.{ BeforeAndAfterEach }
 import akka.actor._
 import akka.event.Logging.Warning
-import scala.concurrent.{ Promise, Await }
+import scala.concurrent.Promise
+import akka.testkit.Await
 import scala.concurrent.duration._
 import akka.pattern.ask
 import akka.dispatch.Dispatcher

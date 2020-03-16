@@ -2,7 +2,7 @@ val akkaJsVersion = "2.2.6.3-SNAPSHOT"
 val akkaOriginalVersion = "v2.6.3"
 
 val commonSettings = Seq(
-    scalaVersion := "2.12.10",
+    scalaVersion := "2.13.1",
     crossScalaVersions  := Seq("2.12.10", "2.13.1"),
     organization := "org.akka-js",
     scalacOptions ++= Seq(
@@ -116,8 +116,10 @@ def getAkkaSources(targetDir: File, version: String) = {
   }
 }
 
-def copyToSourceFolder(sourceDir: File, targetDir: File) = {
-  IO.delete(targetDir)
+def copyToSourceFolder(sourceDir: File, targetDir: File, deleteOld: Boolean = true) = {
+  if (deleteOld)
+    IO.delete(targetDir)
+
   IO.copyDirectory(
     sourceDir,
     targetDir,
@@ -133,6 +135,32 @@ lazy val akkaJsUnsafe = project.in(file("akka-js-unsafe"))
       "org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided"
     )
   )
+
+def fixAwaitImport(folders: Seq[File]) = {
+  import scala.sys.process._
+  val coursierBin = file("target") / "coursier"
+  val scalafixBin = file("target") / "scalafix"
+
+  val scalafixRule = file(".") / "plugins" / "ChangeAwaitImport.scala"
+
+  if (!scalafixBin.exists) {
+    // Install scalafix command line
+    coursierBin.delete()
+
+    assert { s"curl -Lo ${coursierBin.getAbsolutePath} https://git.io/coursier-cli".! == 0 }
+    assert { s"chmod +x ${coursierBin.getAbsolutePath}".! == 0 }
+    assert { s"${coursierBin.getAbsolutePath} bootstrap ch.epfl.scala:scalafix-cli_2.12.10:0.9.11 -f --main scalafix.cli.Cli -o ${scalafixBin.getAbsolutePath}".! == 0 }
+  }
+
+  def fixCommand(targetFolder: String) =
+    s"${scalafixBin.getAbsolutePath} -r file:${scalafixRule} --files ${targetFolder}"
+  
+  folders.foreach { folder =>
+    if (folder.exists) {
+      fixCommand(folder.getAbsolutePath).!
+    }
+  }
+}
 
 import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 
@@ -157,16 +185,18 @@ lazy val akkaJsActor = crossProject(JSPlatform)
         file("akka-js-actor/shared/src/main/scala-2.12")
       )
       copyToSourceFolder(
+        akkaTargetDir.value / "akka-actor" / "src" / "main" / "scala-2.13-",
+        file("akka-js-actor/shared/src/main/scala-2.12"),
+        false
+      )
+      copyToSourceFolder(
         akkaTargetDir.value / "akka-actor" / "src" / "main" / "scala-2.13",
         file("akka-js-actor/shared/src/main/scala-2.13")
       )
       copyToSourceFolder(
         akkaTargetDir.value / "akka-actor" / "src" / "main" / "scala-2.13+",
-        file("akka-js-actor/shared/src/main/scala-2.13+")
-      )
-      copyToSourceFolder(
-        akkaTargetDir.value / "akka-actor" / "src" / "main" / "scala-2.13-",
-        file("akka-js-actor/shared/src/main/scala-2.13-")
+        file("akka-js-actor/shared/src/main/scala-2.13"),
+        false
       )
 
       copyToSourceFolder(
@@ -196,11 +226,10 @@ lazy val akkaJsActor = crossProject(JSPlatform)
    ).jsSettings(
     scalaJSOptimizerOptions ~= { _.withCheckScalaJSIR(true) },
     libraryDependencies ++= {
-      Seq("org.akka-js" %%% "shocon" % "0.5.0") ++
-      (CrossVersion.partialVersion(scalaVersion.value) match {
-        case Some((2, minor)) if minor < 13 => Seq("org.scala-lang.modules" %% "scala-java8-compat" % "0.8.0" % "provided")
-        case _                              => Seq()
-      })
+      Seq(
+        "org.akka-js" %%% "shocon" % "0.5.0",
+        "org.scala-lang.modules" %% "scala-java8-compat" % "0.9.0"
+      )
     },
     libraryDependencies ++= Seq(
       "org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided",
@@ -260,6 +289,8 @@ lazy val akkaJsTestkit = crossProject(JSPlatform)
       val jsTestSources = file("akka-js-testkit/js/src/test/scala")
 
       rm_clash(testTarget, jsTestSources)
+
+      fixAwaitImport(Seq(baseDirectory.value / ".."))
     },
     fixResources := {
       val compileConf = (resourceDirectory in Compile).value / "application.conf"
@@ -314,6 +345,8 @@ lazy val akkaActorTest = crossProject(JSPlatform)
       val jsSources = file("akka-js-actor-tests/js/src/test/scala")
 
       rm_clash(srcTarget, jsSources)
+
+      fixAwaitImport(Seq(baseDirectory.value / ".."))
     }
   ).jsSettings(
     scalaJSStage in Global := FastOptStage,
@@ -376,12 +409,6 @@ lazy val akkaJsActorStream = crossProject(JSPlatform)
     publishSettings : _*
   ).jsSettings(
     scalaJSOptimizerOptions ~= { _.withCheckScalaJSIR(true) },
-    libraryDependencies ++= {
-      CrossVersion.partialVersion(scalaVersion.value) match {
-        case Some((2, minor)) if minor < 13 => Seq("org.scala-lang.modules" %% "scala-java8-compat" % "0.8.0" % "provided")
-        case _                              => Seq()
-      }
-    },
     excludeDependencies += ("org.akka-js" %% "akkaactorjsirpatches"),
     compile in Compile := {(compile in Compile).dependsOn(assembleAkkaLibrary, fixResources).value},
     publishLocal := {publishLocal.dependsOn(assembleAkkaLibrary, fixResources).value},
@@ -418,6 +445,8 @@ lazy val akkaJsStreamTestkit = crossProject(JSPlatform)
 
       rm_clash(srcTestTarget, jsTestSources)
       rm_clash(srcMainTarget, jsMainSources)
+
+      fixAwaitImport(Seq(baseDirectory.value / ".."))
     }
   ).jsSettings(
     scalaJSOptimizerOptions ~= { _.withCheckScalaJSIR(true) },
@@ -456,6 +485,8 @@ lazy val akkaJsStreamTestkit = crossProject(JSPlatform)
        val jsSources = file("akka-js-stream-tests/js/src/test/scala")
 
        rm_clash(srcTarget, jsSources)
+
+       fixAwaitImport(Seq(baseDirectory.value / ".."))
      }
    ).jsSettings(
      libraryDependencies ++= Seq(
@@ -515,13 +546,10 @@ lazy val akkaJsStreamTestkit = crossProject(JSPlatform)
       publishSettings : _*
     ).jsSettings(
       scalaJSOptimizerOptions ~= { _.withCheckScalaJSIR(true) },
-      libraryDependencies ++= {
-        Seq("org.wvlet.airframe" %%% "airframe-log" % "19.12.4") ++
-        (CrossVersion.partialVersion(scalaVersion.value) match {
-          case Some((2, minor)) if minor < 13 => Seq("org.scala-lang.modules" %% "scala-java8-compat" % "0.8.0" % "provided")
-          case _                              => Seq()
-        })
-      },
+      libraryDependencies ++= Seq(
+        "org.wvlet.airframe" %%% "airframe-log" % "19.12.4",
+        "org.scala-lang.modules" %% "scala-java8-compat" % "0.9.0"
+      ),
       excludeDependencies += ("org.akka-js" %% "akkaactorjsirpatches"),
       compile in Compile := {(compile in Compile).dependsOn(assembleAkkaLibrary, fixResources).value},
       publishLocal := {publishLocal.dependsOn(assembleAkkaLibrary, fixResources).value},
@@ -563,6 +591,8 @@ lazy val akkaJsStreamTestkit = crossProject(JSPlatform)
           file("akka-js-typed-testkit/shared/src/test/scala"),
           file("akka-js-typed-testkit/js/src/test/scala")
         )
+
+        fixAwaitImport(Seq(baseDirectory.value / ".."))
       }
     ).jsSettings(
       scalaJSOptimizerOptions ~= { _.withCheckScalaJSIR(true) },
@@ -604,6 +634,8 @@ lazy val akkaJsStreamTestkit = crossProject(JSPlatform)
          val jsSources = file("akka-js-typed-tests/js/src/test/scala")
 
          rm_clash(srcTarget, jsSources)
+
+         fixAwaitImport(Seq(baseDirectory.value / ".."))
        }
      ).jsSettings(
        libraryDependencies ++= Seq(
@@ -650,6 +682,8 @@ lazy val akkaJsStreamTestkit = crossProject(JSPlatform)
         val jsTests = file("akka-js-stream-typed/js/src/test/scala")
 
         rm_clash(testTarget, jsTests)
+
+        fixAwaitImport(Seq(baseDirectory.value / ".."))
       },
       fixResources := {
         val compileConf = (resourceDirectory in Compile).value / "application.conf"

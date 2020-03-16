@@ -223,7 +223,7 @@ private[akka] final class TestProbeImpl[M](name: String, system: ActorSystem[_])
     system.scheduler.scheduleOnce(100 millis, fn)
 
     try {
-      Await.result(f.future, max)
+      akka.testkit.Await.result(f.future, max)
     } catch {
       case NonFatal(e) =>
         null.asInstanceOf[M]

@@ -8,6 +8,7 @@ import akka.Done
 import scala.concurrent.Promise
 
 import akka.actor.typed.scaladsl.Behaviors
+import akka.testkit.Await
 import com.typesafe.config.ConfigFactory
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.Matchers
@@ -44,7 +45,8 @@ class ActorTestKitSpec extends ScalaTestWithActorTestKit with WordSpecLike with 
         Behaviors.empty
       })
 
-      sawMessage.future.futureValue should ===(true)
+      // sawMessage.future.futureValue should ===(true)
+      Await.result(sawMessage.future) should ===(true)
     }
 
     "spawn a named actor" in {
@@ -54,7 +56,8 @@ class ActorTestKitSpec extends ScalaTestWithActorTestKit with WordSpecLike with 
         Behaviors.empty
       }, "name")
 
-      spawnedWithName.future.futureValue should ===("name")
+      // spawnedWithName.future.futureValue should ===("name")
+      Await.result(spawnedWithName.future) should ===("name")
     }
 
     "stop the actor system" in {

@@ -8,7 +8,8 @@ import language.postfixOps
 
 import akka.testkit.{ AkkaSpec, TestLatch }
 import akka.actor.{ Actor, Props }
-import scala.concurrent.{ Await, Future, Promise }
+import scala.concurrent.{ Future, Promise }
+import akka.testkit.Await
 import scala.concurrent.duration._
 
 object PatternSpec {

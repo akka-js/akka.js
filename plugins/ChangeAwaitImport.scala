@@ -3,27 +3,21 @@ import scala.meta._
 
 class ChangeAwaitImport extends SyntacticRule("ChangeAwaitImport") {
 
+  def findAwaitImportee(importees: List[scala.meta.Importee]): Option[Importee] = {
+    importees.find{ _ match {
+      case i @ Importee.Name(Name("Await")) => true
+      case _ => false
+    }}
+  }
 
   override def fix(implicit doc: SyntacticDocument): Patch = {
-    doc.tree
-      .collect {
-        case t @ q"import scala.concurrent.Await" =>
-          Patch.replaceTree(t, "import akka.testkit.Await")
-        case t @ q"import scala.concurrent.{ Promise, Await }" =>
-          Patch.replaceTree(t, "import scala.concurrent.Promise\nimport akka.testkit.Await")
-        case t @ q"import scala.concurrent.{ Await, Promise }" =>
-          Patch.replaceTree(t, "import scala.concurrent.Promise\nimport akka.testkit.Await")
-        case t @ q"import scala.concurrent.{ Await, ExecutionContext }" =>
-          Patch.replaceTree(t, "import scala.concurrent.ExecutionContext\nimport akka.testkit.Await")
-        case t @ q"import scala.concurrent.{ Await, TimeoutException }" =>
-          Patch.replaceTree(t, "import scala.concurrent.TimeoutException\nimport akka.testkit.Await")
-        case t @ q"import scala.concurrent.{ Await, Future, Promise }" =>
-          Patch.replaceTree(t, "import scala.concurrent.{ Future, Promise }\nimport akka.testkit.Await")
-        case t @ q"import scala.concurrent.{ Await, ExecutionContextExecutor, Future }" =>
-          Patch.replaceTree(t, "import scala.concurrent.{ ExecutionContextExecutor, Future }\nimport akka.testkit.Await")
-          
-      }
-      .asPatch
+    doc.tree.collect {
+      case t @ importer"scala.concurrent.{..$importees}" =>
+        findAwaitImportee(importees) match {
+          case Some(i) =>
+            Seq(Patch.removeImportee(i), Patch.addRight(t, "\nimport akka.testkit.Await"))
+          case _ => Seq()
+        }
+    }.flatten.asPatch
   }
 }
-

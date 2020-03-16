@@ -5,7 +5,7 @@ class ChangeAwaitImport extends SyntacticRule("ChangeAwaitImport") {
 
   def findAwaitImportee(importees: List[scala.meta.Importee]): Option[Importee] = {
     importees.find{ _ match {
-      case i @ Importee.Name(Name("Await")) => true
+      case importee"Await" => true
       case _ => false
     }}
   }

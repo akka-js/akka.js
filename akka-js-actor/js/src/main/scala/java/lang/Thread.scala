@@ -13,12 +13,10 @@
 
 package java.lang
 
-/* We need a constructor to create SingleThread in the companion object, but
- * we don't want user code doing a 'new Thread()' to link, because that could
- * be confusing.
- * So we use a binary signature that no Java source file can ever produce.
+/* We need a constructor to create SingleThread in the companion object, but:
+ * PLEASE DO NOT USE THIS CLASS IN USER CODE!
  */
-class Thread private (dummy: Unit) extends Runnable {
+class Thread extends Runnable {
   private var interruptedState = false
   private[this] var name: String = "main" // default name of the main thread
 
@@ -38,13 +36,20 @@ class Thread private (dummy: Unit) extends Runnable {
 
   def getStackTrace(): Array[StackTraceElement] =
     Array()
+    // This is ugly and could have implications, I should not do it here
     // java.lang.StackTrace.getCurrentStackTrace()
+
+  // Javadocs:
+  // Returns the handler invoked when this thread abruptly terminates due to an uncaught exception. If this thread has not had an uncaught exception handler explicitly set then this thread's ThreadGroup object is returned, unless this thread has terminated, in which case null is returned.
+  // Therefore:
+  // JS VMs are running on a single thread, if this Thread has been terminated it has to be this one, so, since it's terminated, we return null
+  def getUncaughtExceptionHandler(): Thread.UncaughtExceptionHandler = null
 
   def getId(): scala.Long = 1
 }
 
 object Thread {
-  private[this] val SingleThread = new Thread(())
+  private[this] val SingleThread = new Thread()
 
   def currentThread(): Thread = SingleThread
 

@@ -1,3 +1,3 @@
 package java.util.concurrent
 
-trait CompletionStage {}
+trait CompletionStage[T] {}

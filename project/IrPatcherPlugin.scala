@@ -15,7 +15,6 @@
 
 package org.akkajs
 
-import java.io.File
 import org.scalajs.ir._
 import Trees._
 import Types._
@@ -23,12 +22,10 @@ import Types._
 import java.io._
 import java.nio.file.{Files, Path}
 
-// IRFile / IRFileImpl / LinkerOutput.File / LinkerOutputFileImpl
-
 object IrPatcherPlugin {
 
   // form:
-  // https://github.com/scala-js/scala-js/blob/508dcf48910102cec222cf5201ca2450e2192da9/project/JavalibIRCleaner.scala#L103-L151
+  // https://github.com/scala-js/scala-js/blob/508dcf48910102cec222cf5201ca2450e2192da9/project/JavalibIRCleaner.scala#L124-L151
   private def readIRFile(path: Path): ClassDef = {
     import java.nio.ByteBuffer
     import java.nio.channels.FileChannel
@@ -60,15 +57,10 @@ object IrPatcherPlugin {
 
   def patchHackedFile(file: File, hackFile: File): Unit = {
 
-    // val vfile = FileVirtualScalaJSIRFile(file)
-    // val (classInfo, classDef) = vfile.infoAndTree
     val classDef = readIRFile(file.toPath())
 
     val className = classDef.name.name
     val classType = ClassType(className)
-
-    // val vHackfile = FileVirtualScalaJSIRFile(hackFile)
-    // val (hackClassInfo, hackClassDef) = vHackfile.infoAndTree
 
     val hackClassDef = readIRFile(hackFile.toPath())
 
@@ -143,24 +135,10 @@ object IrPatcherPlugin {
       jsSuperClass = classDef.jsSuperClass,
       jsNativeLoadSpec = classDef.jsNativeLoadSpec,
       memberDefs = (hackDefs ++ newMethods),
-      topLevelExportDefs = classDef.topLevelExportDefs)(
-        optimizerHints = classDef.optimizerHints)(
-          pos = classDef.pos)
-    
-    // classDef.copy(defs = (hackDefs ++ newMethods))(
-    //   classDef.optimizerHints)(classDef.pos)
-
-    // val newClassInfo = Infos.generateClassInfo(newClassDef)
+      topLevelExportDefs = classDef.topLevelExportDefs
+    )(optimizerHints = classDef.optimizerHints)(pos = classDef.pos)
 
     writeIRFile(file.toPath(), newClassDef)
-    // val out = WritableFileVirtualBinaryFile(file)
-    // val outputStream = out.outputStream
-    // try {
-    //   InfoSerializers.serialize(outputStream, newClassInfo)
-    //   Serializers.serialize(outputStream, newClassDef)
-    // } finally {
-    //   outputStream.close()
-    // }
   }
 
   def hackAllUnder(base: File, hack: File): Unit = {

@@ -11,7 +11,7 @@ trait ExecutorService extends Executor {
   def	isShutdown(): Boolean
   def	isTerminated(): Boolean
   def shutdown(): Unit
-  def shutdownNow(): List[Runnable]
+  def shutdownNow(): jul.List[Runnable]
   def submit[T](task: Callable[T]): Future[T]
   def submit(task: Runnable): Future[_]
   def submit[T](task: Runnable, result: T): Future[T]

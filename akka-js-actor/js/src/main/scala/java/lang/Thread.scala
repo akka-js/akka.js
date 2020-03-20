@@ -1,4 +1,7 @@
-// should be a PR upstream
+// This class is copy pasted from Scala.js sources
+// here: https://github.com/scala-js/scala-js/pull/3992
+// the reasoning why it won't be merged to the core repository
+// here we keep the diff that enable Akka.Js to reuse Akka code
 /*
  * Scala.js (https://www.scala-js.org/)
  *
@@ -13,9 +16,6 @@
 
 package java.lang
 
-/* We need a constructor to create SingleThread in the companion object, but:
- * PLEASE DO NOT USE THIS CLASS IN USER CODE!
- */
 class Thread extends Runnable {
   private var interruptedState = false
   private[this] var name: String = "main" // default name of the main thread
@@ -34,18 +34,13 @@ class Thread extends Runnable {
   final def getName(): String =
     this.name
 
-  def getStackTrace(): Array[StackTraceElement] =
-    Array()
-    // This is ugly and could have implications, I should not do it here
-    // java.lang.StackTrace.getCurrentStackTrace()
-
-  // Javadocs:
-  // Returns the handler invoked when this thread abruptly terminates due to an uncaught exception. If this thread has not had an uncaught exception handler explicitly set then this thread's ThreadGroup object is returned, unless this thread has terminated, in which case null is returned.
-  // Therefore:
-  // JS VMs are running on a single thread, if this Thread has been terminated it has to be this one, so, since it's terminated, we return null
-  def getUncaughtExceptionHandler(): Thread.UncaughtExceptionHandler = null
+  def getStackTrace(): Array[StackTraceElement] = Array()
+    // StackTrace.getCurrentStackTrace()
 
   def getId(): scala.Long = 1
+
+  def getUncaughtExceptionHandler(): Thread.UncaughtExceptionHandler = null
+
 }
 
 object Thread {
@@ -60,6 +55,6 @@ object Thread {
   }
 
   trait UncaughtExceptionHandler {
-    def uncaughtException(t: java.lang.Thread, e: Throwable): Unit
+    def uncaughtException(t: Thread, e: Throwable): Unit
   }
 }

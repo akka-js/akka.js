@@ -10,7 +10,6 @@ import scala.concurrent.duration.Duration
 import scala.scalajs.js
 import scala.scalajs.js.Dynamic.global
 import scala.scalajs.js.timers._
-import scala.scalajs.runtime.UndefinedBehaviorError
 import scala.collection.mutable.{ Queue, ArrayBuffer }
 
 object ManagedEventLoop {

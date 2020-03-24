@@ -155,16 +155,18 @@ object CoordinatedShutdown extends ExtensionId[CoordinatedShutdown] with Extensi
           }
           t.setName("CoordinatedShutdown-exit")
           t.start()*/
-          System.exit(0)
+          // System.exit(0)
+          ()
         }
 
         if (terminateActorSystem) {
           system.terminate().map { _ ⇒
-            if (exitJvm && !runningJvmHook) System.exit(0)
+            if (exitJvm && !runningJvmHook) ()// System.exit(0)
             Done
           }(ExecutionContexts.sameThreadExecutionContext)
         } else if (exitJvm) {
-          System.exit(0)
+          // System.exit(0)
+          ()
           Future.successful(Done)
         } else
           Future.successful(Done)

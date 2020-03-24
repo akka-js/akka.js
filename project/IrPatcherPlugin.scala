@@ -15,39 +15,70 @@
 
 package org.akkajs
 
-import java.io.File
-import org.scalajs.core.ir._
+import org.scalajs.ir._
 import Trees._
 import Types._
-import org.scalajs.core.tools.io._
+
+import java.io._
+import java.nio.file.{Files, Path}
 
 object IrPatcherPlugin {
 
+  // form:
+  // https://github.com/scala-js/scala-js/blob/508dcf48910102cec222cf5201ca2450e2192da9/project/JavalibIRCleaner.scala#L124-L151
+  private def readIRFile(path: Path): ClassDef = {
+    import java.nio.ByteBuffer
+    import java.nio.channels.FileChannel
+
+    val channel = FileChannel.open(path)
+    try {
+      val fileSize = channel.size()
+      if (fileSize > Int.MaxValue.toLong)
+        throw new IOException(s"IR file too large: $path")
+      val buffer = ByteBuffer.allocate(fileSize.toInt)
+      channel.read(buffer)
+      buffer.flip()
+      Serializers.deserialize(buffer)
+    } finally {
+      channel.close()
+    }
+  }
+
+  private def writeIRFile(path: Path, tree: ClassDef): Unit = {
+    Files.createDirectories(path.getParent())
+    val outputStream =
+      new BufferedOutputStream(new FileOutputStream(path.toFile()))
+    try {
+      Serializers.serialize(outputStream, tree)
+    } finally {
+      outputStream.close()
+    }
+  }
+
   def patchHackedFile(file: File, hackFile: File): Unit = {
 
-    val vfile = FileVirtualScalaJSIRFile(file)
-    val (classInfo, classDef) = vfile.infoAndTree
+    val classDef = readIRFile(file.toPath())
 
     val className = classDef.name.name
     val classType = ClassType(className)
 
-    val vHackfile = FileVirtualScalaJSIRFile(hackFile)
-    val (hackClassInfo, hackClassDef) = vHackfile.infoAndTree
+    val hackClassDef = readIRFile(hackFile.toPath())
+
     val hackClassType = ClassType(hackClassDef.name.name)
 
     val newMethods =
-      hackClassDef.defs filter { memberDef =>
+      hackClassDef.memberDefs filter { memberDef =>
         memberDef match {
-          case MethodDef(_, hackIdent, _, _, _) =>
-            !classDef.defs.exists { md =>
+          case MethodDef(_, hackIdent, _, _, _, _) =>
+            !classDef.memberDefs.exists { md =>
               md match {
-                case MethodDef(_, ident, _, _, _) =>
+                case MethodDef(_, ident, _, _, _, _) =>
                   ident equals hackIdent
                 case _ => false
               }
             }
           case FieldDef(_, hackIdent, _, _) =>
-            !classDef.defs.exists { md =>
+            !classDef.memberDefs.exists { md =>
               md match {
                 case FieldDef(_, ident, _, _) =>
                   ident equals hackIdent
@@ -60,8 +91,8 @@ object IrPatcherPlugin {
         //this is to avoid copying position and to make akka-js-actor-ir-patches unreachable
         implicit val pos = Position.NoPosition
         d match {
-          case MethodDef(static, name, args, resultType, body) =>
-            new MethodDef(static, name, args, resultType, body)(Trees.OptimizerHints.empty, None)
+          case MethodDef(flags, name, originalName, args, resultType, body) =>
+            new MethodDef(flags, name, originalName, args, resultType, body)(Trees.OptimizerHints.empty, None)
           case FieldDef(static, name, ftpe, mutable) =>
             new FieldDef(static, name, ftpe, mutable)
           case any => throw new Exception("Not defined")
@@ -69,13 +100,13 @@ object IrPatcherPlugin {
       }
 
     val hackDefs =
-      (classDef.defs map { memberDef =>
+      (classDef.memberDefs map { memberDef =>
         implicit val pos = memberDef.pos
 
         memberDef match {
           case FieldDef(stat, ident, tpe, mutable) =>
             val fieldH =
-              hackClassDef.defs find { md =>
+              hackClassDef.memberDefs find { md =>
                 md match {
                   case FieldDef(stat, hackIdent, _, _) =>
                     hackIdent equals ident
@@ -94,19 +125,20 @@ object IrPatcherPlugin {
         }
       })
 
-    val newClassDef = classDef.copy(defs = (hackDefs ++ newMethods))(
-      classDef.optimizerHints)(classDef.pos)
+    val newClassDef = new ClassDef(
+      name = classDef.name,
+      originalName = classDef.originalName,
+      kind = classDef.kind,
+      jsClassCaptures = classDef.jsClassCaptures,
+      superClass = classDef.superClass,
+      interfaces = classDef.interfaces,
+      jsSuperClass = classDef.jsSuperClass,
+      jsNativeLoadSpec = classDef.jsNativeLoadSpec,
+      memberDefs = (hackDefs ++ newMethods),
+      topLevelExportDefs = classDef.topLevelExportDefs
+    )(optimizerHints = classDef.optimizerHints)(pos = classDef.pos)
 
-    val newClassInfo = Infos.generateClassInfo(newClassDef)
-
-    val out = WritableFileVirtualBinaryFile(file)
-    val outputStream = out.outputStream
-    try {
-      InfoSerializers.serialize(outputStream, newClassInfo)
-      Serializers.serialize(outputStream, newClassDef)
-    } finally {
-      outputStream.close()
-    }
+    writeIRFile(file.toPath(), newClassDef)
   }
 
   def hackAllUnder(base: File, hack: File): Unit = {

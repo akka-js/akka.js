@@ -44,7 +44,7 @@ case class MonitorableThreadFactory(name: String,
 
   class JsThread(runnable: Runnable) extends Thread {
 
-    override def start() = runnable.run
+    def start() = runnable.run
 
   }
 

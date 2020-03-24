@@ -109,6 +109,16 @@ val actorWithStash =
   system.actorOf(Props(new ActorWithStash()).withMailbox("stash-custom-mailbox"), "ActorWithStash")
 ```
 
+***Linking errors with `scala-java-time`***
+
+Akka.Js ships with `scalajs-java-time` that is strictly a minimal subset of `scala-java-time`(`"io.github.cquiroz" %%% "scala-java-time"`).
+If a user has `scala-java-time` has dependency(even transitive) make sure to do the proper exclusion when importing Akka.Js.
+
+e.g.:
+```scala
+libraryDependencies += "org.akka-js" %%% "akkajsactor" % "<version>" exclude("org.scala-js", "scalajs-java-time")
+```
+
 ## Add-ons
 
 Since semantics difference to Akka on JVM we include a bunch of helpers to make life easier:

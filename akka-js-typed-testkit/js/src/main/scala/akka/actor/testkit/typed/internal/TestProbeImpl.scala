@@ -409,7 +409,7 @@ private[akka] final class TestProbeImpl[M](name: String, system: ActorSystem[_])
 
       if (!failed) result
       else {
-        Thread.sleep(t.toMillis)
+        // SCALA.JS Thread.sleep(t.toMillis)
         poll((stop - now) min interval)
       }
     }

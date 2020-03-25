@@ -5,7 +5,7 @@ import akka.actor.ActorSystem
 
 object ThreadUtil {
 
-  def sleep(duration :Long)(implicit  system: ActorSystem): Unit  = {
+  def sleep(duration :Long)(implicit system: ActorSystem): Unit  = {
     import system.dispatcher
     val p = scala.concurrent.Promise[Unit]
     system.scheduler.scheduleOnce(duration millis){

@@ -11,7 +11,7 @@ class EventLoopExecutor extends ExecutorServiceDelegate {
   def executor: ExecutorService = this
 
   final val deferringFunction: Runnable => Unit =
-    if (js.isUndefined(global.setImmediate)) {
+    if (js.typeOf(global.setImmediate) == "undefined") {
       { command: Runnable => global.setTimeout(command.run _, 0) }
     } else {
       { command: Runnable => global.setImmediate(command.run _) }

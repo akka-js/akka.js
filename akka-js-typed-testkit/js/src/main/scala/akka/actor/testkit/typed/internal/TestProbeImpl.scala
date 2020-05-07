@@ -429,4 +429,5 @@ private[akka] final class TestProbeImpl[M](name: String, system: ActorSystem[_])
     testActor.asInstanceOf[ActorRef[AnyRef]] ! Stop
   }
 
+  def asJava: akka.actor.testkit.typed.javadsl.TestProbe[M] = ???
 }

@@ -6,8 +6,17 @@ package akka.actor.testkit.typed.scaladsl
 
 import java.util.concurrent.TimeoutException
 
-import akka.testkit.Await
+import com.typesafe.config.Config
+import com.typesafe.config.ConfigFactory
+
 import scala.concurrent.duration._
+import scala.reflect.ClassTag
+
+import akka.testkit.Await
+import akka.actor.DeadLetter
+import akka.actor.DeadLetterSuppression
+import akka.actor.Dropped
+import akka.actor.UnhandledMessage
 import akka.actor.testkit.typed.TestKitSettings
 import akka.actor.testkit.typed.internal.ActorTestKitGuardian
 import akka.actor.testkit.typed.internal.TestKitUtils
@@ -16,11 +25,11 @@ import akka.actor.typed.ActorSystem
 import akka.actor.typed.Behavior
 import akka.actor.typed.Props
 import akka.actor.typed.Scheduler
+import akka.actor.typed.eventstream.EventStream
 import akka.actor.typed.scaladsl.AskPattern._
+import akka.actor.typed.scaladsl.adapter._
 import akka.annotation.InternalApi
 import akka.util.Timeout
-import com.typesafe.config.Config
-import com.typesafe.config.ConfigFactory
 
 object ActorTestKit {
 
@@ -117,6 +126,7 @@ object ActorTestKit {
   // val ApplicationTestConfig: Config = ConfigFactory.load("application-test")
   val ApplicationTestConfig: Config = ConfigFactory.load()
 
+  private val dummyMessage = new DeadLetterSuppression {}
 }
 
 /**
@@ -227,6 +237,43 @@ final class ActorTestKit private[akka] (val name: String, val config: Config, se
    */
   def createTestProbe[M](name: String): TestProbe[M] = TestProbe(name)(system)
 
+    /**
+   * @return A test probe that is subscribed to unhandled messages from the system event bus. Subscription
+   *         will be completed and verified so any unhandled message after it will be caught by the probe.
+   */
+  def createUnhandledMessageProbe(): TestProbe[UnhandledMessage] =
+    subscribeEventBusAndVerifySubscribed[UnhandledMessage](() =>
+      UnhandledMessage(ActorTestKit.dummyMessage, system.deadLetters.toClassic, system.deadLetters.toClassic))
+
+  /**
+   * @return A test probe that is subscribed to dead letters from the system event bus. Subscription
+   *         will be completed and verified so any dead letter after it will be caught by the probe.
+   */
+  def createDeadLetterProbe(): TestProbe[DeadLetter] =
+    subscribeEventBusAndVerifySubscribed[DeadLetter](() =>
+      DeadLetter(ActorTestKit.dummyMessage, system.deadLetters.toClassic, system.deadLetters.toClassic))
+
+  /**
+   * @return A test probe that is subscribed to dropped letters from the system event bus. Subscription
+   *         will be completed and verified so any dropped letter after it will be caught by the probe.
+   */
+  def createDroppedMessageProbe(): TestProbe[Dropped] =
+    subscribeEventBusAndVerifySubscribed[Dropped](() =>
+      Dropped(ActorTestKit.dummyMessage, "no reason", system.deadLetters.toClassic, system.deadLetters.toClassic))
+
+  private def subscribeEventBusAndVerifySubscribed[M <: AnyRef: ClassTag](createTestEvent: () => M): TestProbe[M] = {
+    val probe = createTestProbe[M]()
+    system.eventStream ! EventStream.Subscribe(probe.ref)
+    probe.awaitAssert {
+      val testEvent = createTestEvent()
+      system.eventStream ! EventStream.Publish(testEvent)
+      probe.fishForMessage(probe.remainingOrDefault) {
+        case m: AnyRef if m eq testEvent => FishingOutcomes.complete
+        case _                           => FishingOutcomes.continue
+      }
+    }
+    probe
+  }
   /**
    * Additional testing utilities for serialization.
    */

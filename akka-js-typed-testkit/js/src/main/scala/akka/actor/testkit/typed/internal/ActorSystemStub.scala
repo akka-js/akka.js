@@ -26,6 +26,7 @@ import com.typesafe.config.ConfigFactory
 import scala.concurrent._
 import akka.actor.{ ActorPath, ActorRefProvider, Address, ReflectiveDynamicAccess }
 import akka.actor.typed.internal.InternalRecipientRef
+import akka.actor.typed.receptionist.Receptionist
 import com.github.ghik.silencer.silent
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -77,6 +78,10 @@ import org.slf4j.LoggerFactory
   override def deadLetters[U]: akka.actor.typed.ActorRef[U] = deadLettersInbox
 
   override def ignoreRef[U]: ActorRef[U] = deadLettersInbox
+
+  val receptionistInbox = new TestInboxImpl[Receptionist.Command](path.parent / "receptionist")
+
+  override def receptionist: ActorRef[Receptionist.Command] = receptionistInbox.ref
 
   val controlledExecutor = new ControlledExecutor
   implicit override def executionContext: scala.concurrent.ExecutionContextExecutor = controlledExecutor

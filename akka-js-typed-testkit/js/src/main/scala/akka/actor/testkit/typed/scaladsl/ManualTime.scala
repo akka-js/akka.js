@@ -60,7 +60,7 @@ final class ManualTime(delegate: akka.testkit.ExplicitlyTriggeredScheduler) {
    */
   def timePasses(amount: FiniteDuration)(implicit system: akka.actor.ActorSystem): Unit = delegate.timePasses(amount)(system)
 
-  @varargs
+  // @varargs
   def expectNoMessageFor(duration: FiniteDuration, on: TestProbe[_]*)(implicit system: akka.actor.ActorSystem): Unit = {
     delegate.timePasses(duration)(system)
     on.foreach(_.expectNoMessage(Duration.Zero))

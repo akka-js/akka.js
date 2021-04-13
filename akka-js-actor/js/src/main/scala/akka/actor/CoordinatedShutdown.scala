@@ -515,4 +515,9 @@ final class CoordinatedShutdown private[akka] (
   def addJvmShutdownHook(hook: Runnable): Unit =
     addJvmShutdownHook(hook.run())
 
+  /**
+   * The `Reason` for the shutdown as passed to the `run` method. `None` if the shutdown
+   * has not been started.
+   */
+  def shutdownReason(): Option[Reason] = if(runStarted.get()) Some(UnknownReason) else None
 }

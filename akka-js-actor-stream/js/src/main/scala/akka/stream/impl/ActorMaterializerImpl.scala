@@ -219,7 +219,7 @@ private[akka] class SubFusingActorMaterializerImpl(
       extends DeadLetterSuppression
       with NoSerializationVerificationNeeded
 
-  case object GetChildrenSnapshots
+  case class GetChildrenSnapshots(timeout: FiniteDuration)
   final case class ChildrenSnapshots(seq: immutable.Seq[StreamSnapshot])
       extends DeadLetterSuppression
       with NoSerializationVerificationNeeded

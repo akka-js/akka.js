@@ -8,4 +8,6 @@ class AbstractNodeQueue[A >: Null] extends Queue[A] {
   def poll(): A = if(isEmpty) null else super.dequeue()
 
   def count() = size
+
+  def peek() = super.headOption.orNull
 }

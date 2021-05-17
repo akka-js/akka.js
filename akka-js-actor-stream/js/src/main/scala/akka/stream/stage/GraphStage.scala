@@ -1287,7 +1287,7 @@ abstract class GraphStageLogic private[stream] (val inCount: Int, val outCount: 
    * @return minimal actor with watch method
    */
   final protected def getStageActor(receive: ((ActorRef, Any)) => Unit): StageActor =
-    getEagerStageActor(interpreter.materializer, poisonPillCompatibility = false)(receive)
+    getEagerStageActor(interpreter.materializer)(receive)
 
   /**
    * INTERNAL API
@@ -1297,13 +1297,13 @@ abstract class GraphStageLogic private[stream] (val inCount: Int, val outCount: 
    */
   @InternalApi
   protected[akka] def getEagerStageActor(
-      eagerMaterializer: Materializer,
-      poisonPillCompatibility: Boolean)( // fallback required for source actor backwards compatibility
+      eagerMaterializer: Materializer
+      )( // fallback required for source actor backwards compatibility
       receive: ((ActorRef, Any)) => Unit): StageActor =
     _stageActor match {
       case null =>
         _stageActor =
-          new StageActor(eagerMaterializer, getAsyncCallback _, receive, poisonPillCompatibility, stageActorName)
+          new StageActor(eagerMaterializer, getAsyncCallback _, receive, false, stageActorName)
         _stageActor
       case existing =>
         existing.become(receive)

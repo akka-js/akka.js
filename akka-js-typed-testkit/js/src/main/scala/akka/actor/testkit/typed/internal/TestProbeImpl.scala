@@ -4,13 +4,14 @@
 
 package akka.actor.testkit.typed.internal
 
-import java.time.{ Duration => JDuration }
+import akka.actor.{ActorRefProvider, ExtendedActorSystem}
+
+import java.time.{Duration => JDuration}
 import java.util.concurrent.BlockingDeque
 import java.util.concurrent.LinkedBlockingDeque
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Supplier
-import java.util.{ List => JList }
-
+import java.util.{List => JList}
 import scala.annotation.tailrec
 import akka.util.ccompat.JavaConverters._
 
@@ -20,16 +21,18 @@ import scala.reflect.ClassTag
 import scala.util.control.NonFatal
 import akka.actor.testkit.typed.FishingOutcome
 import akka.actor.testkit.typed.TestKitSettings
-import akka.actor.testkit.typed.javadsl.{ TestProbe => JavaTestProbe }
+import akka.actor.testkit.typed.javadsl.{TestProbe => JavaTestProbe}
 import akka.actor.testkit.typed.scaladsl.TestDuration
-import akka.actor.testkit.typed.scaladsl.{ TestProbe => ScalaTestProbe }
+import akka.actor.testkit.typed.scaladsl.{TestProbe => ScalaTestProbe}
 import akka.actor.typed.ActorRef
 import akka.actor.typed.ActorSystem
 import akka.actor.typed.Behavior
 import akka.actor.typed.Signal
 import akka.actor.typed.Terminated
+import akka.actor.typed.internal.InternalRecipientRef
 import akka.actor.typed.scaladsl.Behaviors
 import akka.annotation.InternalApi
+import akka.japi.function.Creator
 import akka.util.BoxedType
 import akka.util.JavaDurationConverters._
 import akka.util.PrettyDuration._
@@ -65,7 +68,8 @@ private[akka] object TestProbeImpl {
 @InternalApi
 private[akka] final class TestProbeImpl[M](name: String, system: ActorSystem[_])
     extends JavaTestProbe[M]
-    with ScalaTestProbe[M] {
+    with ScalaTestProbe[M]
+    with InternalRecipientRef[M]{
 
   import TestProbeImpl._
   protected implicit val settings: TestKitSettings = TestKitSettings(system)
@@ -378,7 +382,7 @@ private[akka] final class TestProbeImpl[M](name: String, system: ActorSystem[_])
   override def awaitAssert[A](a: => A): A =
     awaitAssert_internal(a, remainingOrDefault, 100.millis)
 
-  override def awaitAssert[A](max: JDuration, interval: JDuration, supplier: Supplier[A]): A =
+  def awaitAssert[A](max: JDuration, interval: JDuration, supplier: Supplier[A]): A =
     awaitAssert_internal(supplier.get(), max.asScala.dilated, interval.asScala)
 
   def awaitAssert[A](max: JDuration, supplier: Supplier[A]): A =
@@ -430,4 +434,29 @@ private[akka] final class TestProbeImpl[M](name: String, system: ActorSystem[_])
   }
 
   def asJava: akka.actor.testkit.typed.javadsl.TestProbe[M] = ???
+
+  override def awaitAssert[A](max: JDuration, interval: JDuration, creator: Creator[A]): A =
+    awaitAssert_internal(creator.create(), max.asScala.dilated, interval.asScala)
+
+  def awaitAssert[A](max: JDuration, creator: Creator[A]): A =
+    awaitAssert(max, JDuration.ofMillis(100), creator)
+
+  def awaitAssert[A](creator: Creator[A]): A =
+    awaitAssert(getRemainingOrDefault, creator)
+
+  override def fishForMessagePF(max: FiniteDuration, hint: String)(
+    fisher: PartialFunction[M, FishingOutcome]): immutable.Seq[M] =
+    fishForMessage(max, hint)(fisher)
+
+  override def fishForMessagePF(max: FiniteDuration)(fisher: PartialFunction[M, FishingOutcome]): immutable.Seq[M] =
+    fishForMessage(max)(fisher)
+
+  // impl InternalRecipientRef
+  def provider: ActorRefProvider =
+    system.classicSystem.asInstanceOf[ExtendedActorSystem].provider
+
+  // impl InternalRecipientRef
+  def isTerminated = false
+
+  def tell(m: M) = testActor.tell(m)
 }

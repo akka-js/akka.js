@@ -19,7 +19,9 @@ import akka.japi.function
 import akka.stream.impl.TraversalBuilder
 import akka.util.{ ByteString, OptionVal }
 import akka.util.JavaDurationConverters._
-import akka.util.LineNumbers
+// SCALA.JS import akka.util.LineNumbers
+
+// SCALA.JS import scala.util.control.NonFatal
 
 /**
  * Holds attributes which can be used to alter [[akka.stream.scaladsl.Flow]] / [[akka.stream.javadsl.Flow]]
@@ -308,6 +310,7 @@ object Attributes {
    * for debugging. Included in the default toString of GraphStageLogic if present
    */
   final class SourceLocation(lambda: AnyRef) extends Attribute {
+    //SCALA.JS HARDCODED NOW
     lazy val locationName: String = {
       s"${lambda.getClass.getName}-LN"
     }

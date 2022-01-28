@@ -1,9 +1,11 @@
-val akkaJsVersion = "2.2.6.14"
+val akkaJsVersion = "2.2.6.14-SNAPSHOT"
 val akkaOriginalVersion = "v2.6.14"
 
+val scalaVersions = Seq("2.12.15", "2.13.8")
+
 val commonSettings = Seq(
-    scalaVersion := "2.13.2",
-    crossScalaVersions  := Seq("2.12.13", "2.13.5"),
+    crossScalaVersions := scalaVersions,
+    scalaVersion := scalaVersions.last,
     organization := "org.akka-js",
     scalacOptions ++= Seq(
         "-deprecation",
@@ -227,7 +229,9 @@ lazy val akkaJsActor = crossProject(JSPlatform)
     scalaJSLinkerConfig ~= (_.withCheckIR(true)),
     libraryDependencies ++= {
       Seq(
-        "org.akka-js" %%% "shocon" % "1.0.0",
+        "org.akka-js" %%% "shocon" % "1.0.1-SNAPSHOT",
+        "org.scala-js" %%% "scala-js-macrotask-executor" % "1.0.0",
+        "org.scala-js" %%% "scalajs-fake-weakreferences" % "1.0.0",
         "org.scala-lang.modules" %% "scala-java8-compat" % "0.9.1"
       )
     },

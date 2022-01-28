@@ -4,10 +4,15 @@
 
 package akka.dispatch
 
-import akka.event.Logging.{ Debug, Error, LogEventException }
+import akka.event.Logging.{Debug, Error, LogEventException}
 import akka.actor._
+import akka.annotation.InternalStableApi
 import akka.dispatch.sysmsg._
-import akka.event.{ BusLogging, EventStream }
+import akka.event.{BusLogging, EventStream}
+import akka.util.unused
+
+import java.util
+import java.util.concurrent.{AbstractExecutorService, Callable, ExecutorService, Future, TimeUnit}
  /**import com.typesafe.config.{ ConfigFactory, Config } */
 import akka.util.{ /** @note IMPLEMENT IN SCALA.JS Unsafe,*/ Index }
 import akka.event.EventStream
@@ -20,35 +25,41 @@ import scala.concurrent.duration.FiniteDuration
 import scala.scalajs.js.timers._
 import scala.util.control.NonFatal
 import scala.util.Try
-import java.{ util ⇒ ju }
+import java.{ util => ju }
 import java.util.concurrent.Executor
 
-final case class Envelope private (val message: Any, val sender: ActorRef)
+final case class Envelope private (message: Any, sender: ActorRef) {
 
-object Envelope {
-  def apply(message: Any, sender: ActorRef, system: ActorSystem): Envelope = {
-    if (message == null) throw new InvalidMessageException("Message is null")
-    new Envelope(message, if (sender ne Actor.noSender) sender else system.deadLetters)
-  }
+	def copy(message: Any = message, sender: ActorRef = sender) = {
+		Envelope(message, sender)
+	}
 }
 
-final case class TaskInvocation(eventStream: EventStream, runnable: Runnable, cleanup: () ⇒ Unit) extends Runnable /** @note IMPLEMENT IN SCALA.JS extends Batchable */ {
-	final def isBatchable: Boolean = runnable match {
-    case _                                      ⇒ false  
-  }
+object Envelope {
+	def apply(message: Any, sender: ActorRef, system: ActorSystem): Envelope = {
+		if (message == null) {
+			if (sender eq Actor.noSender)
+				throw InvalidMessageException(s"Message is null.")
+			else
+				throw InvalidMessageException(s"Message sent from [$sender] is null.")
+		}
+		new Envelope(message, if (sender ne Actor.noSender) sender else system.deadLetters)
+	}
+}
+
+final case class TaskInvocation(eventStream: EventStream, runnable: Runnable, cleanup: () => Unit) extends Runnable /** @note IMPLEMENT IN SCALA.JS extends Batchable */ {
+	final def isBatchable: Boolean = false /** @note IMPLEMENT IN SCALA.JS akka.dispatch.internal.ScalaBatchable.isBatchable(runnable) */
 
   def run(): Unit =
     try runnable.run() catch {
-      case NonFatal(e) ⇒ eventStream.publish(Error(e, "TaskInvocation", this.getClass, e.getMessage))
+      case NonFatal(e) => eventStream.publish(Error(e, "TaskInvocation", this.getClass, e.getMessage))
     } finally cleanup()
 }
-
-
 
 /**
  * INTERNAL API
  */
- private[akka] trait LoadMetrics { self: Executor ⇒
+ private[akka] trait LoadMetrics { self: Executor =>
    def atFullThrottle(): Boolean
  }
 
@@ -75,12 +86,12 @@ private[akka] object MessageDispatcher {
       } {
         val status = if (a.isTerminated) " (terminated)" else " (alive)"
         val messages = a match {
-          case r: ActorRefWithCell ⇒ " " + r.underlying.numberOfMessages + " messages"
-          case _                   ⇒ " " + a.getClass
+          case r: ActorRefWithCell => " " + r.underlying.numberOfMessages + " messages"
+          case _                   => " " + a.getClass
         }
         val parent = a match {
-          case i: InternalActorRef ⇒ ", parent: " + i.getParent
-          case _                   ⇒ ""
+          case i: InternalActorRef => ", parent: " + i.getParent
+          case _                   => ""
         }
         println(" -> " + a + status + messages + parent)
       }
@@ -101,23 +112,20 @@ abstract class MessageDispatcher(val configurator: MessageDispatcherConfigurator
 	@volatile private[this] var _inhabitantsDoNotCallMeDirectly: Long = _ // DO NOT TOUCH!
 	@volatile private[this] var _shutdownScheduleDoNotCallMeDirectly: Int = _ // DO NOT TOUCH!
 
-	/** @note IMPLEMENT IN SCALA.JS @tailrec */ private final def addInhabitants(add: Long): Long = {
-		val c = inhabitants
-		val r = c + add
-
-    if (r < 0) {
-		  // We haven't succeeded in decreasing the inhabitants yet but the simple fact that we're trying to
-		  // go below zero means that there is an imbalance and we might as well throw the exception
-		  val e = new IllegalStateException("ACTOR SYSTEM CORRUPTED!!! A dispatcher can't have less than 0 inhabitants!")
-		  reportFailure(e)
-		  throw e
+	private final def addInhabitants(add: Long): Long = {
+		/** @note IMPLEMENT IN SCALA.JS
+		val old = Unsafe.instance.getAndAddLong(this, inhabitantsOffset, add)
+		val ret = old + add
+		*/
+		_inhabitantsDoNotCallMeDirectly += add
+		if (_inhabitantsDoNotCallMeDirectly < 0) {
+			// We haven't succeeded in decreasing the inhabitants yet but the simple fact that we're trying to
+			// go below zero means that there is an imbalance and we might as well throw the exception
+			val e = new IllegalStateException("ACTOR SYSTEM CORRUPTED!!! A dispatcher can't have less than 0 inhabitants!")
+			reportFailure(e)
+			throw e
 		}
-
-    /** @note IMPLEMENT IN SCALA.JS
-	  if (Unsafe.instance.compareAndSwapLong(this, inhabitantsOffset, c, r)) r else addInhabitants(add)
-    */
-    _inhabitantsDoNotCallMeDirectly = r
-    r
+		_inhabitantsDoNotCallMeDirectly
 	}
 
   /** @note IMPLEMENT IN SCALA.JS
@@ -159,7 +167,13 @@ abstract class MessageDispatcher(val configurator: MessageDispatcherConfigurator
 	/**
 	 * Detaches the specified actor instance from this dispatcher
 	 */
-	final def detach(actor: ActorCell): Unit = try unregister(actor) finally ifSensibleToDoSoThenScheduleShutdown()
+	final def detach(actor: ActorCell): Unit =
+		try unregister(actor)
+		finally ifSensibleToDoSoThenScheduleShutdown()
+
+	/** @note IMPLEMENT IN SCALA.JS
+	final protected def resubmitOnBlock: Boolean = true // We want to avoid starvation
+	*/
 
   /** THIS COMES FROM BatchingExecutor */
   override def execute(runnable: Runnable): Unit = unbatchedExecute(runnable)
@@ -171,41 +185,49 @@ abstract class MessageDispatcher(val configurator: MessageDispatcherConfigurator
 		try {
 		  executeTask(invocation)
 		} catch {
-		  case t: Throwable ⇒
+		  case t: Throwable =>
 		    addInhabitants(-1)
 				throw t
 		}
 	}
 
 	override def reportFailure(t: Throwable): Unit = t match {
-	/** @note IMPLEMENT IN SCALA.JS case e: LogEventException ⇒ eventStream.publish(e.event) */
-	case _                    ⇒ eventStream.publish(Error(t, getClass.getName, getClass, t.getMessage))
+	/** @note IMPLEMENT IN SCALA.JS case e: LogEventException => eventStream.publish(e.event) */
+	case _                    => eventStream.publish(Error(t, getClass.getName, getClass, t.getMessage))
 	}
 
 	@tailrec
 	private final def ifSensibleToDoSoThenScheduleShutdown(): Unit = {
 		if (inhabitants <= 0) shutdownSchedule match {
-		  case UNSCHEDULED ⇒
+		  case UNSCHEDULED =>
 		    if (updateShutdownSchedule(UNSCHEDULED, SCHEDULED)) scheduleShutdownAction()
 		    else ifSensibleToDoSoThenScheduleShutdown()
-		  case SCHEDULED ⇒
+		  case SCHEDULED =>
 		    if (updateShutdownSchedule(SCHEDULED, RESCHEDULED)) ()
 		    else ifSensibleToDoSoThenScheduleShutdown()
-		  case RESCHEDULED ⇒
+		  case RESCHEDULED =>
+			case unexpected =>
+				throw new IllegalArgumentException(s"Unexpected actor class marker: $unexpected") // will not happen, for exhaustiveness check
 		}
 	}
 
 	private def scheduleShutdownAction(): Unit = {
 		// IllegalStateException is thrown if scheduler has been shutdown
 		try prerequisites.scheduler.scheduleOnce(shutdownTimeout, shutdownAction)(new ExecutionContext {
-			override def execute(runnable: Runnable): Unit = scalajs.js.timers.setTimeout(0) { runnable.run() } // @note IMPLEMENT IN SCALA.JS runnable.run()
+			override def execute(runnable: Runnable): Unit = runnable.run()
 			override def reportFailure(t: Throwable): Unit = MessageDispatcher.this.reportFailure(t)
 		}) catch {
-		  case _: IllegalStateException ⇒ shutdown()
+			case _: IllegalStateException =>
+				shutdown()
+				// Since there is no scheduler anymore, restore the state to UNSCHEDULED.
+				// When this dispatcher is used again,
+				// shutdown is only attempted if the state is UNSCHEDULED
+				// (as per ifSensibleToDoSoThenScheduleShutdown above)
+				updateShutdownSchedule(SCHEDULED, UNSCHEDULED)
 		}
 	}
 
-	private final val taskCleanup: () ⇒ Unit = () ⇒ if (addInhabitants(-1) == 0) ifSensibleToDoSoThenScheduleShutdown()
+	private final val taskCleanup: () => Unit = () => if (addInhabitants(-1) == 0) ifSensibleToDoSoThenScheduleShutdown()
 
 	/**
 	 * If you override it, you must call it. But only ever once. See "attach" for only invocation.
@@ -234,16 +256,18 @@ abstract class MessageDispatcher(val configurator: MessageDispatcherConfigurator
 		@tailrec
 		final def run() {
 			shutdownSchedule match {
-			case SCHEDULED ⇒
+			case SCHEDULED =>
 			  try {
 				  if (inhabitants == 0) shutdown() //Warning, racy
 			  } finally {
 				  while (!updateShutdownSchedule(shutdownSchedule, UNSCHEDULED)) {}
 			  }
-			case RESCHEDULED ⇒
+			case RESCHEDULED =>
 			  if (updateShutdownSchedule(RESCHEDULED, SCHEDULED)) scheduleShutdownAction()
 			  else run()
-			case UNSCHEDULED ⇒
+			case UNSCHEDULED =>
+			case unexpected =>
+				throw new IllegalArgumentException(s"Unexpected actor class marker: $unexpected") // will not happen, for exhaustiveness check
       }
 		}
 	}
@@ -323,15 +347,15 @@ abstract class MessageDispatcher(val configurator: MessageDispatcherConfigurator
 	 *
 	 * INTERNAL API
 	 */
+	@InternalStableApi
 	protected[akka] def shutdown(): Unit
 }
-
 
 /**
  * An ExecutorServiceConfigurator is a class that given some prerequisites and a configuration can create instances of ExecutorService
  */
-abstract class ExecutorServiceConfigurator(config: Config, prerequisites: DispatcherPrerequisites) extends ExecutorServiceFactoryProvider
-
+abstract class ExecutorServiceConfigurator(@unused config: Config, @unused prerequisites: DispatcherPrerequisites)
+	extends ExecutorServiceFactoryProvider
 
 /**
  * Base class to be used for hooking in new dispatchers into Dispatchers.
@@ -352,8 +376,56 @@ abstract class MessageDispatcherConfigurator(_config: Config, val prerequisites:
 
   def configureExecutor(): ExecutorServiceConfigurator = {
     def configurator(executor: String): ExecutorServiceConfigurator = executor match {
-      case "event-loop-executor" ⇒ new EventLoopExecutorConfigurator(new Config, prerequisites)
+			case null | "" | "macrotask-executor" => new MacrotaskExecutorConfigurator(new Config, prerequisites)
+			case "event-loop-executor" => new EventLoopExecutorConfigurator(new Config, prerequisites)
+			case "queue-executor" => new QueueExecutorConfigurator(new Config, prerequisites)
+			case fqcn =>
+				val args = List(classOf[Config] -> config, classOf[DispatcherPrerequisites] -> prerequisites)
+				prerequisites.dynamicAccess
+					.createInstanceFor[ExecutorServiceConfigurator](fqcn, args)
+					.recover {
+						case exception =>
+							throw new IllegalArgumentException(
+								("""Cannot instantiate ExecutorServiceConfigurator ("executor = [%s]"), defined in [%s],
+                make sure it has an accessible constructor with a [%s,%s] signature""")
+									.format(fqcn, config.getString("id"), classOf[Config], classOf[DispatcherPrerequisites]),
+								exception)
+					}
+					.get
     }
-    configurator("event-loop-executor")
+
+		config.getString("executor") match {
+			case "default-executor" =>
+				new DefaultExecutorServiceConfigurator(
+					config.getConfig("default-executor"),
+					prerequisites,
+					configurator(config.getString("default-executor.fallback")))
+			case other => configurator(other)
+		}
   }
+}
+
+class DefaultExecutorServiceConfigurator(
+		config: Config,
+		prerequisites: DispatcherPrerequisites,
+		fallback: ExecutorServiceConfigurator)
+	extends ExecutorServiceConfigurator(config, prerequisites) {
+	val provider: ExecutorServiceFactoryProvider =
+		prerequisites.defaultExecutionContext match {
+			case Some(ec) =>
+				prerequisites.eventStream.publish(
+					Debug(
+						"DefaultExecutorServiceConfigurator",
+						this.getClass,
+						s"Using passed in ExecutionContext as default executor for this ActorSystem. If you want to use a different executor, please specify one in akka.actor.default-dispatcher.default-executor."))
+
+				new ExecutionContextExecutorServiceDelegate(ec) with ExecutorServiceFactory with ExecutorServiceFactoryProvider {
+					def createExecutorServiceFactory(id: String): ExecutorServiceFactory = this
+					def createExecutorService: ExecutorService = this
+				}
+			case None => fallback
+		}
+
+	def createExecutorServiceFactory(id: String): ExecutorServiceFactory =
+		provider.createExecutorServiceFactory(id)
 }

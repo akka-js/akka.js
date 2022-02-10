@@ -231,7 +231,6 @@ lazy val akkaJsActor = crossProject(JSPlatform)
       Seq(
         "org.akka-js" %%% "shocon" % "1.0.1-SNAPSHOT",
         "org.scala-js" %%% "scala-js-macrotask-executor" % "1.0.0",
-        "org.scala-js" %%% "scalajs-fake-weakreferences" % "1.0.0",
         "org.scala-lang.modules" %% "scala-java8-compat" % "0.9.1"
       )
     },
@@ -315,7 +314,8 @@ lazy val akkaJsTestkit = crossProject(JSPlatform)
   .jsSettings(useAnnotationAdderPluginSettings : _*)
   .jsSettings(
     libraryDependencies ++= Seq(
-      "org.scalatest" %%% "scalatest" % "3.1.1" withSources ()
+      "org.scalatest" %%% "scalatest" % "3.1.1" withSources (),
+      "org.scala-js" %%% "scalajs-fake-weakreferences" % "1.0.0"
     ),
     scalaJSStage in Global := FastOptStage,
     publishArtifact in (Test, packageBin) := true,
@@ -453,7 +453,8 @@ lazy val akkaJsStreamTestkit = crossProject(JSPlatform)
   ).jsSettings(
     scalaJSStage in Global := FastOptStage,
     libraryDependencies ++= Seq(
-      "org.scalatest" %%% "scalatest" % "3.1.1" withSources ()
+      "org.scalatest" %%% "scalatest" % "3.1.1" withSources (),
+      "org.scala-js" %%% "scalajs-fake-weakreferences" % "1.0.0"
     ),
     publishArtifact in (Test, packageBin) := true,
     //scalaJSOptimizerOptions ~= { _.withDisableOptimizer(true) },
@@ -599,6 +600,7 @@ lazy val akkaJsStreamTestkit = crossProject(JSPlatform)
       publishArtifact in (Test, packageBin) := true,
       libraryDependencies ++= Seq(
         "org.scalatest" %%% "scalatest" % "3.1.1" withSources (),
+        "org.scala-js" %%% "scalajs-fake-weakreferences" % "1.0.0",
         "org.scala-lang.modules" %% "scala-java8-compat" % "0.9.1"
       ),
       //scalaJSOptimizerOptions ~= { _.withDisableOptimizer(true) },

@@ -1,9 +1,11 @@
-val akkaJsVersion = "2.2.6.14"
+val akkaJsVersion = "2.2.6.14-SNAPSHOT"
 val akkaOriginalVersion = "v2.6.14"
 
+val scalaVersions = Seq("2.12.15", "2.13.8")
+
 val commonSettings = Seq(
-    scalaVersion := "2.13.2",
-    crossScalaVersions  := Seq("2.12.13", "2.13.5"),
+    crossScalaVersions := scalaVersions,
+    scalaVersion := scalaVersions.last,
     organization := "org.akka-js",
     scalacOptions ++= Seq(
         "-deprecation",
@@ -227,7 +229,8 @@ lazy val akkaJsActor = crossProject(JSPlatform)
     scalaJSLinkerConfig ~= (_.withCheckIR(true)),
     libraryDependencies ++= {
       Seq(
-        "org.akka-js" %%% "shocon" % "1.0.0",
+        "org.akka-js" %%% "shocon" % "1.1.0-SNAPSHOT",
+        "org.scala-js" %%% "scala-js-macrotask-executor" % "1.0.0",
         "org.scala-lang.modules" %% "scala-java8-compat" % "0.9.1"
       )
     },
@@ -311,7 +314,8 @@ lazy val akkaJsTestkit = crossProject(JSPlatform)
   .jsSettings(useAnnotationAdderPluginSettings : _*)
   .jsSettings(
     libraryDependencies ++= Seq(
-      "org.scalatest" %%% "scalatest" % "3.1.1" withSources ()
+      "org.scalatest" %%% "scalatest" % "3.1.1" withSources (),
+      "org.scala-js" %%% "scalajs-fake-weakreferences" % "1.0.0"
     ),
     scalaJSStage in Global := FastOptStage,
     publishArtifact in (Test, packageBin) := true,
@@ -449,7 +453,8 @@ lazy val akkaJsStreamTestkit = crossProject(JSPlatform)
   ).jsSettings(
     scalaJSStage in Global := FastOptStage,
     libraryDependencies ++= Seq(
-      "org.scalatest" %%% "scalatest" % "3.1.1" withSources ()
+      "org.scalatest" %%% "scalatest" % "3.1.1" withSources (),
+      "org.scala-js" %%% "scalajs-fake-weakreferences" % "1.0.0"
     ),
     publishArtifact in (Test, packageBin) := true,
     //scalaJSOptimizerOptions ~= { _.withDisableOptimizer(true) },
@@ -595,6 +600,7 @@ lazy val akkaJsStreamTestkit = crossProject(JSPlatform)
       publishArtifact in (Test, packageBin) := true,
       libraryDependencies ++= Seq(
         "org.scalatest" %%% "scalatest" % "3.1.1" withSources (),
+        "org.scala-js" %%% "scalajs-fake-weakreferences" % "1.0.0",
         "org.scala-lang.modules" %% "scala-java8-compat" % "0.9.1"
       ),
       //scalaJSOptimizerOptions ~= { _.withDisableOptimizer(true) },

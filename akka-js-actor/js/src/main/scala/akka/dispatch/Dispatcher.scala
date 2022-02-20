@@ -68,8 +68,8 @@ class Dispatcher(
   /**
    * INTERNAL API
    */
-  protected[akka] def executeTask(invocation: TaskInvocation) {
-    executorService execute invocation
+  protected[akka] def executeTask(invocation: TaskInvocation): Unit = {
+    executorService.execute(invocation)
   }
 
   /**
@@ -100,7 +100,7 @@ class Dispatcher(
   protected[akka] override def registerForExecution(mbox: Mailbox, hasMessageHint: Boolean, hasSystemMessageHint: Boolean): Boolean = {
     if (mbox.canBeScheduledForExecution(hasMessageHint, hasSystemMessageHint)) { //This needs to be here to ensure thread safety and no races
       if (mbox.setAsScheduled()) {
-        executorService execute mbox
+        executorService.execute(mbox)
         mbox.setAsIdle()
         true
       } else false
@@ -114,7 +114,7 @@ object PriorityGenerator {
   /**
    * Creates a PriorityGenerator that uses the supplied function as priority generator
    */
-  def apply(priorityFunction: Any ⇒ Int): PriorityGenerator = new PriorityGenerator {
+  def apply(priorityFunction: Any => Int): PriorityGenerator = new PriorityGenerator {
     def gen(message: Any): Int = priorityFunction(message)
   }
 }

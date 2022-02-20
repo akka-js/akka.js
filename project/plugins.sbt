@@ -1,6 +1,6 @@
-val scalaJsVersion = "1.0.1"
+val scalaJsVersion = "1.8.0"
 
-addSbtPlugin("org.portable-scala" % "sbt-scalajs-crossproject" % "1.0.0")
+addSbtPlugin("org.portable-scala" % "sbt-scalajs-crossproject" % "1.1.0")
 addSbtPlugin("org.scala-js" % "sbt-scalajs" % scalaJsVersion)
 
 addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "2.3")

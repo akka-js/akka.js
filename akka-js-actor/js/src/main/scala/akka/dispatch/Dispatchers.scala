@@ -5,20 +5,20 @@
 package akka.dispatch
 
 import java.util.concurrent.TimeUnit
-
-import java.util.concurrent.{ ConcurrentHashMap, ThreadFactory }
-import com.typesafe.config.{ ConfigFactory, Config }
-import akka.actor.{ Scheduler, DynamicAccess, ActorSystem }
-import com.typesafe.config.Config
-import akka.actor.{ Scheduler, ActorSystem }
+import java.util.concurrent.{ConcurrentHashMap, ThreadFactory}
+import com.typesafe.config.{Config, ConfigFactory, ConfigValueType}
+import akka.actor.{ActorSystem, DynamicAccess, Scheduler}
+import akka.actor.{ActorSystem, Scheduler}
 import akka.event.Logging.Warning
-import akka.event.{ EventStream, LoggingAdapter }
+import akka.event.{EventStream, LoggingAdapter}
+
 import scala.concurrent.duration.Duration
 import akka.ConfigurationException
 import akka.actor.Deploy
-/** @note IMPLEMENT IN SCALA.JS
+import akka.annotation.{DoNotInherit, InternalApi}
+import org.akkajs.shocon
 import akka.util.Helpers.ConfigOps
-*/
+
 import scala.concurrent.ExecutionContext
 
 /**
@@ -37,14 +37,16 @@ trait DispatcherPrerequisites {
 /**
  * INTERNAL API
  */
+@InternalApi
 private[akka] final case class DefaultDispatcherPrerequisites(
-  val threadFactory: ThreadFactory,
-  val eventStream: EventStream,
-  val scheduler: Scheduler,
-  val dynamicAccess: DynamicAccess,
-  val settings: ActorSystem.Settings,
-  val mailboxes: Mailboxes,
-  val defaultExecutionContext: Option[ExecutionContext]) extends DispatcherPrerequisites
+  threadFactory: ThreadFactory,
+  eventStream: EventStream,
+  scheduler: Scheduler,
+  dynamicAccess: DynamicAccess,
+  settings: ActorSystem.Settings,
+  mailboxes: Mailboxes,
+  defaultExecutionContext: Option[ExecutionContext])
+  extends DispatcherPrerequisites
 
 object Dispatchers {
   /**
@@ -56,8 +58,8 @@ object Dispatchers {
   /**
    * INTERNAL API
    */
+  @InternalApi
   private[akka] final val InternalDispatcherId = "akka.actor.internal-dispatcher"
-
 }
 
 /**
@@ -67,8 +69,12 @@ object Dispatchers {
  *
  * Look in `akka.actor.default-dispatcher` section of the reference.conf
  * for documentation of dispatcher options.
+ *
+ * Not for user instantiation or extension
  */
-class Dispatchers(val settings: ActorSystem.Settings,
+@DoNotInherit
+class Dispatchers @InternalApi private[akka] (
+    val settings: ActorSystem.Settings,
     val prerequisites: DispatcherPrerequisites,
     logger: LoggingAdapter) {
 
@@ -77,8 +83,11 @@ class Dispatchers(val settings: ActorSystem.Settings,
   /** @note IMPLEMENT IN SCALA.JS
   val cachingConfig = new CachingConfig(settings.config)
   */
+
+  val cachingConfig: Config = settings.config
+
   val defaultDispatcherConfig: Config =
-    idConfig(DefaultDispatcherId).withFallback(settings.config.getConfig(DefaultDispatcherId))
+    idConfig(DefaultDispatcherId).withFallback(cachingConfig.getConfig(DefaultDispatcherId))
 
   /**
    * The one and only default dispatcher.
@@ -99,9 +108,7 @@ class Dispatchers(val settings: ActorSystem.Settings,
    * @throws ConfigurationException if the specified dispatcher cannot be found in the configuration
    */
 
-  def lookup(id: String): MessageDispatcher =
-    //new DispatcherConfigurator(new Config, prerequisites).dispatcher()
-    lookupConfigurator(id).dispatcher()
+  def lookup(id: String): MessageDispatcher = lookupConfigurator(id).dispatcher()
 
   /**
    * Checks that the configuration provides a section for the given dispatcher.
@@ -113,19 +120,20 @@ class Dispatchers(val settings: ActorSystem.Settings,
 
   private def lookupConfigurator(id: String): MessageDispatcherConfigurator = {
     dispatcherConfigurators.get(id) match {
-      case null ⇒
+      case null =>
         // It doesn't matter if we create a dispatcher configurator that isn't used due to concurrent lookup.
         // That shouldn't happen often and in case it does the actual ExecutorService isn't
         // created until used, i.e. cheap.
-        val newConfigurator = new DispatcherConfigurator(config(id), prerequisites)
-        //if (cachingConfig.hasPath(id)) configuratorFrom(config(id))
-        //else throw new ConfigurationException(s"Dispatcher [$id] not configured")
+
+        val newConfigurator: MessageDispatcherConfigurator =
+          if (cachingConfig.hasPath(id)) configuratorFrom(config(id))
+          else throw new ConfigurationException(s"Dispatcher [$id] not configured")
 
         dispatcherConfigurators.putIfAbsent(id, newConfigurator) match {
-          case null     ⇒ newConfigurator
-          case existing ⇒ existing
+          case null     => newConfigurator
+          case existing => existing
         }
-      case existing ⇒ existing
+      case existing => existing
     }
   }
 
@@ -145,18 +153,19 @@ class Dispatchers(val settings: ActorSystem.Settings,
   def registerConfigurator(id: String, configurator: MessageDispatcherConfigurator): Boolean =
     dispatcherConfigurators.putIfAbsent(id, configurator) == null
   */
+
   /**
    * INTERNAL API
    */
   private[akka] def config(id: String): Config = {
-    config(id, settings.config.getConfig(id))
+    config(id, cachingConfig.getConfig(id))
   }
 
   /**
    * INTERNAL API
    */
   private[akka] def config(id: String, appConfig: Config): Config = {
-    import scala.collection.JavaConverters._
+    import akka.util.ccompat.JavaConverters._
     def simpleName = id.substring(id.lastIndexOf('.') + 1)
     idConfig(id)
       .withFallback(appConfig)
@@ -165,13 +174,8 @@ class Dispatchers(val settings: ActorSystem.Settings,
   }
 
   private def idConfig(id: String): Config = {
-    com.typesafe.config.Config(
-      org.akkajs.shocon.Config.Object(
-        Map(
-          "id" -> org.akkajs.shocon.Config.StringLiteral(id)
-        )
-      )
-    )
+    import akka.util.ccompat.JavaConverters._
+    ConfigFactory.parseMap(Map[String, Any]("id" -> id).asJava)
   }
 
   /**
@@ -199,31 +203,32 @@ class Dispatchers(val settings: ActorSystem.Settings,
    *         IllegalArgumentException if it cannot create the MessageDispatcherConfigurator
    */
   private def configuratorFrom(cfg: Config): MessageDispatcherConfigurator = {
-    /** IMPLEMENT IN SCALA.JS
-    if (!cfg.hasPath("id")) throw new ConfigurationException("Missing dispatcher 'id' property in config: " + cfg.root.render)
+    if (!cfg.hasPath("id"))
+      throw new ConfigurationException("Missing dispatcher 'id' property in config: " + cfg.root.render)
 
     cfg.getString("type") match {
-      case "Dispatcher" ⇒ new DispatcherConfigurator(cfg, prerequisites)
-      case "BalancingDispatcher" ⇒
+      case "Dispatcher" => new DispatcherConfigurator(cfg, prerequisites)
+      /** IMPLEMENT IN SCALA.JS
+      case "BalancingDispatcher" =>
         // FIXME remove this case in 2.4
         throw new IllegalArgumentException("BalancingDispatcher is deprecated, use a BalancingPool instead. " +
           "During a migration period you can still use BalancingDispatcher by specifying the full class name: " +
           classOf[BalancingDispatcherConfigurator].getName)
-      case "PinnedDispatcher" ⇒ new PinnedDispatcherConfigurator(cfg, prerequisites)
-      case fqn ⇒
+      case "PinnedDispatcher" => new PinnedDispatcherConfigurator(cfg, prerequisites)
+      */
+      case fqn =>
         val args = List(classOf[Config] -> cfg, classOf[DispatcherPrerequisites] -> prerequisites)
-        prerequisites.dynamicAccess.createInstanceFor[MessageDispatcherConfigurator](fqn, args).recover({
-          case exception ⇒
-            throw new ConfigurationException(
-              ("Cannot instantiate MessageDispatcherConfigurator type [%s], defined in [%s], " +
-                "make sure it has constructor with [com.typesafe.config.Config] and " +
-                "[akka.dispatch.DispatcherPrerequisites] parameters")
-                .format(fqn, cfg.getString("id")), exception)
-        }).get
+        prerequisites.dynamicAccess
+          .createInstanceFor[MessageDispatcherConfigurator](fqn, args)
+          .recover {
+            case exception =>
+              throw new ConfigurationException(
+                ("Cannot instantiate MessageDispatcherConfigurator type [%s], defined in [%s], " +
+                  "make sure it has constructor with [com.typesafe.config.Config] and " +
+                  "[akka.dispatch.DispatcherPrerequisites] parameters")
+                  .format(fqn, cfg.getString("id")), exception)
+          }.get
     }
-    */
-    // WE ONLY HAVE ONE DISPATCHER, I'M AFRAID
-    new DispatcherConfigurator(cfg, prerequisites)
   }
 }
 
@@ -237,11 +242,11 @@ class DispatcherConfigurator(config: Config, prerequisites: DispatcherPrerequisi
 
   private val instance = new Dispatcher(
     this,
-    /** @note IMPLEMENT IN SCALA.JS config.getString("id"), */ scala.util.Random.nextString(4),
-    /** @note IMPLEMENT IN SCALA.JS config.getInt("throughput"), */ 10, // TODO: MAKE IT CONFIGURABLE
-    /** @note IMPLEMENT IN SCALA.JS config.getNanosDuration("throughput-deadline-time"), */ Duration.fromNanos(1000),
+    config.getString("id"),
+    config.getInt("throughput"),
+    ConfigOps(config).getNanosDuration("throughput-deadline-time") /** @note IMPLEMENT IN SCALA.JS config.getNanosDuration("throughput-deadline-time") */,
     configureExecutor(),
-    /** @note IMPLEMENT IN SCALA.JS config.getMillisDuration("shutdown-timeout")) */ Duration.create(1, TimeUnit.SECONDS))
+    ConfigOps(config).getMillisDuration("shutdown-timeout") /** @note IMPLEMENT IN SCALA.JS config.getMillisDuration("shutdown-timeout") */)
 
   /**
    * Returns the same dispatcher instance for each invocation
@@ -252,7 +257,7 @@ class DispatcherConfigurator(config: Config, prerequisites: DispatcherPrerequisi
 /**
  * INTERNAL API
  */
-/** @note IMPLEMENT IN SCALA.J
+/** @note IMPLEMENT IN SCALA.JS
 private[akka] object BalancingDispatcherConfigurator {
   private val defaultRequirement =
     ConfigFactory.parseString("mailbox-requirement = akka.dispatch.MultipleConsumerSemantics")
@@ -314,8 +319,8 @@ class PinnedDispatcherConfigurator(config: Config, prerequisites: DispatcherPrer
   extends MessageDispatcherConfigurator(config, prerequisites) {
 
   private val threadPoolConfig: ThreadPoolConfig = configureExecutor() match {
-    case e: ThreadPoolExecutorConfigurator ⇒ e.threadPoolConfig
-    case other ⇒
+    case e: ThreadPoolExecutorConfigurator => e.threadPoolConfig
+    case other =>
       prerequisites.eventStream.publish(
         Warning("PinnedDispatcherConfigurator",
           this.getClass,

@@ -229,7 +229,7 @@ lazy val akkaJsActor = crossProject(JSPlatform)
     scalaJSLinkerConfig ~= (_.withCheckIR(true)),
     libraryDependencies ++= {
       Seq(
-        "org.akka-js" %%% "shocon" % "1.0.1-SNAPSHOT",
+        "org.akka-js" %%% "shocon" % "1.1.0-SNAPSHOT",
         "org.scala-js" %%% "scala-js-macrotask-executor" % "1.0.0",
         "org.scala-lang.modules" %% "scala-java8-compat" % "0.9.1"
       )
